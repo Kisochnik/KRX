@@ -53,6 +53,32 @@ SHOP_TYPE_LABELS = {
 db.init_app(app)
 
 
+def migrate_database_schema():
+    db_path = os.path.join(BASE_DIR, 'instance', 'krx.db')
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(user)")
+    existing_columns = {row[1] for row in cur.fetchall()}
+    new_columns = {
+        'hide_online': 'BOOLEAN DEFAULT 0',
+        'hide_level': 'BOOLEAN DEFAULT 0',
+        'hide_birthday': 'BOOLEAN DEFAULT 0',
+        'password_reset_code': "VARCHAR(10) DEFAULT ''",
+        'tg_login_code': "VARCHAR(10) DEFAULT ''",
+        'profile_effect': "VARCHAR(100) DEFAULT ''",
+        'nick_color': "VARCHAR(20) DEFAULT ''",
+    }
+    for column, definition in new_columns.items():
+        if column not in existing_columns:
+            try:
+                cur.execute(f"ALTER TABLE user ADD COLUMN {column} {definition}")
+            except Exception as e:
+                print(f'[DB MIGRATION ERROR] {column}: {e}')
+    conn.commit()
+    conn.close()
+
+
 os.makedirs('static/uploads', exist_ok=True)
 os.makedirs('static/shop/avatars', exist_ok=True)
 os.makedirs('static/shop/banners', exist_ok=True)
@@ -62,6 +88,10 @@ os.makedirs('static/music/covers', exist_ok=True)
 os.makedirs('static/shop/wallpapers', exist_ok=True)
 os.makedirs('static/shop/effects', exist_ok=True)
 os.makedirs('static/shop/nick_colors', exist_ok=True)
+
+with app.app_context():
+    db.create_all()
+    migrate_database_schema()
 
 GENRES = [
     ('pop','🎤 Поп'),('pop_rock','🎸 Поп-рок'),('europop','🇪🇺 Европоп'),
@@ -373,38 +403,46 @@ def login():
     require_2fa = False
     user_pending = None
     if request.method == 'POST':
-        username = request.form['username']; password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        code_input = request.form.get('code', '').strip()
         lang = request.form.get('lang', 'ru')
-        user = User.query.filter_by(username=username, password=password).first()
-        if user:
-            if user.is_banned: error = 'Аккаунт заблокирован!'
-            elif user.tg_id:
-                # 2FA через ТГ
-                code = gen_code(6)
-                user.tg_login_code = code
+
+        if code_input:
+            login_user_id = session.get('login_2fa_user')
+            user = User.query.get(login_user_id) if login_user_id else None
+            if user and code_input == user.tg_login_code:
+                user.tg_login_code = ''
                 db.session.commit()
-                try:
-                    import requests as rlib
-                    rlib.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                              json={'chat_id': user.tg_id, 'text': f'KRX — Вход в аккаунт\n\nКод подтверждения: {code}\n\nВведи этот код на сайте для входа.'})
-                    require_2fa = True
-                    user_pending = user
-                    success = 'Код отправлен в Telegram!'
-                except:
-                    error = 'Ошибка отправки кода в Telegram!'
-            else:
-                session['user_id'] = user.id; return redirect('/feed')
-        else: error = 'Неверный логин или пароль'
-        # Если 2FA, проверить код
-        if 'code' in request.form and user_pending:
-            code = request.form['code']
-            if code == user_pending.tg_login_code:
-                user_pending.tg_login_code = ''
-                db.session.commit()
-                session['user_id'] = user_pending.id
+                session['user_id'] = user.id
+                session.pop('login_2fa_user', None)
                 return redirect('/feed')
+            error = 'Неверный код!'
+        else:
+            user = User.query.filter_by(username=username, password=password).first()
+            if user:
+                if user.is_banned:
+                    error = 'Аккаунт заблокирован!'
+                elif user.tg_id:
+                    # 2FA через ТГ
+                    code = gen_code(6)
+                    user.tg_login_code = code
+                    db.session.commit()
+                    try:
+                        import requests as rlib
+                        rlib.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
+                                  json={'chat_id': user.tg_id, 'text': f'KRX — Вход в аккаунт\n\nКод подтверждения: {code}\n\nВведи этот код на сайте для входа.'})
+                        session['login_2fa_user'] = user.id
+                        require_2fa = True
+                        success = 'Код отправлен в Telegram!'
+                    except Exception as e:
+                        print(f'[LOGIN TG ERROR] {e}')
+                        error = 'Ошибка отправки кода в Telegram!'
+                else:
+                    session['user_id'] = user.id
+                    return redirect('/feed')
             else:
-                error = 'Неверный код!'
+                error = 'Неверный логин или пароль'
     return render_template('login.html', error=error, success=success, lang=lang, require_2fa=require_2fa)
 
 
@@ -435,10 +473,12 @@ def forgot_password():
                     error = 'Ошибка отправки в Telegram!'
             else:
                 # Отправить на email
-                email_code_send(user, code, 'Восстановление пароля', 'Используй этот код для сброса пароля.')
-                user.password_reset_code = code
-                db.session.commit()
-                success = 'Код отправлен на email!'
+                if email_code_send(user, code, 'Восстановление пароля', 'Используй этот код для сброса пароля.'):
+                    user.password_reset_code = code
+                    db.session.commit()
+                    success = 'Код отправлен на email!'
+                else:
+                    error = 'Не удалось отправить код на почту.'
     return render_template('forgot_password.html', error=error, success=success)
 
 
