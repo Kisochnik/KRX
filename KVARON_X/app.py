@@ -78,6 +78,105 @@ def migrate_database_schema():
     conn.commit()
     conn.close()
 
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(track)")
+    existing_track_columns = {row[1] for row in cur.fetchall()}
+    track_new_columns = {
+        'copyright_type': "VARCHAR(30) DEFAULT 'own'",
+        'copyright_owner': "VARCHAR(200) DEFAULT ''",
+        'copyright_url': "VARCHAR(300) DEFAULT ''",
+    }
+    for column, definition in track_new_columns.items():
+        if column not in existing_track_columns:
+            try:
+                cur.execute(f"ALTER TABLE track ADD COLUMN {column} {definition}")
+            except Exception as e:
+                print(f'[DB MIGRATION ERROR] track.{column}: {e}')
+    conn.commit()
+    conn.close()
+
+
+def seed_shop_items():
+    if ShopItem.query.count() > 0:
+        return
+    demo_items = [
+        {
+            'name': 'Активный аватар',
+            'description': 'Анимированная аватарка для профиля',
+            'item_type': 'avatar',
+            'filename': 'avatar_1777215360.gif',
+            'preview': 'avatar_1777215360.gif',
+            'price_kp': 40,
+        },
+        {
+            'name': 'Игровой баннер',
+            'description': 'Баннер для оформления профиля',
+            'item_type': 'banner',
+            'filename': 'banner_1777215375.gif',
+            'preview': 'banner_1777215375.gif',
+            'price_kp': 60,
+        },
+        {
+            'name': 'Неоновый ник',
+            'description': 'Изменяет цвет вашего ника в интерфейсе',
+            'item_type': 'nick_color',
+            'filename': '#ff6ec7',
+            'preview': '',
+            'price_kp': 25,
+        },
+    ]
+    for item in demo_items:
+        db.session.add(ShopItem(**item))
+    db.session.commit()
+
+
+def seed_gaming_content(user):
+    if Group.query.count() > 0 or LFGPost.query.count() > 0:
+        return
+    group1 = Group(name='KRX Gaming Squad', description='Здесь собираются тиммейты для ранкеда и фанов.', game_tag='Valorant', need_mic=True, owner_id=user.id)
+    group2 = Group(name='Команда киберспортсменов', description='Группа для обсуждения турниров и оперативных игр.', game_tag='CS2', need_mic=False, owner_id=user.id)
+    db.session.add(group1)
+    db.session.add(group2)
+    db.session.commit()
+    db.session.add(GroupMember(group_id=group1.id, user_id=user.id))
+    db.session.add(GroupMember(group_id=group2.id, user_id=user.id))
+    db.session.add(LFGPost(user_id=user.id, game='Valorant', mode='Рейтинговая', rank_level='Высокий', need_mic=True, description='Ищу тиммейтов для ранкеда. Быстрая игра с голосом.'))
+    db.session.add(LFGPost(user_id=user.id, game='CS2', mode='Коворк', rank_level='Средний', need_mic=False, description='Расслабленная партия 5 на 5, нужны носители стратегии.'))
+    db.session.commit()
+
+
+def seed_music_content(user):
+    if Track.query.filter_by(is_public=True).count() > 0:
+        return
+    audio_folder = os.path.join(BASE_DIR, 'static', 'music', 'audio')
+    os.makedirs(audio_folder, exist_ok=True)
+    demo_path = os.path.join(audio_folder, 'sample_track.wav')
+    if not os.path.exists(demo_path):
+        import wave
+        import struct
+        with wave.open(demo_path, 'w') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(22050)
+            samples = [0] * 22050
+            wf.writeframes(b''.join(struct.pack('<h', s) for s in samples))
+    db.session.add(Track(
+        user_id=user.id,
+        title='KRX Demo Beat',
+        artist='KRX Studio',
+        genre='gaming',
+        description='Пример трека для музыкального раздела сайта.',
+        filename='sample_track.wav',
+        cover='cover_2_1776785739.png',
+        duration=10,
+        is_public=True,
+        copyright_type='free',
+        copyright_owner='KRX',
+        copyright_url='',
+    ))
+    db.session.commit()
+
 
 os.makedirs('static/uploads', exist_ok=True)
 os.makedirs('static/shop/avatars', exist_ok=True)
@@ -92,6 +191,7 @@ os.makedirs('static/shop/nick_colors', exist_ok=True)
 with app.app_context():
     db.create_all()
     migrate_database_schema()
+    seed_shop_items()
 
 GENRES = [
     ('pop','🎤 Поп'),('pop_rock','🎸 Поп-рок'),('europop','🇪🇺 Европоп'),
@@ -935,6 +1035,8 @@ def messages_poll():
 def gaming():
     if 'user_id' not in session: return redirect('/login')
     user = User.query.get(session['user_id'])
+    if Group.query.count() == 0 and LFGPost.query.count() == 0:
+        seed_gaming_content(user)
     groups = Group.query.order_by(Group.created_at.desc()).all()
     my_groups = [gm.group_id for gm in GroupMember.query.filter_by(user_id=user.id).all()]
     notifs_unread = get_unread_notifs(user.id)
@@ -1037,6 +1139,7 @@ def gaming_poll(gid):
 def music():
     if 'user_id' not in session: return redirect('/login')
     user = User.query.get(session['user_id'])
+    seed_music_content(user)
     notifs_unread = get_unread_notifs(user.id)
     active_tab = request.args.get('tab', 'discover')
     active_genre = request.args.get('genre', '')
@@ -1553,15 +1656,34 @@ def messages_typing_poll():
 def shop():
     if 'user_id' not in session: return redirect('/login')
     user = User.query.get(session['user_id'])
-    avatars = ShopItem.query.filter_by(item_type='avatar').all()
-    banners = ShopItem.query.filter_by(item_type='banner').all()
-    frames = ShopItem.query.filter_by(item_type='frame').all()
+    tab = request.args.get('tab', 'avatar')
+    if tab not in {'avatar', 'banner', 'frame', 'wallpaper', 'effect', 'nick_color', 'leaderboard', 'quests'}:
+        tab = 'avatar'
+    search_q = request.args.get('q', '').strip()
+    item_id = request.args.get('item_id', type=int)
+
+    filters = []
+    if item_id:
+        filters.append(ShopItem.id == item_id)
+    if search_q:
+        filters.append(db.or_(ShopItem.name.ilike(f'%{search_q}%'),
+                              ShopItem.description.ilike(f'%{search_q}%')))
+
+    avatars = ShopItem.query.filter(ShopItem.item_type == 'avatar', *filters).all()
+    banners = ShopItem.query.filter(ShopItem.item_type == 'banner', *filters).all()
+    frames = ShopItem.query.filter(ShopItem.item_type == 'frame', *filters).all()
+    wallpapers = ShopItem.query.filter(ShopItem.item_type == 'wallpaper', *filters).all()
+    effects = ShopItem.query.filter(ShopItem.item_type == 'effect', *filters).all()
+    nick_colors = ShopItem.query.filter(ShopItem.item_type == 'nick_color', *filters).all()
     owned = {p.item_id for p in Purchase.query.filter_by(user_id=user.id).all()}
     notifs_unread = get_unread_notifs(user.id)
     return render_template('shop.html', user=user, avatars=avatars, banners=banners,
-                           frames=frames, owned=owned, inventory=get_inventory(user.id),
-                           notifs_unread=notifs_unread, get_avatar_url=get_avatar_url,
-                           can_use_banner=can_use_banner, can_use_gif_avatar=can_use_gif_avatar)
+                           frames=frames, wallpapers=wallpapers, effects=effects,
+                           nick_colors=nick_colors, owned=owned,
+                           inventory=get_inventory(user.id), notifs_unread=notifs_unread,
+                           get_avatar_url=get_avatar_url, can_use_banner=can_use_banner,
+                           can_use_gif_avatar=can_use_gif_avatar, tab=tab,
+                           search_q=search_q)
 
 
 @app.route('/shop/buy/<int:item_id>', methods=['POST'])
@@ -1569,15 +1691,16 @@ def shop_buy(item_id):
     if 'user_id' not in session: return redirect('/login')
     user = User.query.get(session['user_id'])
     item = ShopItem.query.get_or_404(item_id)
-    if user_has_item(user.id, item_id): return redirect('/shop?error=already_owned')
-    if not user.is_admin and user.kp < item.price_kp: return redirect('/shop?error=not_enough_kp')
+    tab = request.form.get('tab', 'avatar')
+    if user_has_item(user.id, item_id): return redirect(f'/shop?error=already_owned&tab={tab}')
+    if not user.is_admin and user.kp < item.price_kp: return redirect(f'/shop?error=not_enough_kp&tab={tab}')
     if not user.is_admin: user.kp -= item.price_kp
     db.session.add(Purchase(user_id=user.id, item_id=item_id))
     if item.item_type == 'avatar': user.avatar = f'__shop__/{item.filename}'
     elif item.item_type == 'banner': user.banner = f'__shop__/{item.filename}'
     elif item.item_type == 'frame': user.frame = item.filename
     add_xp(user, 10); db.session.commit()
-    return redirect('/shop?success=1')
+    return redirect(f'/shop?success=1&tab={tab}')
 
 
 @app.route('/shop/equip/<int:item_id>', methods=['POST'])
