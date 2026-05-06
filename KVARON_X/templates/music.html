@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRX Music</title>
+  <style>
+    :root {
+      --bg: #080808;
+      --bg2: #0f0f0f;
+      --bg3: #161616;
+      --card: #111111;
+      --card2: #181818;
+      --border: #1e1e1e;
+      --border2: #2a2a2a;
+      --text: #f0f0f0;
+      --text2: #aaa;
+      --text3: #666;
+      --text4: #3a3a3a;
+      --red: #e0245e;
+      --red2: #c0103e;
+      --accent: #7F77DD;
+      --green: #1DB954;
+      --player-h: 88px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 240px; background: #0a0a0a; border-right: 1px solid var(--border);
+      padding: 16px 10px; display: flex; flex-direction: column; gap: 2px;
+      flex-shrink: 0; height: 100vh; overflow-y: auto;
+      position: fixed; top: 0; left: 0; z-index: 200;
+    }
+    .logo { font-size: 24px; font-weight: 900; padding: 8px 12px 18px; letter-spacing: -1px; }
+    .logo span { color: #333; }
+    .nav-section-label { font-size: 10px; color: #222; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 14px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 14px; border-radius: 12px; font-size: 14px; color: #555; text-decoration: none; position: relative; transition: all 0.15s; font-weight: 500; }
+    .nav-item:hover { background: #141414; color: #bbb; }
+    .nav-item.active { color: #fff; background: #1a1a1a; }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: var(--red); border-radius: 0 4px 4px 0; }
+    .nav-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 7px; }
+    .nav-div { height: 1px; background: #161616; margin: 8px 12px; }
+    .nav-spacer { flex: 1; }
+    .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #161616; margin-top: 8px; text-decoration: none; border-radius: 12px; transition: background 0.15s; }
+    .sidebar-user:hover { background: #141414; }
+    .s-av { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .s-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .admin-nav { display: flex; align-items: center; gap: 11px; padding: 9px 14px; border-radius: 12px; font-size: 14px; color: var(--red); text-decoration: none; font-weight: 700; background: #150608; border: 1px solid #2a0a10; transition: all 0.15s; }
+    .admin-nav:hover { background: #1d080e; }
+
+    /* ===== MAIN ===== */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding-bottom: calc(var(--player-h) + 20px);
+      min-height: 100vh;
+    }
+
+    /* ===== HERO ===== */
+    .music-hero {
+      position: relative; overflow: hidden;
+      padding: 48px 32px 40px;
+      background: linear-gradient(160deg, #1a0a0f 0%, #0f0a1a 40%, #080808 100%);
+    }
+    .hero-bg-blur {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    }
+    .hero-bg-blur::before {
+      content: ''; position: absolute;
+      width: 400px; height: 400px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(224,36,94,0.15), transparent 70%);
+      top: -100px; right: -50px;
+    }
+    .hero-bg-blur::after {
+      content: ''; position: absolute;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(127,119,221,0.1), transparent 70%);
+      bottom: -80px; left: 100px;
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+    .hero-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--red); margin-bottom: 10px;
+    }
+    .hero-title { font-size: 40px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 8px; }
+    .hero-title span { color: var(--red); }
+    .hero-sub { font-size: 15px; color: var(--text3); margin-bottom: 28px; }
+
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--red); color: #fff; border: none;
+      border-radius: 999px; padding: 12px 26px; font-size: 14px; font-weight: 800;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 6px 24px rgba(224,36,94,0.35);
+      letter-spacing: 0.2px;
+    }
+    .btn-primary:hover { background: var(--red2); transform: scale(1.04); box-shadow: 0 8px 32px rgba(224,36,94,0.45); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.07); color: var(--text2);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 999px;
+      padding: 11px 22px; font-size: 14px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+
+    /* ===== SEARCH ===== */
+    .search-section { padding: 20px 32px 0; }
+    .search-wrap { display: flex; gap: 10px; margin-bottom: 18px; }
+    .search-input {
+      flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 999px; padding: 11px 20px; font-size: 14px;
+      color: var(--text); outline: none; font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--red); background: #1a1a1a; }
+    .search-input::placeholder { color: var(--text4); }
+    .search-go { background: var(--red); color: #fff; border: none; border-radius: 999px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .search-go:hover { background: var(--red2); }
+
+    /* Genre tags */
+    .genre-strip { display: flex; gap: 8px; flex-wrap: wrap; }
+    .genre-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all 0.15s;
+      border: 1px solid var(--border2); color: var(--text3); background: transparent;
+      white-space: nowrap;
+    }
+    .genre-pill:hover { border-color: var(--red); color: var(--text2); background: #1a0a0e; }
+    .genre-pill.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+    /* ===== TABS ===== */
+    .music-tabs {
+      display: flex; gap: 0; padding: 24px 32px 0;
+      border-bottom: 1px solid var(--border); position: sticky; top: 0;
+      background: rgba(8,8,8,0.97); z-index: 50; backdrop-filter: blur(14px);
+    }
+    .m-tab {
+      padding: 12px 20px 10px; font-size: 14px; font-weight: 600; color: var(--text3);
+      cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
+    }
+    .m-tab:hover { color: var(--text2); }
+    .m-tab.active { color: #fff; border-bottom-color: var(--red); }
+
+    /* ===== SECTIONS ===== */
+    .section { padding: 28px 32px 0; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .section-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .section-more { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .section-more:hover { color: var(--red); }
+
+    /* tab panes */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ===== TRACK GRID ===== */
+    .tracks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+
+    .track-card {
+      background: var(--card2); border-radius: 16px; overflow: hidden;
+      cursor: pointer; transition: all 0.22s; position: relative;
+      border: 1px solid transparent;
+    }
+    .track-card:hover { background: #1f1f1f; transform: translateY(-4px); border-color: #2a2a2a; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+    .track-card.is-playing { border-color: var(--red); background: #1a0810; }
+
+    .tc-cover {
+      width: 100%; aspect-ratio: 1; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tc-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
+    .track-card:hover .tc-cover img { transform: scale(1.06); }
+    .tc-cover-placeholder {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 52px;
+    }
+
+    /* Play button overlay */
+    .tc-play-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .track-card:hover .tc-play-overlay, .track-card.is-playing .tc-play-overlay { opacity: 1; }
+    .tc-play-circle {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--red); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; transition: transform 0.15s;
+      box-shadow: 0 4px 20px rgba(224,36,94,0.5);
+    }
+    .tc-play-circle:hover { transform: scale(1.1); }
+
+    /* Visualizer bars (playing animation) */
+    .tc-visualizer {
+      position: absolute; bottom: 10px; right: 10px;
+      display: none; align-items: flex-end; gap: 2px; height: 20px;
+    }
+    .track-card.is-playing .tc-visualizer { display: flex; }
+    .vis-bar {
+      width: 3px; background: var(--red); border-radius: 2px;
+      animation: visPulse 0.8s ease-in-out infinite;
+    }
+    .vis-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .vis-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+    .vis-bar:nth-child(3) { height: 18px; animation-delay: 0.2s; }
+    .vis-bar:nth-child(4) { height: 12px; animation-delay: 0.3s; }
+    .vis-bar:nth-child(5) { height: 16px; animation-delay: 0.15s; }
+    @keyframes visPulse {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1); }
+    }
+
+    .tc-info { padding: 12px 14px 14px; }
+    .tc-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tc-artist { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
+    .tc-actions { display: flex; align-items: center; gap: 6px; }
+    .tc-act {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 600; color: var(--text4);
+      background: none; border: none; cursor: pointer; padding: 5px 8px;
+      border-radius: 8px; transition: all 0.15s; font-family: inherit;
+    }
+    .tc-act:hover { background: #2a2a2a; color: var(--text2); }
+    .tc-act.liked { color: var(--red); }
+    .tc-act.saved { color: var(--accent); }
+    .tc-act.share { margin-left: auto; }
+    .tc-plays { font-size: 11px; color: var(--text4); margin-left: auto; }
+
+    /* ===== LIST TRACK ===== */
+    .tracks-list { display: flex; flex-direction: column; gap: 2px; }
+    .tl-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 12px;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .tl-item:hover { background: var(--bg3); }
+    .tl-item.is-playing { background: #1a0810; }
+    .tl-num { width: 26px; text-align: center; font-size: 13px; color: var(--text4); flex-shrink: 0; font-weight: 600; }
+    .tl-item.is-playing .tl-num { color: var(--red); }
+    .tl-cover {
+      width: 46px; height: 46px; border-radius: 10px; overflow: hidden;
+      background: var(--bg3); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .tl-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .tl-info { flex: 1; min-width: 0; }
+    .tl-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tl-artist { font-size: 12px; color: var(--text3); margin-top: 2px; }
+    .tl-dur { font-size: 12px; color: var(--text4); flex-shrink: 0; }
+    .tl-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .tl-act { background: none; border: none; color: var(--text4); cursor: pointer; font-size: 17px; padding: 4px 6px; border-radius: 8px; transition: all 0.12s; }
+    .tl-act:hover { color: var(--text2); background: #2a2a2a; }
+    .tl-act.liked { color: var(--red); }
+    .tl-act.saved { color: var(--accent); }
+
+    /* ===== UPLOAD ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: #131313; border: 1px solid var(--border2); border-radius: 20px; padding: 28px; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .modal-title { font-size: 18px; font-weight: 800; }
+    .modal-close { background: var(--bg3); border: none; color: var(--text3); font-size: 18px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .modal-close:hover { background: #2a2a2a; color: var(--text); }
+
+    .drop-zone {
+      border: 2px dashed var(--border2); border-radius: 14px; padding: 32px 20px;
+      text-align: center; cursor: pointer; position: relative; overflow: hidden;
+      transition: all 0.2s; margin-bottom: 16px;
+    }
+    .drop-zone:hover, .drop-zone.drag { border-color: var(--red); background: #1a0810; }
+    .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .drop-icon { font-size: 44px; margin-bottom: 10px; }
+    .drop-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .drop-sub { font-size: 13px; color: var(--text3); }
+    .drop-file-name { font-size: 13px; color: var(--red); font-weight: 600; margin-top: 8px; display: none; }
+
+    .cover-row { display: flex; gap: 12px; margin-bottom: 14px; align-items: center; }
+    .cover-preview { width: 72px; height: 72px; border-radius: 12px; overflow: hidden; background: var(--bg3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; position: relative; transition: all 0.15s; border: 2px dashed var(--border2); }
+    .cover-preview:hover { border-color: var(--red); }
+    .cover-preview input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .cover-info { flex: 1; }
+    .cover-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
+    .cover-hint { font-size: 12px; color: var(--text3); }
+
+    .form-row { margin-bottom: 12px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text3); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 10px 14px; font-size: 14px; color: var(--text);
+      outline: none; font-family: inherit; transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--red); }
+    .form-select option { background: #1a1a1a; }
+    .form-textarea { resize: none; height: 70px; }
+
+    .upload-progress { display: none; margin-bottom: 14px; }
+    .prog-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+    .prog-bg { background: var(--bg3); border-radius: 999px; height: 4px; overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--red); border-radius: 999px; width: 0; transition: width 0.3s; }
+
+    .submit-btn { width: 100%; background: var(--red); color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.15s; box-shadow: 0 4px 20px rgba(224,36,94,0.3); }
+    .submit-btn:hover { background: var(--red2); transform: scale(1.02); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ===== PLAYLIST MODAL ===== */
+    .pl-modal { background: #131313; border: 1px solid var(--border2); border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state { padding: 60px 20px; text-align: center; }
+    .empty-visual { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #1a0810, #0f0a1a); margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+    .empty-title { font-size: 20px; font-weight: 700; color: #555; margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; color: #333; margin-bottom: 20px; line-height: 1.6; }
+
+    /* ===== PLAYER ===== */
+    .player {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--player-h);
+      background: rgba(10,10,10,0.97);
+      border-top: 1px solid #1e1e1e;
+      backdrop-filter: blur(24px) saturate(180%);
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 16px; z-index: 300;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .player.visible { transform: translateY(0); }
+
+    /* Player track info */
+    .p-track { display: flex; align-items: center; gap: 12px; width: 280px; flex-shrink: 0; min-width: 0; }
+    .p-cover {
+      width: 56px; height: 56px; border-radius: 10px; overflow: hidden;
+      background: var(--bg3); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+      position: relative;
+    }
+    .p-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .p-cover-spin { animation: coverSpin 8s linear infinite; }
+    @keyframes coverSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .p-info { flex: 1; min-width: 0; }
+    .p-title { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .p-artist { font-size: 12px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .p-heart { background: none; border: none; color: var(--text4); font-size: 20px; cursor: pointer; padding: 6px; transition: color 0.15s; flex-shrink: 0; }
+    .p-heart:hover { color: var(--red); }
+    .p-heart.liked { color: var(--red); }
+
+    /* Player controls */
+    .p-controls { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+    .p-btns { display: flex; align-items: center; gap: 14px; }
+    .p-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 18px; padding: 6px; transition: all 0.15s; border-radius: 50%; }
+    .p-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .p-btn.active { color: var(--red); }
+    .p-play {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #fff; color: #000; border: none;
+      font-size: 18px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .p-play:hover { transform: scale(1.08); background: #f0f0f0; }
+    .p-play.playing { background: var(--red); color: #fff; box-shadow: 0 0 20px rgba(224,36,94,0.4); }
+    .p-play.playing:hover { background: var(--red2); }
+
+    /* Visualizer in player */
+    .p-visualizer {
+      display: none; align-items: flex-end; gap: 2px; height: 18px; margin-left: 6px;
+    }
+    .p-visualizer.show { display: flex; }
+    .pv-bar { width: 3px; background: var(--red); border-radius: 2px; animation: visPulse 0.7s ease-in-out infinite; }
+    .pv-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+    .pv-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+    .pv-bar:nth-child(3) { height: 18px; animation-delay: 0.2s; }
+    .pv-bar:nth-child(4) { height: 10px; animation-delay: 0.05s; }
+
+    .p-progress { display: flex; align-items: center; gap: 10px; width: 100%; }
+    .p-time { font-size: 11px; color: var(--text4); min-width: 34px; }
+    .p-time.right { text-align: right; }
+    .p-bar {
+      flex: 1; height: 4px; background: #2a2a2a; border-radius: 999px;
+      cursor: pointer; position: relative; group: hover;
+      transition: height 0.15s;
+    }
+    .p-bar:hover { height: 6px; }
+    .p-bar-fill { height: 100%; background: var(--red); border-radius: 999px; pointer-events: none; transition: width 0.1s linear; }
+    .p-bar::after { content: ''; position: absolute; right: calc(100% - var(--pct, 0) * 1%); top: 50%; transform: translate(50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: #fff; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+    .p-bar:hover::after { opacity: 1; }
+
+    /* Player right */
+    .p-right { width: 220px; display: flex; align-items: center; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+    .vol-icon { background: none; border: none; color: #888; cursor: pointer; font-size: 16px; padding: 4px; }
+    .vol-icon:hover { color: #fff; }
+    .vol-bar { width: 80px; height: 4px; background: #2a2a2a; border-radius: 999px; cursor: pointer; position: relative; flex-shrink: 0; }
+    .vol-fill { height: 100%; background: var(--text3); border-radius: 999px; width: 70%; transition: background 0.15s; }
+    .vol-bar:hover .vol-fill { background: #fff; }
+    .p-queue-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 8px; transition: all 0.15s; }
+    .p-queue-btn:hover { color: #fff; background: #2a2a2a; }
+
+    /* ===== COVER GRADIENTS (placeholder) ===== */
+    .cg-0 { background: linear-gradient(135deg, #1a0a1a, #4a1040); }
+    .cg-1 { background: linear-gradient(135deg, #0a1a1a, #104040); }
+    .cg-2 { background: linear-gradient(135deg, #1a1a0a, #403010); }
+    .cg-3 { background: linear-gradient(135deg, #0a0a1a, #101040); }
+    .cg-4 { background: linear-gradient(135deg, #1a0a0a, #401010); }
+    .cg-5 { background: linear-gradient(135deg, #0a1a0a, #104010); }
+
+    /* ===== TOAST ===== */
+    .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(10px); background: #1a1a1a; border: 1px solid #333; color: var(--text2); border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.25s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 999px; }
+
+    @media (max-width: 900px) { .p-right { display: none; } .p-track { width: 180px; } }
+    @media (max-width: 700px) {
+      .sidebar { width: 60px; padding: 12px 6px; }
+      .nav-item span, .nav-section-label, .sidebar-user > div:last-child, .logo sup { display: none; }
+      .main { margin-left: 60px; }
+      .hero-title { font-size: 28px; }
+      .tracks-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item active" href="/music"><span class="nav-icon">🎵</span><span>Музыка</span></a>
+  <a class="nav-item" href="/gaming"><span class="nav-icon">🎮</span><span>Игровой</span></a>
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages"><span class="nav-icon">💬</span><span>Сообщения</span></a>
+  <a class="nav-item" href="/friends"><span class="nav-icon">👥</span><span>Друзья</span></a>
+  <a class="nav-item" href="/notifications"><span class="nav-icon">🔔</span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item" href="/profile"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <a class="nav-item" href="/shop"><span class="nav-icon">🛍</span><span>Магазин</span></a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    <span class="nav-icon">💎</span><span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item" href="/settings"><span class="nav-icon">⚙️</span><span>Настройки</span></a>
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="admin-nav" href="/admin"><span class="nav-icon">🛡️</span><span>Админ</span></a>
+  {% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+      <div style="font-size:11px;color:var(--red);margin-top:1px;">💎 {{ user.kp }} KP</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px;"><span class="nav-icon">🚪</span><span>Выйти</span></a>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="music-hero">
+    <div class="hero-bg-blur"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">🎵 KRX Music</div>
+      <div class="hero-title">Твоя музыка.<br><span>Без ограничений.</span></div>
+      <div class="hero-sub">Слушай, загружай, делись треками с сообществом</div>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="openUpload()">⬆️ Загрузить трек</button>
+        <a href="/music?tab=library" class="btn-ghost">📚 Библиотека</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH & GENRES -->
+  <div class="search-section">
+    <form method="GET" action="/music" id="search-form">
+      <input type="hidden" name="tab" value="{{ active_tab }}">
+      <div class="search-wrap">
+        <input class="search-input" type="text" name="q" id="search-q"
+               placeholder="🔍 Поиск треков, артистов, жанров..."
+               value="{{ search_q }}" autocomplete="off">
+        <button class="search-go" type="submit">Найти</button>
+      </div>
+    </form>
+    <div class="genre-strip">
+      <a class="genre-pill {% if not active_genre %}active{% endif %}" href="/music?tab={{ active_tab }}">🎵 Все</a>
+      {% for g, label in genres %}
+      <a class="genre-pill {% if active_genre == g %}active{% endif %}" href="/music?tab={{ active_tab }}&genre={{ g }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="music-tabs">
+    <div class="m-tab {% if active_tab=='discover' or not active_tab %}active{% endif %}" onclick="switchTab('discover', this)">🔥 Открытия</div>
+    <div class="m-tab {% if active_tab=='trending' %}active{% endif %}" onclick="switchTab('trending', this)">📈 Топ</div>
+    <div class="m-tab {% if active_tab=='library' %}active{% endif %}" onclick="switchTab('library', this)">📚 Библиотека</div>
+    <div class="m-tab {% if active_tab=='playlists' %}active{% endif %}" onclick="switchTab('playlists', this)">📋 Плейлисты</div>
+    <div class="m-tab {% if active_tab=='my_tracks' %}active{% endif %}" onclick="switchTab('my_tracks', this)">🎤 Мои треки</div>
+  </div>
+
+  <!-- DISCOVER -->
+  <div id="tab-discover" class="tab-pane {% if active_tab=='discover' or not active_tab %}active{% endif %}">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">🆕 Новые треки</div>
+      </div>
+      {% if tracks %}
+      <div class="tracks-grid">
+        {% for t in tracks %}
+        {% set cg = loop.index0 % 6 %}
+        <div class="track-card {% if current_track and current_track.id == t.id %}is-playing{% endif %}"
+             id="tc-{{ t.id }}"
+             onclick="playTrack({{ t.id }}, {{ t.title|tojson }}, {{ (t.artist or t.user.username)|tojson }}, {{ t.cover|tojson }})">
+          <div class="tc-cover">
+            {% if t.cover %}
+              <img src="/static/music/covers/{{ t.cover }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="tc-cover-placeholder cg-{{ cg }}" style="display:none;">🎵</div>
+            {% else %}
+              <div class="tc-cover-placeholder cg-{{ cg }}">🎵</div>
+            {% endif %}
+            <div class="tc-play-overlay">
+              <div class="tc-play-circle">
+                <span id="tc-icon-{{ t.id }}">{% if current_track and current_track.id == t.id %}⏸{% else %}▶{% endif %}</span>
+              </div>
+            </div>
+            <div class="tc-visualizer">
+              <div class="vis-bar"></div><div class="vis-bar"></div>
+              <div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div>
+            </div>
+          </div>
+          <div class="tc-info">
+            <div class="tc-title">{{ t.title }}</div>
+            <div class="tc-artist">{{ t.artist or t.user.username }}</div>
+            <div class="tc-actions">
+              <button class="tc-act {% if t.id in liked_tracks %}liked{% endif %}"
+                      onclick="event.stopPropagation(); likeTrack({{ t.id }}, this)">
+                {% if t.id in liked_tracks %}♥{% else %}♡{% endif %}
+                <span id="tlc-{{ t.id }}">{{ t.likes.count() }}</span>
+              </button>
+              <button class="tc-act {% if t.id in saved_tracks %}saved{% endif %}"
+                      onclick="event.stopPropagation(); saveTrack({{ t.id }}, this)"
+                      title="В библиотеку">
+                {% if t.id in saved_tracks %}✓{% else %}+{% endif %}
+              </button>
+              <button class="tc-act share"
+                      onclick="event.stopPropagation(); shareTrack({{ t.id }}, {{ t.title|tojson }}, {{ (t.artist or t.user.username)|tojson }})"
+                      title="Поделиться в ленте">↗</button>
+              <span class="tc-plays">▶ {{ t.plays }}</span>
+              {% if t.copyright_type and t.copyright_type != 'own' %}
+              <span class="tc-plays" title="{% if t.copyright_type=='licensed' %}Лицензия: {{ t.copyright_owner }}{% elif t.copyright_type=='creative_commons' %}Creative Commons{% else %}Royalty-free{% endif %}" style="cursor:help">©</span>
+              {% endif %}
+              {% if user.is_admin %}
+              <button class="tc-act" style="color:#e05;font-weight:bold;"
+                      onclick="event.stopPropagation(); adminDeleteTrack({{ t.id }}, {{ t.title|tojson }})"
+                      title="Удалить трек (Админ)">🗑</button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-visual">🎵</div>
+        <div class="empty-title">Треков пока нет</div>
+        <div class="empty-sub">Будь первым — загрузи свою музыку в KRX!</div>
+        <button class="btn-primary" onclick="openUpload()">⬆️ Загрузить первый трек</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- TRENDING -->
+  <div id="tab-trending" class="tab-pane {% if active_tab=='trending' %}active{% endif %}">
+    <div class="section">
+      <div class="section-header"><div class="section-title">📈 Топ треков</div></div>
+      {% if trending_tracks %}
+      <div class="tracks-list">
+        {% for t in trending_tracks %}
+        <div class="tl-item {% if current_track and current_track.id == t.id %}is-playing{% endif %}"
+             onclick="playTrack({{ t.id }}, {{ t.title|tojson }}, {{ (t.artist or t.user.username)|tojson }}, {{ t.cover|tojson }})">
+          <div class="tl-num">{{ loop.index }}</div>
+          <div class="tl-cover">
+            {% if t.cover %}<img src="/static/music/covers/{{ t.cover }}" onerror="this.style.display='none'">{% else %}🎵{% endif %}
+          </div>
+          <div class="tl-info">
+            <div class="tl-title">{{ t.title }}</div>
+            <div class="tl-artist">{{ t.artist or t.user.username }} · ▶ {{ t.plays }}</div>
+          </div>
+          <div class="tl-dur">{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}</div>
+          <div class="tl-actions">
+            <button class="tl-act {% if t.id in liked_tracks %}liked{% endif %}"
+                    onclick="event.stopPropagation(); likeTrack({{ t.id }}, this)">{% if t.id in liked_tracks %}♥{% else %}♡{% endif %}</button>
+            <button class="tl-act {% if t.id in saved_tracks %}saved{% endif %}"
+                    onclick="event.stopPropagation(); saveTrack({{ t.id }}, this)">{% if t.id in saved_tracks %}✓{% else %}+{% endif %}</button>
+            <button class="tl-act" onclick="event.stopPropagation(); shareTrack({{ t.id }}, {{ t.title|tojson }}, {{ (t.artist or t.user.username)|tojson }})">↗</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-visual">📈</div><div class="empty-title">Пока нет данных</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div id="tab-library" class="tab-pane {% if active_tab=='library' %}active{% endif %}">
+    <div class="section">
+      <div class="section-header"><div class="section-title">📚 Моя библиотека</div></div>
+      {% if library_tracks %}
+      <div class="tracks-list">
+        {% for lt in library_tracks %}
+        {% set t = lt.track %}
+        <div class="tl-item" onclick="playTrack({{ t.id }}, {{ t.title|tojson }}, {{ (t.artist or t.user.username)|tojson }}, {{ t.cover|tojson }})">
+          <div class="tl-cover">{% if t.cover %}<img src="/static/music/covers/{{ t.cover }}" onerror="this.style.display='none'">{% else %}🎵{% endif %}</div>
+          <div class="tl-info">
+            <div class="tl-title">{{ t.title }}</div>
+            <div class="tl-artist">{{ t.artist or t.user.username }}</div>
+          </div>
+          <div class="tl-dur">{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}</div>
+          <div class="tl-actions">
+            <button class="tl-act saved" onclick="event.stopPropagation(); saveTrack({{ t.id }}, this)" title="Удалить">✓</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-visual">📚</div>
+        <div class="empty-title">Библиотека пуста</div>
+        <div class="empty-sub">Нажми + на любом треке чтобы сохранить</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- PLAYLISTS -->
+  <div id="tab-playlists" class="tab-pane {% if active_tab=='playlists' %}active{% endif %}">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📋 Плейлисты</div>
+        <button class="btn-primary" style="padding:8px 18px;font-size:13px;" onclick="openCreatePlaylist()">+ Создать</button>
+      </div>
+      {% if playlists %}
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        {% for pl in playlists %}
+        <a href="/music/playlist/{{ pl.id }}" style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:12px;text-decoration:none;transition:background 0.12s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='transparent'">
+          <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:#1a1a2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">
+            {% if pl.cover %}<img src="/static/music/covers/{{ pl.cover }}" style="width:100%;height:100%;object-fit:cover;">{% else %}🎵{% endif %}
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">{{ pl.name }}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;">{{ pl.items.count() }} треков</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-visual">📋</div><div class="empty-title">Плейлистов нет</div>
+        <button class="btn-primary" onclick="openCreatePlaylist()">+ Создать первый</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- MY TRACKS -->
+  <div id="tab-my_tracks" class="tab-pane {% if active_tab=='my_tracks' %}active{% endif %}">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">🎤 Мои треки</div>
+        <button class="btn-primary" style="padding:8px 18px;font-size:13px;" onclick="openUpload()">⬆️ Загрузить</button>
+      </div>
+      {% if my_tracks %}
+      <div class="tracks-list">
+        {% for t in my_tracks %}
+        <div class="tl-item" onclick="playTrack({{ t.id }}, {{ t.title|tojson }}, {{ (t.artist or t.user.username)|tojson }}, {{ t.cover|tojson }})">
+          <div class="tl-cover">{% if t.cover %}<img src="/static/music/covers/{{ t.cover }}" onerror="this.style.display='none'">{% else %}🎵{% endif %}</div>
+          <div class="tl-info">
+            <div class="tl-title">{{ t.title }}</div>
+            <div class="tl-artist">▶ {{ t.plays }} · ♥ {{ t.likes.count() }} · {{ t.genre }}</div>
+          </div>
+          <div class="tl-dur">{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}</div>
+          <div class="tl-actions">
+            <button class="tl-act" onclick="event.stopPropagation(); deleteTrack({{ t.id }})" style="color:#333;">🗑️</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-visual">🎤</div>
+        <div class="empty-title">Ты ещё не загружал треки</div>
+        <div class="empty-sub">Поделись своей музыкой с сообществом KRX!</div>
+        <button class="btn-primary" onclick="openUpload()">⬆️ Загрузить первый трек</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ===== UPLOAD MODAL ===== -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⬆️ Загрузить трек</div>
+      <button class="modal-close" onclick="closeUpload()">✕</button>
+    </div>
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="audio-file-input" accept="audio/*" onchange="onAudioPick(this)">
+      <div class="drop-icon" id="drop-icon">🎵</div>
+      <div class="drop-title">Перетащи MP3 или WAV сюда</div>
+      <div class="drop-sub">или нажми чтобы выбрать файл</div>
+      <div class="drop-file-name" id="drop-fname"></div>
+    </div>
+
+    <!-- Cover + basic info -->
+    <div class="cover-row">
+      <div class="cover-preview" id="cover-preview" title="Выбрать обложку">
+        <input type="file" id="cover-file-input" accept="image/*" onchange="onCoverPick(this)">
+        <span id="cover-icon-text">🖼️</span>
+      </div>
+      <div class="cover-info">
+        <div class="cover-label">Обложка трека</div>
+        <div class="cover-hint">Квадратная, JPG/PNG<br>Если не добавишь — будет стильный цветной фон</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">Название *</label>
+      <input class="form-input" type="text" id="up-title" placeholder="Название трека..." required>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Артист</label>
+      <input class="form-input" type="text" id="up-artist" placeholder="Имя артиста (или оставь пустым)">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Жанр *</label>
+      <select class="form-select" id="up-genre">
+        {% for g, label in genres %}
+        <option value="{{ g }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Описание</label>
+      <textarea class="form-textarea" id="up-desc" placeholder="Расскажи о треке..."></textarea>
+    </div>
+
+    <!-- COPYRIGHT SECTION -->
+    <div class="form-row" style="border-top:1px solid #333;margin-top:12px;padding-top:12px;">
+      <label class="form-label">📋 Авторские права</label>
+      <select class="form-select" id="up-copyright-type" onchange="onCopyrightChange(this.value)">
+        <option value="own">🎵 Собственное произведение</option>
+        <option value="licensed">📜 Лицензионный трек (указать правообладателя)</option>
+        <option value="creative_commons">🌐 Creative Commons</option>
+        <option value="free">✅ Свободное использование / royalty-free</option>
+      </select>
+    </div>
+    <div class="form-row" id="copyright-owner-row" style="display:none">
+      <label class="form-label">Правообладатель</label>
+      <input class="form-input" type="text" id="up-copyright-owner" placeholder="Название / имя владельца прав">
+    </div>
+    <div class="form-row" id="copyright-url-row" style="display:none">
+      <label class="form-label">Ссылка на лицензию / источник</label>
+      <input class="form-input" type="url" id="up-copyright-url" placeholder="https://...">
+    </div>
+    <div class="form-row" id="copyright-cc-row" style="display:none" style="background:#0d2d1d;border-radius:8px;padding:10px;">
+      <div style="font-size:12px;color:#5f9;opacity:.85">ℹ️ Creative Commons — укажи ссылку на трек или источник и тип лицензии (CC-BY, CC0 и др.)</div>
+    </div>
+
+    <div class="upload-progress" id="up-progress">
+      <div class="prog-label" id="up-prog-label">Загружаю... 0%</div>
+      <div class="prog-bg"><div class="prog-fill" id="up-prog-fill"></div></div>
+    </div>
+
+    <button class="submit-btn" id="up-submit" onclick="submitUpload()">🎵 Загрузить трек</button>
+  </div>
+</div>
+
+<!-- CREATE PLAYLIST MODAL -->
+<div class="modal-overlay" id="pl-modal">
+  <div class="pl-modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 Новый плейлист</div>
+      <button class="modal-close" onclick="document.getElementById('pl-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Название</label>
+      <input class="form-input" type="text" id="pl-name" placeholder="Мой плейлист...">
+    </div>
+    <button class="submit-btn" onclick="createPlaylist()">Создать</button>
+  </div>
+</div>
+
+<!-- ===== PLAYER ===== -->
+<div id="tap-to-play" onclick="resumeAfterTap()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;cursor:pointer;">
+  <div style="background:#1a1a2e;border-radius:20px;padding:30px 50px;text-align:center;color:#fff;">
+    <div style="font-size:48px;">▶️</div>
+    <div style="margin-top:10px;font-size:18px;">Нажми чтобы воспроизвести</div>
+  </div>
+</div>
+<div class="player" id="player">
+  <div class="p-track">
+    <div class="p-cover" id="p-cover">🎵</div>
+    <div class="p-info">
+      <div class="p-title" id="p-title">—</div>
+      <div class="p-artist" id="p-artist">—</div>
+    </div>
+    <div class="p-visualizer" id="p-vis">
+      <div class="pv-bar"></div><div class="pv-bar"></div>
+      <div class="pv-bar"></div><div class="pv-bar"></div>
+    </div>
+    <button class="p-heart" id="p-heart" onclick="likeCurrentTrack()">♡</button>
+  </div>
+
+  <div class="p-controls">
+    <div class="p-btns">
+      <button class="p-btn" id="p-shuffle" onclick="toggleShuffle()" title="Перемешать">🔀</button>
+      <button class="p-btn" onclick="prevTrack()" title="Назад">⏮</button>
+      <button class="p-play" id="p-play" onclick="togglePlay()">▶</button>
+      <button class="p-btn" onclick="nextTrack()" title="Вперёд">⏭</button>
+      <button class="p-btn" id="p-repeat" onclick="toggleRepeat()" title="Повтор">🔁</button>
+    </div>
+    <div class="p-progress">
+      <span class="p-time" id="p-cur">0:00</span>
+      <div class="p-bar" id="p-bar" onclick="seekAudio(event)">
+        <div class="p-bar-fill" id="p-bar-fill" style="width:0%"></div>
+      </div>
+      <span class="p-time right" id="p-dur">0:00</span>
+    </div>
+  </div>
+
+  <div class="p-right">
+    <button class="vol-icon" onclick="toggleMute()">🔊</button>
+    <div class="vol-bar" id="vol-bar" onclick="setVol(event)">
+      <div class="vol-fill" id="vol-fill" style="width:70%"></div>
+    </div>
+    <button class="p-queue-btn" onclick="addCurrentToPlaylist()" title="Добавить в плейлист">📋</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="audio" preload="metadata"></audio>
+
+<script>
+// ===== STATE =====
+const audio = document.getElementById('audio');
+let currentId = null, isPlaying = false, isShuffle = false, isRepeat = false, isMuted = false;
+
+// All tracks for queue building
+const ALL_TRACKS = [
+  {% for t in tracks %}
+  { id: {{ t.id }}, title: {{ t.title|tojson }}, artist: {{ (t.artist or t.user.username)|tojson }}, cover: {{ t.cover|tojson }} },
+  {% endfor %}
+];
+
+// ===== PLAY =====
+function playTrack(id, title, artist, cover) {
+  // Update UI
+  currentId = id;
+  document.getElementById('p-title').textContent = title;
+  document.getElementById('p-artist').textContent = artist;
+
+  const coverEl = document.getElementById('p-cover');
+  if (cover) {
+    coverEl.innerHTML = `<img src="/static/music/covers/${cover}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.parentElement.textContent='🎵'">`;
+  } else {
+    const colors = ['#1a0a1a','#0a1a1a','#1a1a0a','#0a0a1a','#1a0a0a'];
+    const c = colors[id % colors.length];
+    coverEl.style.background = c;
+    coverEl.innerHTML = '🎵';
+  }
+
+  // Show player
+  document.getElementById('player').classList.add('visible');
+
+  // Play audio
+  audio.src = `/music/stream/${id}`;
+  audio.load();
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      setPlayState(true);
+    }).catch(err => {
+      // Autoplay blocked — show a tap-to-play overlay
+      setPlayState(false);
+      const overlay = document.getElementById('tap-to-play');
+      if (overlay) { overlay.style.display = 'flex'; }
+      console.warn('Autoplay blocked:', err);
+    });
+  }
+
+  // Count play
+  fetch(`/music/play/${id}`, { method: 'POST' });
+
+  // Highlight cards
+  document.querySelectorAll('.track-card').forEach(c => c.classList.remove('is-playing'));
+  document.querySelectorAll('.tl-item').forEach(c => c.classList.remove('is-playing'));
+  const card = document.getElementById(`tc-${id}`);
+  if (card) card.classList.add('is-playing');
+
+  // Update play icons
+  document.querySelectorAll('[id^="tc-icon-"]').forEach(el => el.textContent = '▶');
+  const iconEl = document.getElementById(`tc-icon-${id}`);
+  if (iconEl) iconEl.textContent = '⏸';
+
+  // Store in localStorage for cross-page persistence
+  try {
+    localStorage.setItem('kp_track', JSON.stringify({ id, title, artist, cover, src: `/music/stream/${id}` }));
+  } catch(e) {}
+}
+
+function setPlayState(playing) {
+  isPlaying = playing;
+  const btn = document.getElementById('p-play');
+  const vis = document.getElementById('p-vis');
+  if (playing) {
+    btn.textContent = '⏸';
+    btn.classList.add('playing');
+    vis.classList.add('show');
+  } else {
+    btn.textContent = '▶';
+    btn.classList.remove('playing');
+    vis.classList.remove('show');
+  }
+}
+
+function resumeAfterTap() {
+  document.getElementById('tap-to-play').style.display = 'none';
+  audio.play().then(() => setPlayState(true)).catch(console.error);
+}
+function togglePlay() {
+  if (!currentId) return;
+  if (isPlaying) { audio.pause(); setPlayState(false); }
+  else { audio.play().then(() => setPlayState(true)).catch(console.error); }
+}
+
+function nextTrack() {
+  if (!ALL_TRACKS.length) return;
+  let idx = ALL_TRACKS.findIndex(t => t.id === currentId);
+  idx = isShuffle ? Math.floor(Math.random() * ALL_TRACKS.length) : (idx + 1) % ALL_TRACKS.length;
+  const t = ALL_TRACKS[idx];
+  playTrack(t.id, t.title, t.artist, t.cover);
+}
+
+function prevTrack() {
+  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  if (!ALL_TRACKS.length) return;
+  let idx = ALL_TRACKS.findIndex(t => t.id === currentId);
+  idx = (idx - 1 + ALL_TRACKS.length) % ALL_TRACKS.length;
+  const t = ALL_TRACKS[idx];
+  playTrack(t.id, t.title, t.artist, t.cover);
+}
+
+audio.addEventListener('ended', () => { isRepeat ? (audio.currentTime=0, audio.play()) : nextTrack(); });
+
+// Progress
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('p-bar-fill').style.width = pct + '%';
+  document.getElementById('p-cur').textContent = fmt(audio.currentTime);
+  document.getElementById('p-dur').textContent = fmt(audio.duration);
+});
+
+function seekAudio(e) {
+  const bar = document.getElementById('p-bar');
+  const pct = (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth;
+  if (audio.duration) audio.currentTime = pct * audio.duration;
+}
+
+function fmt(s) {
+  if (!s || isNaN(s)) return '0:00';
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+}
+
+function toggleShuffle() {
+  isShuffle = !isShuffle;
+  document.getElementById('p-shuffle').classList.toggle('active', isShuffle);
+  showToast(isShuffle ? '🔀 Перемешать вкл' : '🔀 Перемешать выкл');
+}
+
+function toggleRepeat() {
+  isRepeat = !isRepeat;
+  document.getElementById('p-repeat').classList.toggle('active', isRepeat);
+  showToast(isRepeat ? '🔁 Повтор вкл' : '🔁 Повтор выкл');
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  audio.muted = isMuted;
+  document.querySelector('.vol-icon').textContent = isMuted ? '🔇' : '🔊';
+}
+
+function setVol(e) {
+  const bar = document.getElementById('vol-bar');
+  const pct = Math.max(0, Math.min(1, (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth));
+  audio.volume = pct;
+  document.getElementById('vol-fill').style.width = (pct * 100) + '%';
+}
+
+// ===== LIKE / SAVE =====
+function likeTrack(id, btn) {
+  fetch(`/music/like/${id}`, { method: 'POST' }).then(r => r.json()).then(d => {
+    btn.classList.toggle('liked', d.liked);
+    // Update heart icon
+    const countEl = document.getElementById(`tlc-${id}`);
+    if (btn.classList.contains('tc-act')) {
+      btn.innerHTML = (d.liked ? '♥' : '♡') + ` <span id="tlc-${id}">${d.count}</span>`;
+    } else {
+      btn.textContent = d.liked ? '♥' : '♡';
+    }
+    if (countEl) countEl.textContent = d.count;
+    showToast(d.liked ? '♥ Лайк поставлен!' : '♡ Лайк убран');
+  });
+}
+
+function likeCurrentTrack() {
+  if (!currentId) return;
+  likeTrack(currentId, document.getElementById('p-heart'));
+  const h = document.getElementById('p-heart');
+  h.classList.toggle('liked');
+  h.textContent = h.classList.contains('liked') ? '♥' : '♡';
+}
+
+function saveTrack(id, btn) {
+  fetch(`/music/save/${id}`, { method: 'POST' }).then(r => r.json()).then(d => {
+    btn.classList.toggle('saved', d.saved);
+    if (btn.classList.contains('tc-act')) btn.textContent = d.saved ? '✓' : '+';
+    else btn.textContent = d.saved ? '✓' : '+';
+    showToast(d.saved ? '✓ Сохранено!' : 'Удалено из библиотеки');
+  });
+}
+
+function deleteTrack(id) {
+  if (!confirm('Удалить трек навсегда?')) return;
+  fetch(`/music/delete/${id}`, { method: 'POST' }).then(() => location.reload());
+}
+
+// ===== SHARE TO POST =====
+function shareTrack(id, title, artist) {
+  const text = `🎵 Слушаю: ${title} — ${artist}\n${window.location.origin}/music?play=${id}`;
+  const fd = new FormData();
+  fd.append('content', text);
+  fd.append('visibility', 'public');
+  fetch('/post/share-track', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) showToast('✓ Пост опубликован в ленте!');
+      else showToast('❌ ' + (d.error || 'Ошибка'));
+    })
+    .catch(() => {
+      // Fallback: copy link
+      const url = `${window.location.origin}/music?play=${id}`;
+      navigator.clipboard?.writeText(url);
+      showToast('🔗 Ссылка скопирована!');
+    });
+}
+
+function addCurrentToPlaylist() {
+  if (!currentId) { showToast('❌ Сначала выбери трек'); return; }
+  const name = prompt('Название плейлиста:');
+  if (!name) return;
+  fetch('/music/playlist/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ track_id: currentId, playlist_name: name })
+  }).then(r => r.json()).then(d => showToast(d.ok ? '✓ Добавлено!' : '❌ ' + (d.error || 'Ошибка')));
+}
+
+// ===== UPLOAD =====
+let audioFile = null, coverFile = null;
+
+function openUpload() { document.getElementById('upload-modal').classList.add('open'); }
+function closeUpload() { document.getElementById('upload-modal').classList.remove('open'); }
+function onCopyrightChange(val) {
+  document.getElementById('copyright-owner-row').style.display = (val === 'licensed') ? 'block' : 'none';
+  document.getElementById('copyright-url-row').style.display = (val === 'licensed' || val === 'creative_commons') ? 'block' : 'none';
+  document.getElementById('copyright-cc-row').style.display = (val === 'creative_commons') ? 'block' : 'none';
+}
+document.getElementById('upload-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeUpload(); });
+
+// Drag and drop
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('audio/')) onAudioFilePicked(f);
+});
+
+function onAudioPick(input) {
+  if (input.files[0]) onAudioFilePicked(input.files[0]);
+}
+
+function onAudioFilePicked(file) {
+  audioFile = file;
+  const fname = document.getElementById('drop-fname');
+  fname.textContent = '✓ ' + file.name;
+  fname.style.display = 'block';
+  document.getElementById('drop-icon').textContent = '✅';
+  if (!document.getElementById('up-title').value) {
+    document.getElementById('up-title').value = file.name.replace(/\.[^/.]+$/, '');
+  }
+}
+
+function onCoverPick(input) {
+  if (!input.files[0]) return;
+  coverFile = input.files[0];
+  const url = URL.createObjectURL(coverFile);
+  const prev = document.getElementById('cover-preview');
+  document.getElementById('cover-icon-text').style.display = 'none';
+  const existing = prev.querySelector('img.cv-img');
+  if (existing) existing.remove();
+  const img = document.createElement('img');
+  img.className = 'cv-img';
+  img.src = url;
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+  prev.appendChild(img);
+}
+
+function submitUpload() {
+  const title = document.getElementById('up-title').value.trim();
+  if (!title) { showToast('❌ Введи название трека'); return; }
+  if (!audioFile) { showToast('❌ Выбери аудиофайл'); return; }
+
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('artist', document.getElementById('up-artist').value.trim());
+  fd.append('genre', document.getElementById('up-genre').value);
+  fd.append('description', document.getElementById('up-desc').value.trim());
+  fd.append('copyright_type', document.getElementById('up-copyright-type').value);
+  fd.append('copyright_owner', document.getElementById('up-copyright-owner').value.trim());
+  fd.append('copyright_url', document.getElementById('up-copyright-url').value.trim());
+  fd.append('audio', audioFile);
+  if (coverFile) fd.append('cover', coverFile);
+
+  const btn = document.getElementById('up-submit');
+  const prog = document.getElementById('up-progress');
+  btn.disabled = true; btn.textContent = 'Загружаю...';
+  prog.style.display = 'block';
+
+  const xhr = new XMLHttpRequest();
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      document.getElementById('up-prog-fill').style.width = pct + '%';
+      document.getElementById('up-prog-label').textContent = `Загружаю... ${pct}%`;
+    }
+  };
+  xhr.onload = () => {
+    if (xhr.status === 200) {
+      showToast('✓ Трек загружен!');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      btn.disabled = false; btn.textContent = '🎵 Загрузить трек';
+      prog.style.display = 'none';
+      showToast('❌ Ошибка загрузки');
+    }
+  };
+  xhr.open('POST', '/music/upload');
+  xhr.send(fd);
+}
+
+// ===== PLAYLISTS =====
+function openCreatePlaylist() { document.getElementById('pl-modal').classList.add('open'); }
+document.getElementById('pl-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+function createPlaylist() {
+  const name = document.getElementById('pl-name').value.trim();
+  if (!name) return;
+  fetch('/music/playlist/create', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) { showToast('✓ Плейлист создан!'); setTimeout(() => location.reload(), 800); }
+  });
+}
+
+// ===== TABS =====
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+  history.replaceState(null, '', `/music?tab=${tab}`);
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') { if (audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 10); }
+  if (e.code === 'ArrowLeft') { audio.currentTime = Math.max(0, audio.currentTime - 10); }
+  if (e.key === 'Escape') { closeUpload(); document.getElementById('pl-modal').classList.remove('open'); }
+});
+
+// ===== RESTORE PLAYER from localStorage (cross-page) =====
+window.addEventListener('load', () => {
+  try {
+    const saved = localStorage.getItem('kp_track');
+    if (saved) {
+      const t = JSON.parse(saved);
+      document.getElementById('p-title').textContent = t.title || '—';
+      document.getElementById('p-artist').textContent = t.artist || '—';
+      if (t.cover) {
+        document.getElementById('p-cover').innerHTML = `<img src="/static/music/covers/${t.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+      }
+      document.getElementById('player').classList.add('visible');
+      audio.src = t.src;
+      currentId = t.id;
+    }
+  } catch(e) {}
+
+async function adminDeleteTrack(id, title) {
+  if (!confirm(`Удалить трек «${title}»? Это действие нельзя отменить.`)) return;
+  const r = await fetch(`/admin/music/delete/${id}`, { method: 'POST' });
+  const d = await r.json();
+  if (d.ok) { showToast('🗑 Трек удалён'); document.getElementById(`tc-${id}`)?.remove(); }
+  else showToast('❌ Ошибка: ' + (d.error || ''));
+}
+
+  {% if auto_play_id %}
+  playTrack({{ auto_play_id }}, {{ auto_play_title|tojson }}, {{ auto_play_artist|tojson }}, {{ auto_play_cover|tojson }});
+  {% endif %}
+});
+</script>
+</body>
+</html>

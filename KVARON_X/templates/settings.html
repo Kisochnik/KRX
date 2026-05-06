@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>KRX — Настройки</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: {% if user.theme == 'light' %}#f5f5f5{% else %}#0a0a0a{% endif %};
+      --bg2: {% if user.theme == 'light' %}#fff{% else %}#111{% endif %};
+      --bg3: {% if user.theme == 'light' %}#e8e8e8{% else %}#1a1a1a{% endif %};
+      --text: {% if user.theme == 'light' %}#111{% else %}#fff{% endif %};
+      --text2: {% if user.theme == 'light' %}#444{% else %}#ccc{% endif %};
+      --text3: {% if user.theme == 'light' %}#777{% else %}#555{% endif %};
+      --border: {% if user.theme == 'light' %}#ddd{% else %}#1e1e1e{% endif %};
+      --border2: {% if user.theme == 'light' %}#ccc{% else %}#2a2a2a{% endif %};
+      --accent: {{ user.accent_color or '#7F77DD' }};
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; display: flex; }
+
+    .sidebar {
+      width: 220px; min-height: 100vh; background: var(--bg2);
+      border-right: 1px solid var(--border); padding: 20px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+      position: fixed; top: 0; left: 0; height: 100vh;
+    }
+    .logo { font-size: 22px; font-weight: 700; padding: 8px 12px 20px; color: var(--text); }
+    .logo span { color: #444; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; font-size: 15px;
+      color: var(--text3); text-decoration: none; position: relative;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text2); }
+    .nav-item.active { color: var(--text); background: var(--bg3); }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; background: var(--accent); border-radius: 0 3px 3px 0;
+    }
+    .nav-div { height: 1px; background: var(--border); margin: 4px 12px; }
+    .nav-spacer { flex: 1; }
+
+    .content { margin-left: 220px; flex: 1; padding: 30px 20px; min-height: 100vh; max-width: 920px; }
+    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 24px; color: var(--text); }
+
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .settings-grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .card-full { grid-column: 1 / -1; }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+    label { font-size: 12px; color: var(--text3); display: block; margin-bottom: 4px; }
+    input[type=text], input[type=password], input[type=email], input[type=tel] {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 9px 14px; font-size: 14px;
+      color: var(--text); margin-bottom: 12px; outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .save-btn {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 10px; padding: 9px 20px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .save-btn:hover { opacity: 0.85; }
+    .danger-btn {
+      background: transparent; color: #f08080; border: 1px solid #3a1010;
+      border-radius: 10px; padding: 9px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .danger-btn:hover { background: #1f0a0a; }
+
+    .success { background: #0a1f0a; border: 1px solid #1a4a1a; color: #80f080; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
+    .error-box { background: #1f0a0a; border: 1px solid #3a1010; color: #f08080; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
+
+    .theme-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .theme-opt {
+      flex: 1; border-radius: 12px; padding: 14px;
+      text-align: center; font-size: 14px; cursor: pointer;
+      border: 2px solid var(--border2); transition: border-color 0.2s;
+    }
+    .theme-opt.dark-theme { background: #0a0a0a; color: #fff; }
+    .theme-opt.light-theme { background: #f5f5f5; color: #111; }
+    .theme-opt.selected { border-color: var(--accent); }
+
+    .color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .color-pick {
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+      border: 3px solid transparent; transition: border-color 0.15s, transform 0.1s;
+    }
+    .color-pick:hover { transform: scale(1.1); }
+    .color-pick.selected { border-color: #fff; transform: scale(1.15); }
+
+    .xp-bar-bg { background: var(--bg3); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 10px; }
+    .xp-bar-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+    .milestones { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .milestone { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border2); color: var(--text3); }
+    .milestone.reached { border-color: var(--accent); color: var(--accent); }
+
+    .phone-status { font-size: 12px; margin-top: 6px; padding: 8px 12px; border-radius: 8px; }
+    .phone-status.verified { background: #0a1f0a; color: #1D9E75; border: 1px solid #1a4a1a; }
+    .phone-status.pending { background: #1a1500; color: #EF9F27; border: 1px solid #3a3000; }
+
+    .reward-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .reward-item:last-child { border-bottom: none; }
+    .reward-icon { font-size: 20px; }
+    .reward-name { font-size: 13px; color: var(--text2); font-weight: 500; }
+    .reward-req { font-size: 11px; color: var(--text3); }
+    .reward-status { margin-left: auto; font-size: 11px; padding: 3px 8px; border-radius: 999px; }
+    .reward-status.unlocked { background: #0a1f0a; color: #1D9E75; border: 1px solid #1a4a1a; }
+    .reward-status.locked { background: var(--bg3); color: var(--text3); border: 1px solid var(--border2); }
+
+    .user-preview { display: flex; align-items: center; gap: 14px; padding: 16px; background: var(--bg3); border-radius: 12px; margin-bottom: 16px; }
+    .user-av { width: 54px; height: 54px; border-radius: 50%; background: #333; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-av img { width: 100%; height: 100%; object-fit: cover; }
+
+    .email-pending { font-size: 11px; color: #EF9F27; margin-top: 4px; }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <a class="nav-item" href="/feed">🏠 <span>Главная</span></a>
+  <a class="nav-item" href="/messages">✉️ <span>Сообщения</span></a>
+  <a class="nav-item" href="/friends">👥 <span>Друзья</span></a>
+  <a class="nav-item" href="/music">🎵 <span>Музыка</span></a>
+  <div class="nav-div"></div>
+  <a class="nav-item" href="/shop">🛒 <span>Магазин</span></a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    💎 <span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item active" href="/profile">👤 <span>Профиль</span></a>
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="nav-item" href="/admin" style="color:#e0245e;">🛡️ <span>Админ</span></a>
+  {% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" style="text-decoration:none;">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--border);margin-top:8px;cursor:pointer;">
+      <div class="user-av" style="width:36px;height:36px;font-size:14px;">
+        {% if user.avatar and user.avatar != 'default_avatar.jpg' and not user.avatar.startswith('__shop__') %}<img src="/static/uploads/{{ user.avatar }}" style="width:100%;height:100%;object-fit:cover;">
+        {% elif user.avatar and user.avatar.startswith('__shop__') %}<img src="/static/shop/avatars/{{ user.avatar[9:] }}" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}{{ user.username[0].upper() }}{% endif %}
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text2);">{{ user.username }}</div>
+        <div style="font-size:11px;color:#7F77DD;">💎 {{ user.kp }} KP</div>
+      </div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout">🚪 <span>Выйти</span></a>
+</div>
+
+<div class="content">
+  <div class="page-title">⚙️ Настройки</div>
+
+  {% if success %}<div class="success">✓ {{ success }}</div>{% endif %}
+  {% if error %}<div class="error-box">❌ {{ error }}</div>{% endif %}
+
+  <div class="settings-grid">
+
+    <div class="card card-full">
+      <div class="user-preview">
+        <div class="user-av">
+          {% if user.avatar and user.avatar != 'default_avatar.jpg' and not user.avatar.startswith('__shop__') %}<img src="/static/uploads/{{ user.avatar }}">
+          {% elif user.avatar and user.avatar.startswith('__shop__') %}<img src="/static/shop/avatars/{{ user.avatar[9:] }}">
+          {% else %}{{ user.username[0].upper() }}{% endif %}
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:700;color:var(--text);">
+            {{ user.username }}
+            {% if user.is_verified %}<span style="color:#60aaff;">✓</span>{% endif %}
+            {% if user.badge == 'founder' %} 👑{% endif %}
+          </div>
+          <div style="font-size:13px;color:var(--text3);">{{ user.email }}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">{{ user.title }} · Ур. {{ user.level }} · 💎 {{ user.kp }} KP</div>
+        </div>
+      </div>
+      <div class="card-title">⚡ Прогресс</div>
+      <div style="font-size:26px;font-weight:700;color:var(--text);">{{ user.xp }} XP <span style="font-size:15px;color:var(--text3);">Уровень {{ user.level }}</span></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">До следующего: {{ "{:,}".format(next_xp - user.xp) }} XP</div>
+      <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:{{ xp_pct }}%"></div></div>
+      <div class="milestones">
+        <span class="milestone {% if user.level >= 1 %}reached{% endif %}">Ур.1</span>
+        <span class="milestone {% if user.level >= 5 %}reached{% endif %}">Ур.5 Баннер</span>
+        <span class="milestone {% if user.level >= 10 %}reached{% endif %}">Ур.10 Рамка</span>
+        <span class="milestone {% if user.level >= 20 %}reached{% endif %}">Ур.20</span>
+        <span class="milestone {% if user.level >= 30 %}reached{% endif %}">Ур.30</span>
+        <span class="milestone {% if user.level >= 50 %}reached{% endif %}">Ур.50 Легенда</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔒 Смена пароля</div>
+      <form method="POST" action="/settings">
+        <input type="hidden" name="action" value="password">
+        <label>Текущий пароль</label>
+        <input type="password" name="old_password" placeholder="••••••••">
+        <label>Новый пароль (мин. 8)</label>
+        <input type="password" name="new_password" placeholder="••••••••">
+        <button class="save-btn" type="submit">Изменить пароль</button>
+      </form>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Новый пароль придёт на почту {{ user.email }}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📧 Изменить Email</div>
+      {% if user.email_code %}
+      <div class="email-pending">⏳ Код отправлен — введи его ниже</div>
+      <form method="POST" action="/settings" style="margin-top:12px;">
+        <input type="hidden" name="action" value="email_confirm_code">
+        <label>Код из письма</label>
+        <input type="text" name="email_code_input" placeholder="123456" maxlength="6">
+        <button class="save-btn" type="submit">✓ Подтвердить</button>
+      </form>
+      {% else %}
+      <form method="POST" action="/settings">
+        <input type="hidden" name="action" value="email_send_code">
+        <label>Новый email</label>
+        <input type="email" name="new_email" placeholder="new@email.com">
+        <label>Пароль для подтверждения</label>
+        <input type="password" name="email_password" placeholder="••••••••">
+        <button class="save-btn" type="submit">📨 Получить код</button>
+      </form>
+      {% endif %}
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Код придёт на текущую почту {{ user.email }}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📱 Номер телефона</div>
+      {% if user.phone_verified %}
+        <div class="phone-status verified">✓ {{ user.phone }} — подтверждён</div>
+        <form method="POST" action="/settings" style="margin-top:14px;">
+          <input type="hidden" name="action" value="phone_send">
+          <label>Изменить номер</label>
+          <input type="tel" name="phone" placeholder="+380671234567" value="{{ user.phone }}">
+          <button class="save-btn" type="submit">📨 Новый код на почту</button>
+        </form>
+      {% else %}
+        <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">Код подтверждения придёт на почту</div>
+        <form method="POST" action="/settings">
+          <input type="hidden" name="action" value="phone_send">
+          <label>Номер телефона</label>
+          <input type="tel" name="phone" placeholder="+380671234567" value="{{ user.phone }}">
+          <button class="save-btn" type="submit">📨 Получить код на почту</button>
+        </form>
+        {% if user.phone and not user.phone_verified %}
+        <div class="phone-status pending" style="margin-top:10px;">⏳ Ожидает кода — проверь почту</div>
+        <form method="POST" action="/settings" style="margin-top:12px;">
+          <input type="hidden" name="action" value="phone_verify">
+          <label>Код из письма</label>
+          <input type="text" name="phone_code" placeholder="123456" maxlength="6">
+          <button class="save-btn" type="submit">✓ Подтвердить</button>
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="card card-full">
+      <div class="card-title">🎨 Внешний вид</div>
+      <form method="POST" action="/settings" id="theme-form">
+        <input type="hidden" name="action" value="theme">
+        <input type="hidden" name="theme" id="theme-input" value="{{ user.theme or 'dark' }}">
+        <input type="hidden" name="accent_color" id="accent-input" value="{{ user.accent_color or '#7F77DD' }}">
+
+        <label style="margin-bottom:8px;">Тема оформления</label>
+        <div class="theme-row">
+          <div class="theme-opt dark-theme {% if user.theme != 'light' %}selected{% endif %}"
+               onclick="selectTheme('dark', this)">
+            🌑 Тёмная
+          </div>
+          <div class="theme-opt light-theme {% if user.theme == 'light' %}selected{% endif %}"
+               onclick="selectTheme('light', this)">
+            ☀️ Светлая
+          </div>
+        </div>
+
+        <label style="margin-bottom:8px;margin-top:4px;">Акцентный цвет</label>
+        <div class="color-row">
+          {% for color in ['#7F77DD','#e0245e','#1D9E75','#378ADD','#EF9F27','#D4537E','#FF6B35','#00BCD4'] %}
+          <div class="color-pick {% if (user.accent_color or '#7F77DD') == color %}selected{% endif %}"
+               style="background:{{ color }};" onclick="pickColor('{{ color }}')"></div>
+          {% endfor %}
+        </div>
+
+        <button class="save-btn" type="submit">Сохранить внешний вид</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🌍 Локализация</div>
+      <form method="POST" action="/settings">
+        <input type="hidden" name="action" value="language">
+        <label>Язык интерфейса</label>
+        <select name="lang" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:9px 14px;font-size:14px;color:var(--text);outline:none;">
+          <option value="ru" {% if user.lang == 'ru' %}selected{% endif %}>Русский</option>
+          <option value="uk" {% if user.lang == 'uk' %}selected{% endif %}>Українська</option>
+          <option value="en" {% if user.lang == 'en' %}selected{% endif %}>English</option>
+        </select>
+        <button class="save-btn" type="submit">Сохранить язык</button>
+      </form>
+    </div>
+      <form method="POST" action="/settings">
+        <input type="hidden" name="action" value="privacy">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+          <div>
+            <div style="font-size:14px;color:var(--text2);">Закрытый профиль</div>
+            <div style="font-size:12px;color:var(--text3);">Посты видны только друзьям</div>
+          </div>
+          <input type="checkbox" name="profile_private" {% if user.profile_private %}checked{% endif %}
+                 style="width:20px;height:20px;cursor:pointer;">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);">
+          <div>
+            <div style="font-size:14px;color:var(--text2);">Скрыть онлайн-статус</div>
+            <div style="font-size:12px;color:var(--text3);">Другие не увидят, когда вы онлайн</div>
+          </div>
+          <input type="checkbox" name="hide_online" {% if user.hide_online %}checked{% endif %}
+                 style="width:20px;height:20px;cursor:pointer;">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);">
+          <div>
+            <div style="font-size:14px;color:var(--text2);">Скрыть уровень и XP</div>
+            <div style="font-size:12px;color:var(--text3);">Не показывать прогресс в профиле</div>
+          </div>
+          <input type="checkbox" name="hide_level" {% if user.hide_level %}checked{% endif %}
+                 style="width:20px;height:20px;cursor:pointer;">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);">
+          <div>
+            <div style="font-size:14px;color:var(--text2);">Скрыть дату рождения</div>
+            <div style="font-size:12px;color:var(--text3);">Не показывать возраст в профиле</div>
+          </div>
+          <input type="checkbox" name="hide_birthday" {% if user.hide_birthday %}checked{% endif %}
+                 style="width:20px;height:20px;cursor:pointer;">
+        </div>
+        <button class="save-btn" type="submit">Сохранить</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 Награды за уровни</div>
+      <div class="reward-item">
+        <div class="reward-icon">🖼️</div>
+        <div><div class="reward-name">Кастомный баннер</div><div class="reward-req">Уровень 5</div></div>
+        <div class="reward-status {% if user.level >= 5 %}unlocked{% else %}locked{% endif %}">{% if user.level >= 5 %}✓{% else %}🔒 Ур.5{% endif %}</div>
+      </div>
+      <div class="reward-item">
+        <div class="reward-icon">🟤</div>
+        <div><div class="reward-name">Бронзовая рамка</div><div class="reward-req">Уровень 10</div></div>
+        <div class="reward-status {% if user.level >= 10 %}unlocked{% else %}locked{% endif %}">{% if user.level >= 10 %}✓{% else %}🔒 Ур.10{% endif %}</div>
+      </div>
+      <div class="reward-item">
+        <div class="reward-icon">🎬</div>
+        <div><div class="reward-name">GIF/видео аватарка и баннер</div><div class="reward-req">Ур.50 или галочка</div></div>
+        <div class="reward-status {% if user.level >= 50 or user.is_verified %}unlocked{% else %}locked{% endif %}">{% if user.level >= 50 or user.is_verified %}✓{% else %}🔒{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#f08080;">🗑️ Удаление аккаунта</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">Все данные удаляются навсегда.</div>
+      <form method="POST" action="/delete-account" onsubmit="return confirm('Удалить аккаунт навсегда?')">
+        <label>Пароль для подтверждения</label>
+        <input type="password" name="password" placeholder="••••••••">
+        <button class="danger-btn" type="submit">Удалить аккаунт</button>
+      </form>
+    </div>
+
+  </div>
+
+  <div style="margin-top:20px;">
+    <a href="/profile" style="font-size:13px;color:var(--text3);text-decoration:none;">← Назад к профилю</a>
+  </div>
+</div>
+
+<script>
+function selectTheme(theme, el) {
+  document.querySelectorAll('.theme-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('theme-input').value = theme;
+}
+
+function pickColor(color) {
+  document.querySelectorAll('.color-pick').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('accent-input').value = color;
+}
+</script>
+</body>
+</html>
+<div class="card">
+  <div class="card-title">📱 Telegram</div>
+  {% if user.tg_id %}
+    <div style="background:#0a1f0a;border:1px solid #1a4a1a;border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;color:#1D9E75;">✓ Привязан к Telegram</div>
+      {% if user.tg_username %}<div style="font-size:12px;color:#555;margin-top:4px;">@{{ user.tg_username }}</div>{% endif %}
+    </div>
+    <button onclick="unlinkTg()" class="danger-btn" type="button">Отвязать Telegram</button>
+  {% else %}
+    <div style="font-size:13px;color:#555;margin-bottom:14px;line-height:1.6;">
+      Привязав Telegram, вы сможете получать коды подтверждения для входа и восстановления пароля прямо в мессенджер.
+    </div>
+    <button onclick="linkTg()" class="save-btn" type="button">🔗 Привязать Telegram</button>
+    <div style="margin-top:14px;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:10px;padding:14px;font-size:12px;color:#aaa;line-height:1.5;">
+      <div style="font-weight:600;color:#7F77DD;margin-bottom:8px;">📋 Правила использования и безопасные условия:</div>
+      <ul style="margin:0;padding-left:16px;">
+        <li>Привязка Telegram позволяет получать важные уведомления и коды безопасности.</li>
+        <li>Ваши данные защищены шифрованием и не передаются третьим лицам.</li>
+        <li>Вы можете отвязать Telegram в любое время в настройках.</li>
+        <li>Используйте только свой аккаунт Telegram для привязки.</li>
+        <li>В случае подозрительной активности, свяжитесь с поддержкой.</li>
+      </ul>
+    </div>
+    <div id="tg-link-box" style="display:none;margin-top:14px;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:10px;padding:14px;">
+      <div style="font-size:13px;color:#7F77DD;font-weight:600;margin-bottom:8px;">Твоя ссылка:</div>
+      <a id="tg-link-url" href="#" target="_blank"
+         style="font-size:13px;color:#60aaff;word-break:break-all;"></a>
+      <div style="font-size:11px;color:#444;margin-top:8px;">Нажми на ссылку — откроется Telegram с ботом</div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+function linkTg() {
+  fetch('/settings/tg-link', {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      const box = document.getElementById('tg-link-box');
+      const link = document.getElementById('tg-link-url');
+      link.href = d.url;
+      link.textContent = d.url;
+      box.style.display = 'block';
+    });
+}
+function unlinkTg() {
+  if (!confirm('Отвязать Telegram?')) return;
+  fetch('/settings/tg-unlink', {method:'POST'})
+    .then(() => location.reload());
+}
+</script>

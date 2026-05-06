@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(224,36,94,0.15), transparent 70%);
+            top: -100px; left: -100px;
+            pointer-events: none;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(127,119,221,0.12), transparent 70%);
+            bottom: -100px; right: -100px;
+            pointer-events: none;
+        }
+        .logo {
+            font-size: 96px;
+            font-weight: 900;
+            letter-spacing: 16px;
+            background: linear-gradient(135deg, #e0245e 0%, #7F77DD 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            animation: fadeUp .8s ease both;
+        }
+        .tagline {
+            margin-top: 16px;
+            color: #555;
+            letter-spacing: 6px;
+            font-size: 13px;
+            text-transform: uppercase;
+            animation: fadeUp .8s .1s ease both;
+        }
+        .divider {
+            width: 60px; height: 2px;
+            background: linear-gradient(90deg, #e0245e, #7F77DD);
+            margin: 32px auto;
+            border-radius: 99px;
+            animation: fadeUp .8s .2s ease both;
+        }
+        .desc {
+            color: #888;
+            font-size: 15px;
+            text-align: center;
+            max-width: 360px;
+            line-height: 1.7;
+            animation: fadeUp .8s .3s ease both;
+        }
+        .btns {
+            margin-top: 40px;
+            display: flex;
+            gap: 14px;
+            animation: fadeUp .8s .4s ease both;
+        }
+        .btn {
+            padding: 14px 40px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            transition: transform .2s, opacity .2s;
+        }
+        .btn:hover { transform: translateY(-2px); opacity: .9; }
+        .btn-primary { background: linear-gradient(135deg, #e0245e, #7F77DD); color: #fff; }
+        .btn-secondary { border: 1.5px solid #333; color: #888; background: transparent; }
+        .badge {
+            margin-top: 48px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 999px;
+            padding: 8px 20px;
+            font-size: 12px;
+            color: #555;
+            letter-spacing: 2px;
+            animation: fadeUp .8s .5s ease both;
+        }
+        .badge span { color: #e0245e; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">KRX</div>
+    <div class="tagline">Social Network</div>
+    <div class="divider"></div>
+    <p class="desc">Платформа для общения, музыки и игр. Скоро открытие.</p>
+    <div class="btns">
+        <a href="https://kisochnik.github.io/KRX/login.html" class="btn btn-primary">Войти</a>
+        <a href="https://kisochnik.github.io/KRX/register.html" class="btn btn-secondary">Регистрация</a>
+    </div>
+    <div class="badge">BY <span>KVARON X</span> · 2025</div>
+</body>
+</html>

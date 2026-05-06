@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRX — {{ user.username }}</title>
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0f0f0f; --bg3: #161616;
+      --card: #111; --card2: #181818;
+      --border: #1e1e1e; --border2: #2a2a2a;
+      --text: #f0f0f0; --text2: #aaa; --text3: #666; --text4: #3a3a3a;
+      --red: #e0245e; --red2: #c0103e;
+      --green: #1D9E75; --accent: #7F77DD; --gold: #EF9F27;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 220px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; height: 100vh; overflow-y: auto; position: fixed; top: 0; left: 0; z-index: 100; }
+    .logo { font-size: 22px; font-weight: 900; padding: 6px 12px 16px; letter-spacing: -1px; }
+    .logo span { color: #333; }
+    .nav-section-label { font-size: 10px; color: #222; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; font-size: 14px; color: #555; text-decoration: none; position: relative; transition: all 0.15s; font-weight: 500; }
+    .nav-item:hover { background: #141414; color: #bbb; }
+    .nav-item.active { color: #fff; background: #1a1a1a; }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: var(--red); border-radius: 0 4px 4px 0; }
+    .nav-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 7px; }
+    .nav-div { height: 1px; background: #161616; margin: 6px 10px; }
+    .nav-spacer { flex: 1; }
+    .sidebar-user { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-top: 1px solid #161616; margin-top: 6px; text-decoration: none; border-radius: 12px; transition: background 0.15s; }
+    .sidebar-user:hover { background: #141414; }
+    .s-av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .s-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .admin-nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; font-size: 14px; color: var(--red); text-decoration: none; font-weight: 700; background: #150608; border: 1px solid #2a0a10; transition: all 0.15s; }
+    .admin-nav:hover { background: #1d080e; }
+
+    /* MAIN */
+    .main { margin-left: 220px; flex: 1; max-width: 720px; min-height: 100vh; border-right: 1px solid var(--border); }
+
+    /* BANNER */
+    .banner { height: 200px; position: relative; overflow: hidden; background: #111; }
+    .banner-media { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .banner-grid { width: 100%; height: 100%; background: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 40px); }
+    .banner-actions { position: absolute; top: 12px; right: 14px; display: flex; gap: 8px; }
+    .banner-btn { font-size: 12px; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6); color: #ddd; text-decoration: none; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.15s; font-family: inherit; }
+    .banner-btn:hover { background: rgba(30,30,30,0.9); }
+
+    /* PROFILE AREA */
+    .profile-area { padding: 0 24px 0; }
+    .avatar-row { display: flex; align-items: flex-end; justify-content: space-between; margin-top: -52px; padding-bottom: 12px; }
+    .av-wrap { width: 96px; height: 96px; border-radius: 50%; border: 4px solid var(--bg); overflow: hidden; background: #333; flex-shrink: 0; z-index: 2; position: relative; }
+    .av-wrap img, .av-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .frame-ring { position: absolute; inset: -4px; border-radius: 50%; pointer-events: none; }
+    .frame-bronze { box-shadow: 0 0 0 3px #CD7F32; }
+    .frame-silver { box-shadow: 0 0 0 3px #C0C0C0; }
+    .frame-gold { box-shadow: 0 0 0 3px #FFD700; }
+    .frame-elite { box-shadow: 0 0 0 3px var(--accent), 0 0 16px rgba(127,119,221,0.5); animation: pulseFrame 2s infinite; }
+    @keyframes pulseFrame { 0%,100%{box-shadow:0 0 0 3px var(--accent),0 0 12px rgba(127,119,221,0.4)} 50%{box-shadow:0 0 0 3px var(--accent),0 0 28px rgba(127,119,221,0.7)} }
+
+    .profile-actions { display: flex; gap: 8px; align-items: flex-end; padding-bottom: 4px; }
+    .edit-btn { font-size: 13px; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--border2); color: var(--text2); background: transparent; text-decoration: none; transition: all 0.15s; }
+    .edit-btn:hover { background: #1a1a1a; color: var(--text); border-color: #444; }
+    .edit-btn.red { background: var(--red); color: #fff; border-color: var(--red); }
+    .edit-btn.red:hover { background: var(--red2); }
+
+    /* NAME ROW */
+    .name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .p-username { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+    .verified-icon { color: #60aaff; font-size: 18px; }
+    .badge-pill { font-size: 11px; padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+    .bp-founder { background: #2a1a00; border: 1px solid #8B6914; color: #FFD700; }
+    .bp-admin { background: #1a0808; border: 1px solid var(--red); color: var(--red); }
+    .bp-dev { background: #0a1a0a; border: 1px solid #1a8a1a; color: #4af04a; }
+    .bp-legend { background: #1a0a2a; border: 1px solid #6a1aaa; color: #c060ff; }
+    .bp-top { background: #0a1a2a; border: 1px solid #1a6aaa; color: #60aaff; }
+
+    /* Level button with popup */
+    .level-btn { font-size: 12px; padding: 4px 12px; border-radius: 999px; background: #111; border: 1px solid var(--border2); color: var(--accent); cursor: pointer; position: relative; font-family: inherit; transition: border-color 0.15s; }
+    .level-btn:hover { border-color: var(--accent); }
+    .level-popup { display: none; position: absolute; top: calc(100% + 8px); left: 0; background: #111; border: 1px solid #2a2a3a; border-radius: 16px; padding: 16px; width: 300px; z-index: 200; box-shadow: 0 12px 40px rgba(0,0,0,0.7); }
+    .level-popup.open { display: block; }
+    .lp-bar-bg { background: #1a1a2e; border-radius: 999px; height: 5px; overflow: hidden; margin: 8px 0 4px; }
+    .lp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--red), #ff6688); border-radius: 999px; }
+    .lp-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
+    .lp-item:last-child { border-bottom: none; }
+    .lp-lvl { min-width: 38px; color: var(--accent); font-weight: 700; }
+    .lp-title { flex: 1; color: var(--text2); }
+    .lp-check { color: var(--green); }
+    .lp-lock { color: #333; }
+
+    /* Bio & meta */
+    .p-emoji { font-size: 20px; margin-top: 4px; }
+    .p-handle { font-size: 14px; color: var(--text3); margin-top: 2px; }
+    .p-title-text { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+    .p-bio { font-size: 14px; color: var(--text2); margin-top: 10px; line-height: 1.6; max-width: 480px; }
+    .p-meta { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+    .p-meta-item { font-size: 13px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+
+    /* XP Bar */
+    .xp-bar-section { margin-top: 14px; cursor: pointer; }
+    .xp-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text4); margin-bottom: 5px; }
+    .xp-bar-bg { background: #1a1a1a; border-radius: 999px; height: 5px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--red), #ff6688); transition: width 0.5s; }
+
+    /* Stats */
+    .stats-row { display: flex; border-top: 1px solid var(--border); margin-top: 14px; }
+    .stat-btn { flex: 1; text-align: center; padding: 12px 0; text-decoration: none; transition: background 0.12s; border-right: 1px solid var(--border); }
+    .stat-btn:last-child { border-right: none; }
+    .stat-btn:hover { background: #0d0d0d; }
+    .stat-num { font-size: 20px; font-weight: 800; color: var(--text); }
+    .stat-label { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    /* Music player */
+    .music-row { margin-top: 14px; background: #111; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+    .music-play-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--red); color: #fff; border: none; font-size: 14px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+    .music-play-btn:hover { background: var(--red2); transform: scale(1.08); }
+    .music-waves { display: flex; align-items: flex-end; gap: 2px; }
+    .mw { width: 3px; background: var(--text4); border-radius: 2px; height: 8px; transition: background 0.15s; }
+    .music-row.playing .mw { background: var(--green); animation: wavePulse 0.7s ease-in-out infinite; }
+    .mw:nth-child(2) { animation-delay: 0.1s; } .mw:nth-child(3) { animation-delay: 0.2s; } .mw:nth-child(4) { animation-delay: 0.15s; }
+    @keyframes wavePulse { 0%,100%{height:4px} 50%{height:16px} }
+
+    /* Inventory */
+    .inventory-strip { padding: 14px 24px; border-bottom: 1px solid var(--border); }
+    .inv-title { font-size: 13px; color: var(--text3); font-weight: 600; margin-bottom: 10px; }
+    .inv-items { display: flex; gap: 8px; flex-wrap: wrap; }
+    .inv-item { background: #111; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; width: 70px; cursor: pointer; transition: border-color 0.15s; }
+    .inv-item:hover { border-color: var(--accent); }
+    .inv-item.equipped { border-color: var(--green); }
+    .inv-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .inv-type { font-size: 9px; color: var(--text4); padding: 3px 5px; text-align: center; }
+    .inv-btn { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: #1a1a1a; border: 1px solid var(--border2); color: var(--text3); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .inv-btn:hover { background: #2a2a2a; color: var(--text2); }
+
+    /* CONTENT TABS */
+    .tabs-bar { display: flex; border-bottom: 1px solid var(--border); }
+    .c-tab { flex: 1; padding: 13px 4px 11px; font-size: 14px; font-weight: 600; color: var(--text3); cursor: pointer; border-bottom: 2.5px solid transparent; transition: all 0.15s; text-align: center; }
+    .c-tab:hover { color: var(--text2); }
+    .c-tab.active { color: #fff; border-bottom-color: var(--red); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* POSTS */
+    .post-card { background: var(--card2); border: 1px solid #1a1a1a; border-radius: 14px; margin: 10px 16px; overflow: hidden; transition: border-color 0.15s; }
+    .post-card:hover { border-color: var(--border2); }
+    .post-card-inner { padding: 14px; }
+    .post-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .post-av { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .post-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .post-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .post-time { font-size: 12px; color: var(--text4); margin-top: 2px; }
+    .post-text { font-size: 15px; color: #ccc; line-height: 1.6; word-break: break-word; margin-bottom: 10px; }
+    .post-media { margin: 0 -14px 10px; }
+    .post-media img { width: 100%; max-height: 400px; object-fit: cover; display: block; }
+    .post-media video { width: 100%; display: block; }
+    .post-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #1a1a1a; }
+    .post-act { display: flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text3); cursor: pointer; background: none; border: none; font-family: inherit; transition: all 0.15s; }
+    .post-act:hover { background: #1a1a1a; color: var(--text2); }
+    .post-act.liked { color: var(--red); }
+    .post-act.delete-act { margin-left: auto; color: var(--text4); }
+    .post-act.delete-act:hover { color: var(--red); background: #1f0a0e; }
+    .comments-section { display: none; border-top: 1px solid #1a1a1a; background: #0e0e0e; }
+    .comments-section.open { display: block; }
+    .comment-list { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .comment-item { display: flex; gap: 8px; }
+    .c-av { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .c-av img { width: 100%; height: 100%; object-fit: cover; }
+    .c-bubble { background: #1a1a1a; border-radius: 12px; padding: 7px 11px; flex: 1; }
+    .c-author { font-size: 12px; font-weight: 700; color: var(--text2); }
+    .c-text { font-size: 13px; color: var(--text3); margin-top: 2px; }
+    .comment-form { display: flex; gap: 8px; padding: 8px 14px; border-top: 1px solid #1a1a1a; }
+    .c-input { flex: 1; background: #1a1a1a; border: 1px solid var(--border2); border-radius: 999px; padding: 7px 14px; font-size: 13px; color: var(--text); outline: none; font-family: inherit; }
+    .c-input:focus { border-color: var(--red); }
+    .c-send { background: var(--red); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* Media grid */
+    .media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 8px 0; }
+    .media-cell { aspect-ratio: 1; overflow: hidden; position: relative; cursor: pointer; }
+    .media-cell img, .media-cell video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s; }
+    .media-cell:hover img, .media-cell:hover video { transform: scale(1.04); }
+    .media-cell-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .media-cell:hover .media-cell-overlay { opacity: 1; }
+
+    /* Liked posts tab */
+    .liked-grid { padding: 10px 16px; }
+
+    /* Empty tab */
+    .empty-tab { padding: 50px 20px; text-align: center; color: var(--text4); }
+    .empty-tab-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.3; }
+    .empty-tab-title { font-size: 16px; color: #444; font-weight: 600; }
+    .empty-tab-sub { font-size: 13px; color: #2a2a2a; margin-top: 6px; }
+
+    /* Lightbox */
+    #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999; align-items: center; justify-content: center; cursor: zoom-out; }
+    #lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 12px; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 999px; }
+
+    @media (max-width: 800px) {
+      .sidebar { width: 60px; padding: 12px 6px; }
+      .nav-item span, .nav-section-label, .sidebar-user > div:last-child { display: none; }
+      .main { margin-left: 60px; }
+    }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item" href="/music"><span class="nav-icon">🎵</span><span>Музыка</span></a>
+  <a class="nav-item" href="/gaming"><span class="nav-icon">🎮</span><span>Игровой</span></a>
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages"><span class="nav-icon">💬</span><span>Сообщения</span></a>
+  <a class="nav-item" href="/friends"><span class="nav-icon">👥</span><span>Друзья</span></a>
+  <a class="nav-item" href="/notifications"><span class="nav-icon">🔔</span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item active" href="/profile"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <a class="nav-item" href="/shop"><span class="nav-icon">🛍</span><span>Магазин</span></a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    <span class="nav-icon">💎</span><span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item" href="/settings"><span class="nav-icon">⚙️</span><span>Настройки</span></a>
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="admin-nav" href="/admin"><span class="nav-icon">🛡️</span><span>Админ</span></a>
+  {% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+      <div style="font-size:11px;color:var(--red);margin-top:1px;">💎 {{ user.kp }} KP</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px;"><span class="nav-icon">🚪</span><span>Выйти</span></a>
+</div>
+
+<div class="main">
+  <!-- BANNER -->
+  <div class="banner">
+    {% set banner = get_banner_url(user) %}
+    {% if banner and 'default_banner' not in banner %}
+      {% set ext = banner.split('.')[-1].lower() %}
+      {% if ext in ['mp4','webm','mov'] %}
+        <video class="banner-media" autoplay muted loop playsinline><source src="{{ banner }}"></video>
+      {% else %}
+        <img class="banner-media" src="{{ banner }}">
+      {% endif %}
+    {% else %}
+      <div class="banner-grid"></div>
+    {% endif %}
+    <div class="banner-actions">
+      <a href="/settings" class="banner-btn">⚙️ Настройки</a>
+      <a href="/edit-avatar" class="banner-btn">🖼️ Фото</a>
+    </div>
+  </div>
+
+  <!-- PROFILE AREA -->
+  <div class="profile-area" style="padding-bottom:6px;">
+    <div class="avatar-row">
+      <div class="av-wrap">
+        {% set av = get_avatar_url(user) %}
+        {% set av_ext = av.split('.')[-1].lower() %}
+        {% if av_ext in ['mp4','webm','mov'] %}
+          <video autoplay muted loop playsinline><source src="{{ av }}"></video>
+        {% else %}
+          <img src="{{ av }}" onerror="this.src='/static/default_avatar.jpg'">
+        {% endif %}
+        {% if user.frame %}
+        <div class="frame-ring frame-{{ user.frame }}"></div>
+        {% endif %}
+      </div>
+      <div class="profile-actions">
+        <a href="/edit-profile" class="edit-btn">✏️ Редактировать</a>
+        <a href="/edit-avatar" class="edit-btn">🖼️ Медиа</a>
+      </div>
+    </div>
+
+    <div class="name-row">
+      <span class="p-username">{{ user.username }}</span>
+      {% if user.is_verified %}<span class="verified-icon">✓</span>{% endif %}
+      {% if user.badge %}
+        {% if user.badge == 'founder' %}<span class="badge-pill bp-founder">👑 Основатель</span>
+        {% elif user.badge == 'admin' %}<span class="badge-pill bp-admin">🛡️ Админ</span>
+        {% elif user.badge == 'dev' %}<span class="badge-pill bp-dev">⚙️ Dev</span>
+        {% elif user.badge == 'legend' %}<span class="badge-pill bp-legend">💜 Легенда</span>
+        {% elif user.badge == 'top' %}<span class="badge-pill bp-top">⭐ Топ</span>{% endif %}
+      {% endif %}
+      <button class="level-btn" onclick="toggleLevelPopup(event)">
+        ⚡ Ур.{{ user.level }}
+        <div class="level-popup" id="lvl-popup">
+          <div style="font-size:14px;font-weight:800;margin-bottom:8px;">📊 Прогресс</div>
+          <div class="lp-bar-bg"><div class="lp-bar-fill" style="width:{{ xp_pct }}%"></div></div>
+          <div style="font-size:11px;color:var(--text4);margin-bottom:10px;">{{ user.xp }} / {{ next_xp }} XP</div>
+          {% for req_lvl, title_name, title_desc in level_titles %}
+          <div class="lp-item">
+            <span class="lp-lvl">Ур.{{ req_lvl }}</span>
+            <span class="lp-title">{{ title_name }}</span>
+            {% if user.level >= req_lvl %}<span class="lp-check">✓</span>{% else %}<span class="lp-lock">🔒</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </button>
+    </div>
+
+    {% if user.status_emoji %}<div class="p-emoji">{{ user.status_emoji }}</div>{% endif %}
+    <div class="p-handle">@{{ user.username }}</div>
+    {% if user.title %}<div class="p-title-text">{{ user.title }}</div>{% endif %}
+    {% if user.bio %}<div class="p-bio">{{ user.bio }}</div>{% endif %}
+
+    <div class="p-meta">
+      {% if user.location %}<span class="p-meta-item">📍 {{ user.location }}</span>{% endif %}
+      {% if user.birthday and user.show_birthday %}<span class="p-meta-item">🎂 {{ user.birthday }}</span>{% endif %}
+      <span class="p-meta-item">⚡ {{ user.xp }} XP</span>
+      <span class="p-meta-item">💎 {{ user.kp }} KP</span>
+    </div>
+
+    <div class="xp-bar-section" onclick="toggleLevelPopup(event)">
+      <div class="xp-bar-label"><span>Ур.{{ user.level }}</span><span>{{ user.xp }} / {{ next_xp }} XP</span></div>
+      <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:{{ xp_pct }}%"></div></div>
+    </div>
+
+    {% if user.music %}
+    <div class="music-row" id="music-row">
+      <button class="music-play-btn" onclick="toggleMusic()">▶</button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎵 {{ user.music_name or 'Трек профиля' }}</div>
+      </div>
+      <div class="music-waves"><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div></div>
+    </div>
+    <audio id="p-audio" src="/static/uploads/{{ user.music }}"></audio>
+    {% endif %}
+
+    <div class="stats-row">
+      <a href="/profile" class="stat-btn">
+        <div class="stat-num">{{ posts|length }}</div><div class="stat-label">Постов</div>
+      </a>
+      <a href="/friends" class="stat-btn">
+        <div class="stat-num">{{ friends|length }}</div><div class="stat-label">Друзей</div>
+      </a>
+      <div class="stat-btn">
+        <div class="stat-num">{{ followers_count }}</div><div class="stat-label">Подписчиков</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTORY -->
+  {% if inventory %}
+  <div class="inventory-strip">
+    <div class="inv-title">🎒 Инвентарь ({{ inventory|length }})</div>
+    <div class="inv-items">
+      {% for p in inventory %}
+      {% set item = p.item %}
+      {% set folder = 'avatars' if item.item_type == 'avatar' else ('banners' if item.item_type == 'banner' else 'frames') %}
+      {% set equipped = (item.item_type=='avatar' and user.avatar=='__shop__/'+item.filename) or (item.item_type=='banner' and user.banner=='__shop__/'+item.filename) or (item.item_type=='frame' and user.frame==item.filename) %}
+      <div class="inv-item {% if equipped %}equipped{% endif %}" title="{{ item.name }}">
+        <img class="inv-img" src="/static/shop/{{ folder }}/{{ item.preview }}">
+        <div class="inv-type">{{ item.item_type }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+      <a href="/shop" style="font-size:12px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid #2a2a3a;border-radius:999px;">+ Магазин</a>
+      {% for slot in ['avatar','banner','frame'] %}
+      <form method="POST" action="/shop/unequip/{{ slot }}" style="display:inline;">
+        <button class="inv-btn" type="submit">Снять {{ slot }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- CONTENT TABS -->
+  <div class="tabs-bar">
+    <div class="c-tab active" onclick="switchTab('posts', this)">📝 Посты <span style="font-size:11px;color:var(--text4);">{{ posts|length }}</span></div>
+    <div class="c-tab" onclick="switchTab('media', this)">🖼️ Медиа</div>
+    <div class="c-tab" onclick="switchTab('liked', this)">♥ Нравится</div>
+  </div>
+
+  <!-- POSTS TAB -->
+  <div id="tab-posts" class="tab-pane active">
+    {% if posts %}
+      {% for post in posts %}
+      <div class="post-card">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+            <div>
+              <div class="post-name">{{ user.username }}</div>
+              <div class="post-time">{{ post.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+          </div>
+          {% if post.content %}<div class="post-text">{{ post.content }}</div>{% endif %}
+          {% if post.media %}
+          <div class="post-media">
+            {% if post.media_type == 'image' %}<img src="/static/uploads/{{ post.media }}" loading="lazy" onclick="openLightbox(this.src)">
+            {% elif post.media_type == 'video' %}<video controls><source src="/static/uploads/{{ post.media }}"></video>{% endif %}
+          </div>
+          {% endif %}
+          <div class="post-actions">
+            <button class="post-act {% if post.id in me_likes %}liked{% endif %}" onclick="toggleLike({{ post.id }}, this)">
+              {% if post.id in me_likes %}♥{% else %}♡{% endif %} <span id="lc-{{ post.id }}">{{ likes_by_post[post.id] }}</span>
+            </button>
+            <button class="post-act" onclick="toggleComments({{ post.id }})">
+              💬 {{ comment_counts[post.id] }}
+            </button>
+            <form method="POST" action="/post/delete/{{ post.id }}" onsubmit="return confirm('Удалить?')" style="margin-left:auto;display:inline;">
+              <button class="post-act delete-act" type="submit">🗑️</button>
+            </form>
+          </div>
+        </div>
+        <div class="comments-section" id="cs-{{ post.id }}">
+          <div class="comment-list">
+            {% for c in comments_by_post[post.id] %}
+            <div class="comment-item">
+              <div class="c-av"><img src="{{ get_avatar_url(c.user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+              <div class="c-bubble">
+                <div class="c-author">{{ c.user.username }}</div>
+                <div class="c-text">{{ c.content }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="comment-form">
+            <div class="c-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+            <input class="c-input" type="text" placeholder="Комментарий..." id="ci-{{ post.id }}" onkeydown="if(event.key==='Enter')sendComment({{ post.id }})">
+            <button class="c-send" onclick="sendComment({{ post.id }})">↑</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty-tab">
+      <div class="empty-tab-icon">📝</div>
+      <div class="empty-tab-title">Постов пока нет</div>
+      <div class="empty-tab-sub">Напишите первый пост в ленте!</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- MEDIA TAB -->
+  <div id="tab-media" class="tab-pane">
+    {% set media_posts = posts|selectattr('media')|list %}
+    {% if media_posts %}
+    <div class="media-grid">
+      {% for post in media_posts %}
+      <div class="media-cell" onclick="openLightbox('/static/uploads/{{ post.media }}')">
+        {% if post.media_type == 'image' %}
+        <img src="/static/uploads/{{ post.media }}" loading="lazy">
+        {% elif post.media_type == 'video' %}
+        <video preload="none"><source src="/static/uploads/{{ post.media }}"></video>
+        {% endif %}
+        <div class="media-cell-overlay">♥ {{ likes_by_post[post.id] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-tab">
+      <div class="empty-tab-icon">🖼️</div>
+      <div class="empty-tab-title">Медиа пока нет</div>
+      <div class="empty-tab-sub">Добавьте фото или видео к посту</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- LIKED TAB -->
+  <div id="tab-liked" class="tab-pane">
+    {% if liked_posts %}
+    <div class="liked-grid">
+      {% for post in liked_posts %}
+      <div class="post-card" style="margin:10px 0;">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-av"><img src="{{ get_avatar_url(post.user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+            <div>
+              <div class="post-name"><a href="/user/{{ post.user.id }}" style="color:inherit;text-decoration:none;">{{ post.user.username }}</a></div>
+              <div class="post-time">{{ post.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+          </div>
+          {% if post.content %}<div class="post-text">{{ post.content }}</div>{% endif %}
+          {% if post.media and post.media_type == 'image' %}
+          <div class="post-media"><img src="/static/uploads/{{ post.media }}" loading="lazy"></div>
+          {% endif %}
+          <div class="post-actions">
+            <button class="post-act liked" onclick="toggleLike({{ post.id }}, this)">♥ <span id="lc-{{ post.id }}">{{ liked_counts[post.id] }}</span></button>
+            <button class="post-act" onclick="toggleComments({{ post.id }})">💬</button>
+          </div>
+        </div>
+        <div class="comments-section" id="cs-{{ post.id }}">
+          <div class="comment-form" style="padding:10px 14px;">
+            <div class="c-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+            <input class="c-input" type="text" placeholder="Комментарий..." id="ci-{{ post.id }}" onkeydown="if(event.key==='Enter')sendComment({{ post.id }})">
+            <button class="c-send" onclick="sendComment({{ post.id }})">↑</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-tab">
+      <div class="empty-tab-icon">♥</div>
+      <div class="empty-tab-title">Лайков пока нет</div>
+      <div class="empty-tab-sub">Лайкайте посты в ленте — они появятся здесь</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="lb-img" style="max-width:90vw;max-height:90vh;border-radius:12px;">
+</div>
+
+<script>
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.c-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+}
+
+let musicPlaying = false;
+function toggleMusic() {
+  const audio = document.getElementById('p-audio');
+  const btn = document.querySelector('.music-play-btn');
+  const row = document.getElementById('music-row');
+  if (!audio) return;
+  musicPlaying = !musicPlaying;
+  if (musicPlaying) { audio.play(); btn.textContent='⏸'; row.classList.add('playing'); }
+  else { audio.pause(); btn.textContent='▶'; row.classList.remove('playing'); }
+}
+
+function toggleLevelPopup(e) {
+  e.stopPropagation();
+  document.getElementById('lvl-popup').classList.toggle('open');
+}
+document.addEventListener('click', () => document.getElementById('lvl-popup')?.classList.remove('open'));
+
+function toggleLike(postId, btn) {
+  fetch('/like/' + postId, { method: 'POST' }).then(r => r.json()).then(d => {
+    btn.classList.toggle('liked', d.liked);
+    btn.childNodes[0].textContent = d.liked ? '♥' : '♡';
+    const lc = document.getElementById('lc-' + postId);
+    if (lc) lc.textContent = d.count;
+  });
+}
+
+function toggleComments(postId) {
+  const cs = document.getElementById('cs-' + postId);
+  cs.classList.toggle('open');
+  if (cs.classList.contains('open')) {
+    const input = document.getElementById('ci-' + postId);
+    if (input) setTimeout(() => input.focus(), 100);
+  }
+}
+
+function sendComment(postId) {
+  const input = document.getElementById('ci-' + postId);
+  const content = input.value.trim();
+  if (!content) return;
+  const fd = new FormData(); fd.append('content', content);
+  fetch('/comment/' + postId, { method: 'POST', body: fd })
+    .then(r => r.json()).then(d => {
+      if (!d.ok) return;
+      input.value = '';
+      const list = document.getElementById('cs-' + postId).querySelector('.comment-list');
+      if (!list) { const form = document.getElementById('cs-' + postId).querySelector('.comment-form'); if (form) { const newList = document.createElement('div'); newList.className = 'comment-list'; document.getElementById('cs-' + postId).insertBefore(newList, form); } }
+      const clist = document.getElementById('cs-' + postId).querySelector('.comment-list');
+      if (clist) {
+        const item = document.createElement('div'); item.className = 'comment-item';
+        item.innerHTML = `<div class="c-av"><img src="${d.avatar}" onerror="this.src='/static/default_avatar.jpg'"></div><div class="c-bubble"><div class="c-author">${d.username}</div><div class="c-text">${d.content}</div></div>`;
+        clist.appendChild(item);
+      }
+    });
+}
+
+function openLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lb-img').src = src;
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+
+</body>
+</html>

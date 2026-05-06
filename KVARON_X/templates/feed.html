@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>KRX — Лента</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --bg3: #181818;
+      --bg4: #1e1e1e;
+      --card: #121212;
+      --border: #1e1e1e;
+      --border2: #2a2a2a;
+      --text: #f0f0f0;
+      --text2: #aaa;
+      --text3: #666;
+      --text4: #444;
+      --accent: #7F77DD;
+      --accent2: #6a63cc;
+      --red: #e0245e;
+      --green: #1D9E75;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; min-height: 100vh; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 240px; background: #0d0d0d; border-right: 1px solid var(--border);
+      padding: 16px 10px; display: flex; flex-direction: column; gap: 2px;
+      flex-shrink: 0; height: 100vh; overflow-y: auto;
+      position: fixed; top: 0; left: 0; z-index: 100;
+    }
+    .logo { font-size: 24px; font-weight: 900; padding: 8px 12px 18px; letter-spacing: -1px; }
+    .logo span { color: #444; }
+    .logo sup { font-size: 10px; color: var(--accent); vertical-align: super; }
+
+    .nav-section-label {
+      font-size: 10px; color: #2a2a2a; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 10px 14px 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 11px;
+      padding: 9px 14px; border-radius: 12px; font-size: 14px;
+      color: #555; text-decoration: none; position: relative;
+      transition: all 0.15s; font-weight: 500; user-select: none;
+    }
+    .nav-item:hover { background: #141414; color: #bbb; }
+    .nav-item.active { color: #fff; background: #1a1a28; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 20px; background: var(--accent);
+      border-radius: 0 4px 4px 0;
+    }
+    .nav-item .icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 800; border-radius: 999px;
+      padding: 2px 7px; min-width: 20px; text-align: center;
+    }
+    .nav-div { height: 1px; background: #181818; margin: 8px 12px; }
+    .nav-spacer { flex: 1; }
+
+    .sidebar-user {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-top: 1px solid #181818; margin-top: 8px;
+      text-decoration: none; border-radius: 12px; transition: background 0.15s; cursor: pointer;
+    }
+    .sidebar-user:hover { background: #141414; }
+    .s-av { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .s-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .admin-nav {
+      display: flex; align-items: center; gap: 11px;
+      padding: 9px 14px; border-radius: 12px; font-size: 14px;
+      color: var(--red); text-decoration: none; font-weight: 700;
+      background: #1a080a; border: 1px solid #3a1015; transition: all 0.15s;
+    }
+    .admin-nav:hover { background: #220a0e; }
+
+    /* ===== LAYOUT ===== */
+    .feed-wrap { margin-left: 240px; display: flex; justify-content: center; width: calc(100% - 240px); }
+    .feed-main { width: 100%; max-width: 640px; min-height: 100vh; border-right: 1px solid var(--border); border-left: 1px solid var(--border); }
+    .right-col { width: 320px; padding: 20px 16px; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+
+    /* ===== FEED HEADER ===== */
+    .feed-header {
+      padding: 0 20px;
+      position: sticky; top: 0; background: rgba(10,10,10,0.95);
+      z-index: 50; backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .feed-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0 0;
+    }
+    .feed-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+
+    .feed-tabs { display: flex; gap: 0; margin-top: 2px; }
+    .feed-tab {
+      flex: 1; text-align: center; padding: 12px 4px 10px;
+      font-size: 14px; color: var(--text3); cursor: pointer;
+      border-bottom: 2.5px solid transparent; transition: all 0.15s;
+      font-weight: 600; text-decoration: none; user-select: none;
+    }
+    .feed-tab:hover { color: var(--text2); }
+    .feed-tab.active { color: #fff; border-bottom-color: var(--red); }
+
+    /* ===== SEARCH ===== */
+    .search-bar { padding: 12px 20px; border-bottom: 1px solid var(--border); }
+    .search-inner { display: flex; gap: 8px; }
+    .search-input {
+      flex: 1; background: #161616; border: 1px solid var(--border2);
+      border-radius: 999px; padding: 9px 18px; font-size: 14px;
+      color: var(--text); outline: none; font-family: inherit; transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--accent); background: #1a1a1a; }
+    .search-input::placeholder { color: var(--text4); }
+    .search-btn {
+      background: var(--accent); color: #fff; border: none; border-radius: 999px;
+      padding: 9px 20px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+    }
+    .search-btn:hover { opacity: 0.85; }
+
+    .search-results { margin-top: 10px; }
+    .search-result {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border-radius: 10px; text-decoration: none; transition: background 0.12s;
+    }
+    .search-result:hover { background: #161616; }
+    .sr-av { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .sr-av img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ===== INCOMING ===== */
+    .incoming-box {
+      padding: 12px 20px; border-bottom: 1px solid var(--border);
+      background: #0e0e18;
+    }
+    .incoming-title { font-size: 12px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .incoming-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .inc-av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .inc-av img { width: 100%; height: 100%; object-fit: cover; }
+    .inc-name { font-size: 13px; color: var(--text2); flex: 1; font-weight: 500; }
+    .inc-accept { background: var(--accent); color: #fff; border: none; border-radius: 999px; padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer; margin-right: 4px; }
+    .inc-decline { background: #1a1a1a; color: var(--text3); border: 1px solid var(--border2); border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+
+    /* ===== COMPOSE ===== */
+    .compose {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .compose-inner { display: flex; gap: 12px; }
+    .compose-av { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .compose-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .compose-right { flex: 1; }
+
+    .compose-textarea {
+      width: 100%; background: #161616; border: 1px solid var(--border2);
+      border-radius: 14px; padding: 12px 16px; font-size: 15px;
+      color: var(--text); outline: none; resize: none; min-height: 60px;
+      font-family: inherit; transition: border-color 0.15s, min-height 0.2s;
+      line-height: 1.5;
+    }
+    .compose-textarea:focus {
+      border-color: var(--accent); background: #1a1a1a;
+      min-height: 90px;
+    }
+    .compose-textarea::placeholder { color: var(--text4); }
+
+    .compose-tools {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 10px; flex-wrap: wrap; gap: 8px;
+    }
+    .compose-icons { display: flex; gap: 4px; }
+    .compose-icon-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 7px 12px; border-radius: 10px; font-size: 13px;
+      color: var(--text3); cursor: pointer; background: transparent;
+      border: 1px solid transparent; transition: all 0.15s; font-family: inherit;
+    }
+    .compose-icon-btn:hover { background: #1a1a1a; color: var(--text2); border-color: var(--border2); }
+    .compose-icon-btn.active { color: var(--accent); border-color: var(--accent); background: #0f0f1a; }
+
+    .compose-right-tools { display: flex; align-items: center; gap: 8px; }
+    .vis-select {
+      background: #161616; border: 1px solid var(--border2); color: var(--text3);
+      border-radius: 999px; padding: 6px 12px; font-size: 12px; outline: none;
+      cursor: pointer; font-family: inherit; transition: border-color 0.15s;
+    }
+    .vis-select:focus { border-color: var(--accent); }
+
+    .publish-btn {
+      background: linear-gradient(135deg, #e0245e, #c0103e);
+      color: #fff; border: none; border-radius: 999px; padding: 8px 22px;
+      font-size: 14px; font-weight: 800; cursor: pointer;
+      transition: all 0.15s; letter-spacing: 0.2px;
+      box-shadow: 0 4px 16px rgba(224,36,94,0.3);
+    }
+    .publish-btn:hover { transform: scale(1.04); box-shadow: 0 6px 20px rgba(224,36,94,0.4); }
+    .publish-btn:active { transform: scale(0.98); }
+
+    .media-preview-area { margin-top: 10px; display: none; position: relative; }
+    .media-preview-area img, .media-preview-area video { max-width: 100%; border-radius: 12px; max-height: 220px; object-fit: cover; display: block; }
+    .remove-media {
+      position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.75);
+      border: none; color: #fff; border-radius: 50%; width: 28px; height: 28px;
+      cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .remove-media:hover { background: rgba(0,0,0,0.9); }
+
+    /* ===== EMPTY FEED ===== */
+    .empty-feed {
+      padding: 60px 24px; text-align: center;
+    }
+    .empty-feed-visual {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #1a1a2e, #2a1a2e);
+      margin: 0 auto 20px; display: flex; align-items: center;
+      justify-content: center; font-size: 36px;
+    }
+    .empty-feed-title { font-size: 20px; font-weight: 700; color: #555; margin-bottom: 8px; }
+    .empty-feed-sub { font-size: 14px; color: #333; line-height: 1.6; max-width: 280px; margin: 0 auto 20px; }
+    .empty-feed-action { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; border: none; border-radius: 999px; padding: 10px 24px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; }
+
+    /* ===== POST CARD ===== */
+    .post-card {
+      background: var(--card); border: 1px solid #1a1a1a;
+      border-radius: 16px; margin: 12px 16px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      overflow: hidden;
+    }
+    .post-card:hover { border-color: #2a2a2a; box-shadow: 0 2px 16px rgba(0,0,0,0.3); }
+
+    .post-card-inner { padding: 14px 16px 10px; }
+    .post-header { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 10px; }
+    .post-av { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; text-decoration: none; cursor: pointer; }
+    .post-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .post-av-init { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; color: #fff; }
+
+    .post-meta { flex: 1; min-width: 0; }
+    .post-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+    .post-username {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .post-username:hover { color: var(--accent); }
+    .post-verified { color: #60aaff; font-size: 14px; }
+    .post-badge-tag { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; }
+    .badge-founder { background: #2a1a00; border: 1px solid #8B6914; color: #FFD700; }
+    .badge-admin { background: #1a0808; border: 1px solid var(--red); color: var(--red); }
+    .post-level { font-size: 11px; color: var(--text4); background: #1a1a1a; padding: 2px 8px; border-radius: 999px; }
+    .post-time { font-size: 12px; color: var(--text4); margin-left: auto; white-space: nowrap; }
+
+    .post-sub { font-size: 12px; color: var(--text4); }
+
+    .post-text {
+      font-size: 15px; color: #d0d0d0; line-height: 1.6;
+      word-break: break-word; white-space: pre-wrap;
+      margin-bottom: 10px;
+    }
+
+    .post-media { border-radius: 12px; overflow: hidden; margin: 0 -16px 10px; }
+    .post-media img { width: 100%; display: block; max-height: 420px; object-fit: cover; cursor: zoom-in; }
+    .post-media video { width: 100%; display: block; max-height: 420px; background: #000; }
+
+    /* Post actions */
+    .post-actions {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 0 2px; border-top: 1px solid #1a1a1a; margin-top: 8px;
+    }
+    .post-act {
+      display: flex; align-items: center; gap: 5px;
+      padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      color: var(--text3); cursor: pointer; background: none; border: none;
+      font-family: inherit; transition: all 0.15s; user-select: none;
+    }
+    .post-act:hover { background: #1a1a1a; color: var(--text2); }
+    .post-act.liked { color: var(--red); }
+    .post-act.liked:hover { background: #1f0a0e; }
+    .post-act-count { font-size: 13px; font-weight: 600; }
+    .post-act.delete-act { margin-left: auto; color: #333; }
+    .post-act.delete-act:hover { color: var(--red); background: #1f0a0e; }
+
+    /* Comments */
+    .comments-section { border-top: 1px solid #161616; background: #0e0e0e; }
+    .comments-section.hidden { display: none; }
+    .comment-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .comment-item { display: flex; gap: 9px; align-items: flex-start; }
+    .comment-av { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .comment-av img { width: 100%; height: 100%; object-fit: cover; }
+    .comment-bubble { background: #1a1a1a; border-radius: 12px; padding: 8px 12px; flex: 1; }
+    .comment-author { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 3px; }
+    .comment-text { font-size: 13px; color: var(--text3); line-height: 1.4; }
+    .comment-form { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid #161616; }
+    .comment-av-small { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .comment-av-small img { width: 100%; height: 100%; object-fit: cover; }
+    .comment-input {
+      flex: 1; background: #1a1a1a; border: 1px solid var(--border2);
+      border-radius: 999px; padding: 8px 14px; font-size: 13px;
+      color: var(--text); outline: none; font-family: inherit;
+    }
+    .comment-input:focus { border-color: var(--accent); }
+    .comment-send {
+      background: var(--accent); color: #fff; border: none; border-radius: 50%;
+      width: 34px; height: 34px; font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    /* ===== RIGHT COLUMN ===== */
+    .widget { background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+    .widget-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--text); }
+
+    .xp-widget { background: linear-gradient(135deg, #0f0f1e, #161626); border: 1px solid #2a2a4a; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+    .xp-user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .xp-av { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .xp-av img { width: 100%; height: 100%; object-fit: cover; }
+    .xp-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .xp-title-text { font-size: 12px; color: #666; margin-top: 1px; }
+    .xp-bar-wrap { margin-bottom: 8px; }
+    .xp-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text4); margin-bottom: 5px; }
+    .xp-bar-bg { background: #1a1a2e; border-radius: 999px; height: 5px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #b8b0ff); transition: width 0.5s; }
+    .xp-kp { font-size: 13px; color: var(--accent); font-weight: 700; }
+
+    .suggest-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .sug-av { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .sug-av img { width: 100%; height: 100%; object-fit: cover; }
+    .sug-info { flex: 1; min-width: 0; }
+    .sug-name { font-size: 13px; font-weight: 600; color: var(--text2); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sug-name:hover { color: var(--accent); }
+    .sug-level { font-size: 11px; color: var(--text4); margin-top: 1px; }
+    .sug-add { font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border2); color: var(--text3); background: transparent; text-decoration: none; white-space: nowrap; transition: all 0.15s; }
+    .sug-add:hover { background: #1a1a1a; color: var(--text2); border-color: #444; }
+
+    .online-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 4px; }
+    .offline-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #333; margin-right: 4px; }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #111; border: 1px solid var(--accent);
+      color: #c0b8ff; border-radius: 12px; padding: 10px 22px;
+      font-size: 14px; font-weight: 700; z-index: 9999;
+      opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(127,119,221,0.2);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Notif popup */
+    .notif-pop {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #111; border-radius: 16px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      z-index: 9998; max-width: 320px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes popIn { from { opacity:0; transform: translateY(20px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+    @media (max-width: 1200px) { .right-col { display: none; } }
+    @media (max-width: 800px) {
+      .sidebar { width: 64px; padding: 12px 6px; }
+      .nav-item span, .nav-section-label, .sidebar-user > div:last-child, .logo sup, .admin-nav span { display: none; }
+      .logo { font-size: 18px; padding: 6px 8px 14px; }
+      .feed-wrap { margin-left: 64px; width: calc(100% - 64px); }
+    }
+  
+    .kw-dot {
+      width: 7px; height: 7px; background: #7F77DD;
+      border-radius: 50%; margin-left: auto; flex-shrink: 0;
+      box-shadow: 0 0 8px #7F77DD;
+      animation: kwPulse 2s infinite;
+    }
+    @keyframes kwPulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:.4; transform:scale(.7); }
+    }
+    a[href="/wallet"]:hover { background: #0d0d1f !important; color: #a09fff !important; }
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item active" href="/feed">
+    <span class="icon">🏠</span><span>Главная</span>
+  </a>
+  <a class="nav-item" href="/music">
+    <span class="icon">🎵</span><span>Музыка</span>
+  </a>
+  <a class="nav-item" href="/gaming">
+    <span class="icon">🎮</span><span>Игровой</span>
+  </a>
+
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages">
+    <span class="icon">💬</span><span>Сообщения</span>
+  </a>
+  <a class="nav-item" href="/friends">
+    <span class="icon">👥</span><span>Друзья</span>
+    {% if incoming %}<span class="nav-badge">{{ incoming|length }}</span>{% endif %}
+  </a>
+  <a class="nav-item" href="/notifications">
+    <span class="icon">🔔</span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item" href="/profile">
+    <span class="icon">👤</span><span>Профиль</span>
+  </a>
+  <a class="nav-item" href="/shop">
+    <span class="icon">🛍</span><span>Магазин</span>
+  </a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    <span class="icon">💎</span><span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item" href="/settings">
+    <span class="icon">⚙️</span><span>Настройки</span>
+  </a>
+
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="admin-nav" href="/admin">
+    <span class="icon">🛡️</span><span>Админ</span>
+  </a>
+  {% endif %}
+
+  <div class="nav-spacer"></div>
+
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+      <div style="font-size:11px;color:var(--accent);margin-top:1px;">Ур.{{ user.level }} · 💎 {{ user.kp }}</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px;">
+    <span class="icon">🚪</span><span>Выйти</span>
+  </a>
+</div>
+
+<!-- ===== FEED WRAP ===== -->
+<div class="feed-wrap">
+  <div class="feed-main">
+
+    <!-- HEADER -->
+    <div class="feed-header">
+      <div class="feed-header-top">
+        <div class="feed-title">KRX</div>
+      </div>
+      <div class="feed-tabs">
+        <a class="feed-tab {% if tab=='global' %}active{% endif %}" href="/feed?tab=global">🌍 Все</a>
+        <a class="feed-tab {% if tab=='friends' %}active{% endif %}" href="/feed?tab=friends">👥 Друзья</a>
+        <a class="feed-tab {% if tab=='top' %}active{% endif %}" href="/feed?tab=top">🔥 Топ</a>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-bar">
+      <form method="GET" action="/feed">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <div class="search-inner">
+          <input class="search-input" type="text" name="q" placeholder="🔍 Найти пользователей..." value="{{ search_query }}">
+          <button class="search-btn" type="submit">Найти</button>
+        </div>
+      </form>
+      {% if search_results %}
+      <div class="search-results">
+        {% for u in search_results %}
+        <a href="/user/{{ u.id }}" class="search-result">
+          <div class="sr-av"><img src="{{ get_avatar_url(u) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+          <div>
+            <div style="font-size:14px;color:var(--text);font-weight:600;">{{ u.username }}{% if u.is_verified %} <span style="color:#60aaff;">✓</span>{% endif %}</div>
+            <div style="font-size:12px;color:var(--text4);">Ур.{{ u.level }} · {{ u.title }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- INCOMING REQUESTS -->
+    {% if incoming %}
+    <div class="incoming-box">
+      <div class="incoming-title">🔔 Заявки в друзья</div>
+      {% for req in incoming %}
+      <div class="incoming-row">
+        <div class="inc-av"><img src="{{ get_avatar_url(req.from_user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+        <span class="inc-name">{{ req.from_user.username }}</span>
+        <form method="POST" action="/friend/accept/{{ req.id }}" style="display:inline;">
+          <button class="inc-accept" type="submit">✓</button>
+        </form>
+        <form method="POST" action="/friend/decline/{{ req.id }}" style="display:inline;">
+          <button class="inc-decline" type="submit">✕</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- COMPOSE -->
+    <div class="compose">
+      <div class="compose-inner">
+        <div class="compose-av">
+          <img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'">
+        </div>
+        <div class="compose-right">
+          <form method="POST" action="/feed" enctype="multipart/form-data" id="post-form">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <textarea class="compose-textarea" name="content" id="post-text"
+                      placeholder="Что нового, {{ user.username.split()[0] }}?..."
+                      rows="2"></textarea>
+
+            <div class="media-preview-area" id="media-wrap">
+              <img id="img-prev" style="display:none;">
+              <video id="vid-prev" controls style="display:none;max-width:100%;border-radius:12px;max-height:220px;"></video>
+              <button type="button" class="remove-media" onclick="removeMedia()">✕</button>
+            </div>
+
+            <div class="compose-tools">
+              <div class="compose-icons">
+                <label class="compose-icon-btn" title="Фото">
+                  <span>📷</span> <span>Фото</span>
+                  <input type="file" name="media" id="media-photo" accept="image/*" style="display:none" onchange="previewMedia(this, 'image')">
+                </label>
+                <label class="compose-icon-btn" title="Видео/GIF">
+                  <span>🎬</span> <span>Видео</span>
+                  <input type="file" name="media" id="media-video" accept="video/*" style="display:none" onchange="previewMedia(this, 'video')">
+                </label>
+                <button type="button" class="compose-icon-btn" onclick="showPollHint()">
+                  <span>📊</span> <span>Опрос</span>
+                </button>
+              </div>
+              <div class="compose-right-tools">
+                <select class="vis-select" name="visibility">
+                  <option value="public">🌍 Все</option>
+                  <option value="friends">👥 Друзья</option>
+                </select>
+                <button class="publish-btn" type="submit">Опубликовать</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTS -->
+    {% if not posts %}
+    <div class="empty-feed">
+      <div class="empty-feed-visual">🌙</div>
+      <div class="empty-feed-title">Здесь пока тихо...</div>
+      <div class="empty-feed-sub">
+        Подпишись на друзей или создай свою первую запись — и лента оживёт!
+      </div>
+      <button class="empty-feed-action" onclick="document.getElementById('post-text').focus()">
+        ✏️ Написать пост
+      </button>
+    </div>
+    {% endif %}
+
+    {% for post in posts %}
+    <div class="post-card" id="post-{{ post.id }}">
+      <div class="post-card-inner">
+        <!-- Header -->
+        <div class="post-header">
+          <a href="/user/{{ post.user.id }}" class="post-av">
+            <img src="{{ get_avatar_url(post.user) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="post-av-init" style="display:none;background:#2a2a2a;">{{ post.user.username[0].upper() }}</div>
+          </a>
+          <div class="post-meta">
+            <div class="post-name-row">
+              <a href="/user/{{ post.user.id }}" class="post-username">{{ post.user.username }}</a>
+              {% if post.user.is_verified %}<span class="post-verified">✓</span>{% endif %}
+              {% if post.user.badge == 'founder' %}<span class="post-badge-tag badge-founder">👑</span>
+              {% elif post.user.badge == 'admin' %}<span class="post-badge-tag badge-admin">🛡️</span>{% endif %}
+              <span class="post-level">Ур.{{ post.user.level }}</span>
+              <span class="post-time">{{ post.created_at.strftime('%d.%m %H:%M') }}</span>
+            </div>
+            <div class="post-sub">{{ post.user.title }}</div>
+          </div>
+        </div>
+
+        <!-- Content -->
+        {% if post.content %}<div class="post-text">{{ post.content }}</div>{% endif %}
+
+        <!-- Media -->
+        {% if post.media %}
+        <div class="post-media">
+          {% if post.media_type == 'image' %}
+          <img src="/static/uploads/{{ post.media }}" loading="lazy" onclick="openMedia(this.src)">
+          {% elif post.media_type == 'video' %}
+          <video controls preload="none">
+            <source src="/static/uploads/{{ post.media }}">
+          </video>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="post-actions">
+          <button class="post-act {% if post.id in likes %}liked{% endif %}"
+                  onclick="toggleLike({{ post.id }}, this)">
+            <span>{% if post.id in likes %}♥{% else %}♡{% endif %}</span>
+            <span class="post-act-count" id="lc-{{ post.id }}">{{ like_counts[post.id] }}</span>
+          </button>
+          <button class="post-act" onclick="toggleComments({{ post.id }})">
+            <span>💬</span>
+            <span class="post-act-count" id="cc-{{ post.id }}">{{ comment_counts[post.id] }}</span>
+          </button>
+          <button class="post-act" onclick="sharePost({{ post.id }})" title="Поделиться">
+            <span>↗</span>
+          </button>
+          {% if post.user_id == user.id or user.is_admin %}
+          <form method="POST" action="/post/delete/{{ post.id }}" onsubmit="return confirm('Удалить?')" style="margin-left:auto;">
+            <button class="post-act delete-act" type="submit">🗑️</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="comments-section hidden" id="cs-{{ post.id }}">
+        <div class="comment-list" id="cl-{{ post.id }}">
+          {% for c in comments_by_post[post.id] %}
+          <div class="comment-item">
+            <div class="comment-av">
+              <img src="{{ get_avatar_url(c.user) }}" onerror="this.src='/static/default_avatar.jpg'">
+            </div>
+            <div class="comment-bubble">
+              <div class="comment-author">{{ c.user.username }}</div>
+              <div class="comment-text">{{ c.content }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="comment-form">
+          <div class="comment-av-small">
+            <img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'">
+          </div>
+          <input class="comment-input" type="text" placeholder="Комментарий..." id="ci-{{ post.id }}"
+                 onkeydown="if(event.key==='Enter')sendComment({{ post.id }})">
+          <button class="comment-send" onclick="sendComment({{ post.id }})">↑</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div><!-- /feed-main -->
+
+  <!-- ===== RIGHT COLUMN ===== -->
+  <div class="right-col">
+    <!-- XP Widget -->
+    <div class="xp-widget">
+      <div class="xp-user-row">
+        <div class="xp-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="xp-name">{{ user.username }}</div>
+          <div class="xp-title-text">{{ user.title }}</div>
+        </div>
+        <div style="font-size:13px;color:#555;">Ур.{{ user.level }}</div>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-label">
+          <span>{{ user.xp }} XP</span>
+          <span>{{ next_xp }} XP</span>
+        </div>
+        <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:{{ xp_pct }}%"></div></div>
+      </div>
+      <div class="xp-kp">💎 {{ user.kp }} KP</div>
+    </div>
+
+    <!-- Suggested users -->
+    {% if suggested %}
+    <div class="widget">
+      <div class="widget-title">👥 Люди KRX</div>
+      {% for s in suggested %}
+      <div class="suggest-item">
+        <div class="sug-av"><img src="{{ get_avatar_url(s) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+        <div class="sug-info">
+          <a href="/user/{{ s.id }}" class="sug-name">
+            {{ s.username }}{% if s.is_verified %} <span style="color:#60aaff;font-size:11px;">✓</span>{% endif %}
+          </a>
+          <div class="sug-level">Ур.{{ s.level }} · {{ s.xp }} XP</div>
+        </div>
+        <a href="/user/{{ s.id }}" class="sug-add">+ Добавить</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Online friends -->
+    {% if friends %}
+    <div class="widget">
+      <div class="widget-title">🟢 Онлайн</div>
+      {% for f in friends %}
+      <div class="suggest-item">
+        <div class="sug-av" style="position:relative;">
+          <img src="{{ get_avatar_url(f) }}" onerror="this.src='/static/default_avatar.jpg'">
+          <div style="position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:{% if is_online(f) %}#1D9E75{% else %}#333{% endif %};border:2px solid #111;"></div>
+        </div>
+        <div class="sug-info">
+          <a href="/messages?with={{ f.id }}" class="sug-name">{{ f.username }}</a>
+          <div class="sug-level" style="{% if is_online(f) %}color:#1D9E75;{% endif %}">{% if is_online(f) %}● Онлайн{% else %}● Офлайн{% endif %}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div><!-- /right-col -->
+
+</div><!-- /feed-wrap -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MEDIA LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="lightbox-img" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 16px 64px rgba(0,0,0,0.8);">
+</div>
+
+<script>
+// ===== XP TOAST =====
+{% if xp_gained %}
+window.addEventListener('load', () => showToast('⚡ +{{ xp_gained }} XP · 💎 +{{ kp_gained }} KP'));
+{% endif %}
+
+// ===== MEDIA PREVIEW =====
+function previewMedia(input, type) {
+  if (!input.files || !input.files[0]) return;
+  const wrap = document.getElementById('media-wrap');
+  const img = document.getElementById('img-prev');
+  const vid = document.getElementById('vid-prev');
+  const url = URL.createObjectURL(input.files[0]);
+  wrap.style.display = 'block';
+  if (type === 'image') {
+    img.src = url; img.style.display = 'block'; vid.style.display = 'none';
+  } else {
+    vid.src = url; vid.style.display = 'block'; img.style.display = 'none';
+  }
+  // Mark active button
+  document.querySelectorAll('.compose-icon-btn').forEach(b => b.classList.remove('active'));
+  input.closest('.compose-icon-btn').classList.add('active');
+}
+
+function removeMedia() {
+  document.getElementById('media-wrap').style.display = 'none';
+  document.getElementById('img-prev').src = '';
+  document.getElementById('vid-prev').src = '';
+  document.getElementById('media-photo').value = '';
+  document.getElementById('media-video').value = '';
+  document.querySelectorAll('.compose-icon-btn').forEach(b => b.classList.remove('active'));
+}
+
+function showPollHint() {
+  showToast('📊 Опросы — скоро!');
+}
+
+// ===== LIKE =====
+function toggleLike(postId, btn) {
+  fetch('/like/' + postId, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      btn.classList.toggle('liked', d.liked);
+      btn.querySelector('span:first-child').textContent = d.liked ? '♥' : '♡';
+      document.getElementById('lc-' + postId).textContent = d.count;
+    });
+}
+
+// ===== COMMENTS =====
+function toggleComments(postId) {
+  const cs = document.getElementById('cs-' + postId);
+  cs.classList.toggle('hidden');
+  if (!cs.classList.contains('hidden')) {
+    const input = document.getElementById('ci-' + postId);
+    if (input) setTimeout(() => input.focus(), 100);
+  }
+}
+
+function sendComment(postId) {
+  const input = document.getElementById('ci-' + postId);
+  const content = input.value.trim();
+  if (!content) return;
+  const fd = new FormData();
+  fd.append('content', content);
+  fetch('/comment/' + postId, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) return;
+      input.value = '';
+      const list = document.getElementById('cl-' + postId);
+      const item = document.createElement('div');
+      item.className = 'comment-item';
+      item.innerHTML = `
+        <div class="comment-av"><img src="${d.avatar}" onerror="this.src='/static/default_avatar.jpg'"></div>
+        <div class="comment-bubble">
+          <div class="comment-author">${d.username}</div>
+          <div class="comment-text">${d.content}</div>
+        </div>`;
+      list.appendChild(item);
+      const ccEl = document.getElementById('cc-' + postId);
+      if (ccEl) ccEl.textContent = parseInt(ccEl.textContent || 0) + 1;
+    });
+}
+
+// ===== SHARE =====
+function sharePost(postId) {
+  const url = window.location.origin + '/feed#post-' + postId;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('🔗 Ссылка скопирована!'));
+  } else {
+    showToast('🔗 ' + url);
+  }
+}
+
+// ===== LIGHTBOX =====
+function openMedia(src) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = src;
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== NOTIFICATIONS POPUP =====
+let lastNotifId = 0;
+{% if user.notif_popup %}
+const NOTIF_ICONS = {like:'♥',follow:'👤',comment:'💬',friend_request:'➕',friend_accept:'✓',xp:'⚡'};
+const NOTIF_COLORS = {like:'#e0245e',follow:'#1D9E75',comment:'#7F77DD',friend_request:'#378ADD',friend_accept:'#1D9E75',xp:'#EF9F27'};
+
+function checkNotifs() {
+  fetch('/notifications/poll?after=' + lastNotifId)
+    .then(r => r.json())
+    .then(data => {
+      if (!Array.isArray(data)) return;
+      data.forEach(n => {
+        showNotifPop(n.text, n.avatar, n.type);
+        if (n.id > lastNotifId) lastNotifId = n.id;
+      });
+    });
+}
+setInterval(checkNotifs, 5000);
+
+function showNotifPop(text, avatar, type) {
+  document.querySelectorAll('.notif-pop').forEach(e => e.remove());
+  const pop = document.createElement('div');
+  pop.className = 'notif-pop';
+  pop.style.borderLeft = `3px solid ${NOTIF_COLORS[type] || '#7F77DD'}`;
+  pop.innerHTML = `
+    <img src="${avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#e0e0e0;line-height:1.4;">${text}</div>
+    </div>
+    <span style="font-size:20px;flex-shrink:0;color:${NOTIF_COLORS[type]||'#7F77DD'}">${NOTIF_ICONS[type]||'🔔'}</span>`;
+  document.body.appendChild(pop);
+  {% if user.notif_sound %}
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.frequency.value = 800; osc.type = 'sine';
+    g.gain.setValueAtTime(0.06, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(); osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+  {% endif %}
+  setTimeout(() => pop.remove(), 5000);
+}
+{% endif %}
+
+// Compose auto-resize
+const ta = document.getElementById('post-text');
+if (ta) {
+  ta.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+  });
+}
+</script>
+</body>
+</html>

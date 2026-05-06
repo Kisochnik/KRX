@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>KRX — {{ pl.name }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: #0d0d0d; border-right: 1px solid #1e1e1e; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; height: 100vh; overflow-y: auto; position: fixed; top: 0; left: 0; }
+    .logo { font-size: 22px; font-weight: 800; padding: 6px 12px 16px; }
+    .logo span { color: #555; }
+    .nav-section-label { font-size: 10px; color: #333; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 8px 12px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; font-size: 14px; color: #555; text-decoration: none; position: relative; transition: all 0.15s; font-weight: 500; }
+    .nav-item:hover { background: #141414; color: #aaa; }
+    .nav-item.active { color: #fff; background: #161622; }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: #7F77DD; border-radius: 0 3px 3px 0; }
+    .nav-badge { margin-left: auto; background: #e0245e; color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 2px 6px; }
+    .nav-div { height: 1px; background: #1a1a1a; margin: 6px 10px; }
+    .nav-spacer { flex: 1; }
+    .sidebar-user { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-top: 1px solid #1a1a1a; margin-top: 6px; text-decoration: none; border-radius: 10px; transition: background 0.15s; }
+    .sidebar-user:hover { background: #141414; }
+    .sidebar-av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .sidebar-av img { width: 100%; height: 100%; object-fit: cover; }
+    .admin-btn { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; font-size: 14px; color: #e0245e; text-decoration: none; font-weight: 600; background: #1a0808; border: 1px solid #3a1010; }
+
+    .main { margin-left: 220px; flex: 1; padding-bottom: 100px; }
+
+    .playlist-hero {
+      background: linear-gradient(135deg, #1a1a2e, #2a1a4e);
+      padding: 36px 28px 28px; display: flex; gap: 24px; align-items: flex-end;
+    }
+    .pl-cover {
+      width: 160px; height: 160px; border-radius: 16px; overflow: hidden;
+      background: #2a2a4e; flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 56px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .pl-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .pl-info { flex: 1; min-width: 0; }
+    .pl-type { font-size: 12px; color: #7F77DD; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .pl-name { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .pl-meta { font-size: 14px; color: #888; margin-bottom: 16px; }
+    .pl-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .play-all-btn { background: #7F77DD; color: #fff; border: none; border-radius: 999px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .play-all-btn:hover { transform: scale(1.04); background: #6a63cc; }
+    .pl-delete-btn { background: transparent; color: #e0245e; border: 1px solid #e0245e44; border-radius: 999px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .pl-delete-btn:hover { background: #1f0a0a; }
+
+    .tracks-section { padding: 24px 28px; }
+    .track-list-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: background 0.12s; }
+    .track-list-item:hover { background: #111; }
+    .track-list-item.playing { background: #131320; }
+    .track-num { width: 24px; text-align: center; font-size: 13px; color: #555; flex-shrink: 0; }
+    .track-list-cover { width: 44px; height: 44px; border-radius: 8px; overflow: hidden; background: #1a1a2e; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .track-list-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .track-list-info { flex: 1; min-width: 0; }
+    .track-list-title { font-size: 14px; font-weight: 600; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-list-artist { font-size: 12px; color: #666; }
+    .track-list-duration { font-size: 12px; color: #444; flex-shrink: 0; }
+    .list-act-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.15s; }
+    .list-act-btn:hover { color: #aaa; }
+    .list-act-btn.liked { color: #e0245e; }
+
+    .empty-state { padding: 60px 20px; text-align: center; color: #333; }
+    .empty-icon { font-size: 56px; margin-bottom: 14px; opacity: 0.4; }
+
+    .player { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: rgba(10,10,10,0.97); border-top: 1px solid #1e1e1e; backdrop-filter: blur(20px); display: flex; align-items: center; padding: 0 20px; gap: 16px; z-index: 500; transition: transform 0.3s; }
+    .player.hidden { transform: translateY(100%); }
+    .player-track { display: flex; align-items: center; gap: 12px; width: 260px; flex-shrink: 0; min-width: 0; }
+    .player-cover { width: 52px; height: 52px; border-radius: 10px; overflow: hidden; background: #1a1a2e; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .player-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .player-info { min-width: 0; flex: 1; }
+    .player-title { font-size: 14px; font-weight: 600; color: #e0e0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .player-artist { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .player-controls { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .player-btns { display: flex; align-items: center; gap: 16px; }
+    .ctrl-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 16px; padding: 6px; transition: all 0.15s; border-radius: 50%; }
+    .ctrl-btn:hover { color: #fff; }
+    .ctrl-btn.main { width: 40px; height: 40px; background: #fff; color: #000; border-radius: 50%; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .ctrl-btn.main:hover { transform: scale(1.08); }
+    .player-progress { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 500px; }
+    .time-label { font-size: 11px; color: #555; min-width: 32px; }
+    .progress-bar { flex: 1; height: 4px; background: #2a2a2a; border-radius: 999px; cursor: pointer; position: relative; }
+    .progress-fill { height: 100%; background: #7F77DD; border-radius: 999px; }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed">🏠 <span>Главная</span></a>
+  <a class="nav-item active" href="/music">🎵 <span>Музыка</span></a>
+  <a class="nav-item" href="/gaming">🎮 <span>Игровой</span></a>
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages">💬 <span>Сообщения</span></a>
+  <a class="nav-item" href="/friends">👥 <span>Друзья</span></a>
+  <a class="nav-item" href="/notifications">🔔 <span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item" href="/profile">👤 <span>Профиль</span></a>
+  <a class="nav-item" href="/shop">🛍 <span>Магазин</span></a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">💎 <span>KRXWallet</span><span class="kw-dot"></span></a>
+  <a class="nav-item" href="/settings">⚙️ <span>Настройки</span></a>
+  {% if user.is_admin %}<div class="nav-div"></div><a class="admin-btn" href="/admin">🛡️ <span>Админ</span></a>{% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" class="sidebar-user">
+    <div class="sidebar-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#ccc;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div><div style="font-size:11px;color:#7F77DD;">💎 {{ user.kp }} KP</div></div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:2px;">🚪 <span>Выйти</span></a>
+</div>
+
+<div class="main">
+  <div class="playlist-hero">
+    <div class="pl-cover">
+      {% if pl.cover %}<img src="/static/music/covers/{{ pl.cover }}" onerror="this.style.display='none'">{% else %}📋{% endif %}
+    </div>
+    <div class="pl-info">
+      <div class="pl-type">Плейлист</div>
+      <div class="pl-name">{{ pl.name }}</div>
+      <div class="pl-meta">{{ pl.user.username }} · {{ pl.items.count() }} треков</div>
+      <div class="pl-actions">
+        <button class="play-all-btn" onclick="playAll()">▶ Слушать всё</button>
+        <a href="/music" style="font-size:14px;color:#888;text-decoration:none;">← Назад к музыке</a>
+        {% if pl.user_id == user.id %}
+        <button class="pl-delete-btn" onclick="deletePlaylist()">🗑️ Удалить</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="tracks-section">
+    {% if pl.items.count() > 0 %}
+    <div>
+      {% for item in pl.items %}
+      {% set t = item.track %}
+      <div class="track-list-item" id="tlitem-{{ t.id }}"
+           onclick="playTrack({{ t.id }}, '{{ t.title|e }}', '{{ (t.artist or t.user.username)|e }}', '{{ t.cover }}')">
+        <div class="track-num">{{ loop.index }}</div>
+        <div class="track-list-cover">
+          {% if t.cover %}<img src="/static/music/covers/{{ t.cover }}" onerror="this.style.display='none'">{% else %}🎵{% endif %}
+        </div>
+        <div class="track-list-info">
+          <div class="track-list-title">{{ t.title }}</div>
+          <div class="track-list-artist">{{ t.artist or t.user.username }}</div>
+        </div>
+        <div class="track-list-duration">{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}</div>
+        <div style="display:flex;gap:6px;">
+          <button class="list-act-btn {% if t.id in liked_tracks %}liked{% endif %}"
+                  onclick="event.stopPropagation(); likeTrack({{ t.id }}, this)">♥</button>
+          {% if pl.user_id == user.id %}
+          <button class="list-act-btn" onclick="event.stopPropagation(); removeFromPlaylist({{ t.id }})" title="Удалить из плейлиста" style="color:#e0245e44;">✕</button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div style="font-size:18px;color:#555;font-weight:600;">Плейлист пуст</div>
+      <div style="font-size:13px;color:#333;margin-top:6px;">Добавь треки из раздела Музыка</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="player hidden" id="player">
+  <div class="player-track">
+    <div class="player-cover" id="player-cover">🎵</div>
+    <div class="player-info">
+      <div class="player-title" id="player-title">—</div>
+      <div class="player-artist" id="player-artist">—</div>
+    </div>
+  </div>
+  <div class="player-controls">
+    <div class="player-btns">
+      <button class="ctrl-btn" onclick="prevTrack()">⏮</button>
+      <button class="ctrl-btn main" id="play-pause-btn" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn" onclick="nextTrack()">⏭</button>
+    </div>
+    <div class="player-progress">
+      <span class="time-label" id="current-time">0:00</span>
+      <div class="progress-bar" onclick="seekTo(event)">
+        <div class="progress-fill" id="progress-fill-bar" style="width:0%"></div>
+      </div>
+      <span class="time-label" style="text-align:right;" id="total-time">0:00</span>
+    </div>
+  </div>
+</div>
+
+<audio id="audio-player"></audio>
+
+<script>
+const PL_ID = {{ pl.id }};
+const TRACKS = [
+  {% for item in pl.items %}
+  {% set t = item.track %}
+  { id: {{ t.id }}, title: {{ t.title|tojson }}, artist: {{ (t.artist or t.user.username)|tojson }}, cover: {{ t.cover|tojson }} },
+  {% endfor %}
+];
+let currentIdx = 0;
+let isPlaying = false;
+const audio = document.getElementById('audio-player');
+const player = document.getElementById('player');
+
+function playTrack(id, title, artist, cover) {
+  const idx = TRACKS.findIndex(t => t.id === id);
+  if (idx >= 0) currentIdx = idx;
+  document.getElementById('player-title').textContent = title;
+  document.getElementById('player-artist').textContent = artist;
+  const coverEl = document.getElementById('player-cover');
+  coverEl.innerHTML = cover ? `<img src="/static/music/covers/${cover}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">` : '🎵';
+  player.classList.remove('hidden');
+  audio.src = `/music/stream/${id}`;
+  audio.play();
+  isPlaying = true;
+  document.getElementById('play-pause-btn').textContent = '⏸';
+  fetch(`/music/play/${id}`, { method: 'POST' });
+  document.querySelectorAll('.track-list-item.playing').forEach(el => el.classList.remove('playing'));
+  const el = document.getElementById(`tlitem-${id}`);
+  if (el) el.classList.add('playing');
+}
+
+function playAll() {
+  if (TRACKS.length) playTrack(TRACKS[0].id, TRACKS[0].title, TRACKS[0].artist, TRACKS[0].cover);
+}
+
+function togglePlay() {
+  if (isPlaying) { audio.pause(); isPlaying = false; document.getElementById('play-pause-btn').textContent = '▶'; }
+  else { audio.play(); isPlaying = true; document.getElementById('play-pause-btn').textContent = '⏸'; }
+}
+
+function nextTrack() {
+  currentIdx = (currentIdx + 1) % TRACKS.length;
+  const t = TRACKS[currentIdx];
+  playTrack(t.id, t.title, t.artist, t.cover);
+}
+
+function prevTrack() {
+  currentIdx = (currentIdx - 1 + TRACKS.length) % TRACKS.length;
+  const t = TRACKS[currentIdx];
+  playTrack(t.id, t.title, t.artist, t.cover);
+}
+
+audio.addEventListener('ended', nextTrack);
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  document.getElementById('progress-fill-bar').style.width = (audio.currentTime / audio.duration * 100) + '%';
+  document.getElementById('current-time').textContent = fmt(audio.currentTime);
+  document.getElementById('total-time').textContent = fmt(audio.duration);
+});
+
+function seekTo(e) {
+  const bar = e.currentTarget;
+  const pct = (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth;
+  audio.currentTime = pct * audio.duration;
+}
+
+function fmt(s) {
+  if (!s || isNaN(s)) return '0:00';
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+}
+
+function likeTrack(id, btn) {
+  fetch(`/music/like/${id}`, { method: 'POST' }).then(r => r.json()).then(d => {
+    btn.classList.toggle('liked', d.liked);
+    btn.textContent = d.liked ? '♥' : '♡';
+  });
+}
+
+function removeFromPlaylist(trackId) {
+  if (!confirm('Удалить из плейлиста?')) return;
+  fetch(`/music/playlist/${PL_ID}/remove/${trackId}`, { method: 'POST' })
+    .then(() => location.reload());
+}
+
+function deletePlaylist() {
+  if (!confirm('Удалить плейлист навсегда?')) return;
+  fetch(`/music/playlist/${PL_ID}/delete`, { method: 'POST' })
+    .then(() => window.location.href = '/music?tab=playlists');
+}
+</script>
+</body>
+</html>

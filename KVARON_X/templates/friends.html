@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRX — Друзья</title>
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0f0f0f; --bg3: #161616;
+      --card: #111; --card2: #181818;
+      --border: #1e1e1e; --border2: #2a2a2a;
+      --text: #f0f0f0; --text2: #aaa; --text3: #666; --text4: #3a3a3a;
+      --red: #e0245e; --red2: #c0103e;
+      --green: #1D9E75; --accent: #7F77DD;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; display: flex; min-height: 100vh; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar { width: 220px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; height: 100vh; overflow-y: auto; position: fixed; top: 0; left: 0; z-index: 100; }
+    .logo { font-size: 22px; font-weight: 900; padding: 6px 12px 16px; letter-spacing: -1px; }
+    .logo span { color: #333; }
+    .nav-section-label { font-size: 10px; color: #222; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; font-size: 14px; color: #555; text-decoration: none; position: relative; transition: all 0.15s; font-weight: 500; }
+    .nav-item:hover { background: #141414; color: #bbb; }
+    .nav-item.active { color: #fff; background: #1a1a1a; }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: var(--red); border-radius: 0 4px 4px 0; }
+    .nav-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 7px; }
+    .nav-div { height: 1px; background: #161616; margin: 6px 10px; }
+    .nav-spacer { flex: 1; }
+    .sidebar-user { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-top: 1px solid #161616; margin-top: 6px; text-decoration: none; border-radius: 12px; transition: background 0.15s; }
+    .sidebar-user:hover { background: #141414; }
+    .s-av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .s-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .admin-nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; font-size: 14px; color: var(--red); text-decoration: none; font-weight: 700; background: #150608; border: 1px solid #2a0a10; transition: all 0.15s; }
+    .admin-nav:hover { background: #1d080e; }
+
+    /* ===== MAIN ===== */
+    .main { margin-left: 220px; flex: 1; display: flex; gap: 0; min-height: 100vh; }
+    .content { flex: 1; max-width: 780px; border-right: 1px solid var(--border); min-height: 100vh; }
+    .right-col { width: 300px; padding: 24px 18px; flex-shrink: 0; }
+
+    /* ===== PAGE HEADER ===== */
+    .page-header { padding: 20px 24px 0; position: sticky; top: 0; background: rgba(8,8,8,0.97); z-index: 50; backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .page-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .page-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+    .add-friend-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--red); color: #fff; border: none; border-radius: 999px; padding: 8px 18px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.15s; font-family: inherit; }
+    .add-friend-btn:hover { background: var(--red2); transform: scale(1.04); }
+
+    /* Search */
+    .search-wrap { margin-bottom: 14px; }
+    .search-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 999px; padding: 10px 18px 10px 38px; font-size: 14px; color: var(--text); outline: none; font-family: inherit; transition: border-color 0.15s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23444' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 14px center; }
+    .search-input:focus { border-color: var(--red); }
+    .search-input::placeholder { color: var(--text4); }
+
+    /* TABS */
+    .tabs-row { display: flex; gap: 0; }
+    .tab-btn { flex: 1; padding: 10px 4px 8px; font-size: 14px; font-weight: 600; color: var(--text3); cursor: pointer; border-bottom: 2.5px solid transparent; transition: all 0.15s; text-align: center; user-select: none; }
+    .tab-btn:hover { color: var(--text2); }
+    .tab-btn.active { color: #fff; border-bottom-color: var(--red); }
+    .tab-badge { display: inline-block; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 1px 6px; margin-left: 5px; vertical-align: middle; }
+
+    .tab-pane { display: none; padding: 16px 24px; }
+    .tab-pane.active { display: block; }
+
+    /* ===== FRIEND CARD ===== */
+    .friends-grid { display: flex; flex-direction: column; gap: 8px; }
+
+    .friend-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 13px 16px;
+      transition: all 0.18s;
+    }
+    .friend-card:hover { border-color: #2a2a2a; background: #1e1e1e; }
+
+    .fc-av-wrap { position: relative; flex-shrink: 0; }
+    .fc-av { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #222; }
+    .fc-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .fc-av-init { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #fff; }
+
+    /* Status dot */
+    .status-dot { position: absolute; bottom: 1px; right: 1px; width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid var(--card2); }
+    .dot-online { background: var(--green); }
+    .dot-gaming { background: var(--red); animation: pulseDot 1.5s infinite; }
+    .dot-offline { background: #2a2a2a; }
+    @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.3)} }
+
+    .fc-info { flex: 1; min-width: 0; }
+    .fc-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fc-name a { color: inherit; text-decoration: none; }
+    .fc-name a:hover { color: var(--red); }
+    .fc-verified { color: #60aaff; font-size: 12px; }
+
+    .fc-status { font-size: 12px; margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+    .fc-status.online { color: var(--green); }
+    .fc-status.gaming { color: var(--red); }
+    .fc-status.offline { color: var(--text4); }
+    .fc-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .fc-status-dot.green { background: var(--green); }
+    .fc-status-dot.red { background: var(--red); }
+    .fc-status-dot.gray { background: #2a2a2a; }
+
+    .fc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .fc-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; text-decoration: none; font-size: 16px; transition: all 0.15s; }
+    .fc-btn:hover { border-color: var(--red); color: var(--red); background: #1a0808; }
+    .fc-btn.msg:hover { border-color: var(--accent); color: var(--accent); background: #0f0f1a; }
+
+    /* ===== INCOMING CARDS ===== */
+    .incoming-card { display: flex; align-items: center; gap: 14px; background: #0f0f18; border: 1px solid #2a2a4a; border-radius: 14px; padding: 13px 16px; margin-bottom: 8px; }
+    .inc-info { flex: 1; min-width: 0; }
+    .inc-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .inc-name a { color: inherit; text-decoration: none; }
+    .inc-name a:hover { color: var(--accent); }
+    .inc-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+    .inc-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .inc-accept { background: var(--red); color: #fff; border: none; border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .inc-accept:hover { background: var(--red2); }
+    .inc-decline { background: transparent; color: var(--text3); border: 1px solid var(--border2); border-radius: 10px; padding: 8px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .inc-decline:hover { background: #1a1a1a; color: var(--text2); }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state { padding: 50px 16px; text-align: center; }
+    .empty-icon { font-size: 52px; margin-bottom: 14px; opacity: 0.35; }
+    .empty-title { font-size: 18px; font-weight: 700; color: #444; margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; color: #2a2a2a; line-height: 1.6; max-width: 280px; margin: 0 auto 20px; }
+    .empty-action { display: inline-flex; align-items: center; gap: 8px; background: var(--red); color: #fff; border: none; border-radius: 999px; padding: 10px 24px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; font-family: inherit; }
+
+    /* ===== RIGHT COLUMN ===== */
+    .widget { background: var(--card2); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+    .widget-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; }
+
+    .suggest-card { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+    .sug-av { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; position: relative; }
+    .sug-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sug-av-init { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #1a1a2e, #2a1a1a); }
+    .sug-dot { position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--card2); }
+    .sug-info { flex: 1; min-width: 0; }
+    .sug-name { font-size: 13px; font-weight: 700; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+    .sug-name:hover { color: var(--red); }
+    .sug-sub { font-size: 11px; color: var(--text4); margin-top: 2px; }
+    .sug-add-btn { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none; transition: all 0.15s; font-family: inherit; }
+    .sug-add-btn:hover { border-color: var(--red); color: var(--red); background: #1a0808; }
+
+    /* Stats widget */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box { background: var(--bg3); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 900; color: var(--red); letter-spacing: -1px; }
+    .stat-label { font-size: 11px; color: var(--text4); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: #1a1a1a; border: 1px solid var(--border2); color: var(--text2); border-radius: 12px; padding: 9px 18px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.25s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 999px; }
+
+    @media (max-width: 1100px) { .right-col { display: none; } }
+    @media (max-width: 800px) {
+      .sidebar { width: 60px; padding: 12px 6px; }
+      .nav-item span, .nav-section-label, .sidebar-user > div:last-child { display: none; }
+      .main { margin-left: 60px; }
+    }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item" href="/music"><span class="nav-icon">🎵</span><span>Музыка</span></a>
+  <a class="nav-item" href="/gaming"><span class="nav-icon">🎮</span><span>Игровой</span></a>
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages"><span class="nav-icon">💬</span><span>Сообщения</span></a>
+  <a class="nav-item active" href="/friends"><span class="nav-icon">👥</span><span>Друзья</span>
+    {% if incoming %}<span class="nav-badge">{{ incoming|length }}</span>{% endif %}
+  </a>
+  <a class="nav-item" href="/notifications"><span class="nav-icon">🔔</span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item" href="/profile"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <a class="nav-item" href="/shop"><span class="nav-icon">🛍</span><span>Магазин</span></a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    <span class="nav-icon">💎</span><span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item" href="/settings"><span class="nav-icon">⚙️</span><span>Настройки</span></a>
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="admin-nav" href="/admin"><span class="nav-icon">🛡️</span><span>Админ</span></a>
+  {% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+      <div style="font-size:11px;color:var(--red);margin-top:1px;">💎 {{ user.kp }} KP</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px;"><span class="nav-icon">🚪</span><span>Выйти</span></a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="content">
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="page-title-row">
+        <div class="page-title">👥 Друзья</div>
+        <a href="/feed" class="add-friend-btn">🔍 Найти друзей</a>
+      </div>
+
+      <div class="search-wrap">
+        <input class="search-input" type="text" id="friend-search" placeholder="Поиск по никнейму..." oninput="filterFriends(this.value)">
+      </div>
+
+      <div class="tabs-row">
+        <div class="tab-btn active" id="tab-btn-all" onclick="switchTab('all', this)">
+          Все <span class="tab-badge">{{ friends|length }}</span>
+        </div>
+        <div class="tab-btn" id="tab-btn-online" onclick="switchTab('online', this)">
+          Онлайн <span class="tab-badge" id="online-count" style="background:var(--green);">{{ online_count }}</span>
+        </div>
+        <div class="tab-btn" id="tab-btn-requests" onclick="switchTab('requests', this)">
+          Заявки
+          {% if incoming %}<span class="tab-badge">{{ incoming|length }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ALL FRIENDS -->
+    <div id="pane-all" class="tab-pane active">
+      {% if friends %}
+      <div class="friends-grid" id="all-friends-grid">
+        {% for f in friends %}
+        {% set online = is_online(f) %}
+        {% set gaming = f.status_emoji == '🎮' and online %}
+        <div class="friend-card" data-name="{{ f.username.lower() }}">
+          <div class="fc-av-wrap">
+            <div class="fc-av">
+              <img src="{{ get_avatar_url(f) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="fc-av-init" style="display:none;">{{ f.username[0].upper() }}</div>
+            </div>
+            <div class="status-dot {% if gaming %}dot-gaming{% elif online %}dot-online{% else %}dot-offline{% endif %}"></div>
+          </div>
+
+          <div class="fc-info">
+            <div class="fc-name">
+              <a href="/user/{{ f.id }}">{{ f.username }}</a>
+              {% if f.is_verified %}<span class="fc-verified">✓</span>{% endif %}
+              {% if f.badge == 'founder' %}<span style="font-size:11px;">👑</span>
+              {% elif f.badge == 'admin' %}<span style="font-size:11px;">🛡️</span>{% endif %}
+            </div>
+            <div class="fc-status {% if gaming %}gaming{% elif online %}online{% else %}offline{% endif %}">
+              <span class="fc-status-dot {% if gaming %}red{% elif online %}green{% else %}gray{% endif %}"></span>
+              {% if gaming %}Играет сейчас 🎮
+              {% elif online %}Онлайн
+              {% else %}Не в сети{% endif %}
+            </div>
+          </div>
+
+          <div class="fc-actions">
+            <a href="/messages?with={{ f.id }}" class="fc-btn msg" title="Написать">💬</a>
+            <a href="/user/{{ f.id }}" class="fc-btn" title="Профиль">👤</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <div class="empty-title">Друзей пока нет</div>
+        <div class="empty-sub">Найди новых друзей в ленте — ищи по нику и добавляй тех, кто тебе интересен!</div>
+        <a href="/feed" class="empty-action">🔍 Найти людей</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB: ONLINE -->
+    <div id="pane-online" class="tab-pane">
+      {% set online_friends = friends | selectattr('id', 'in', online_ids) | list %}
+      {% if online_friends %}
+      <div class="friends-grid">
+        {% for f in online_friends %}
+        {% set gaming = f.status_emoji == '🎮' %}
+        <div class="friend-card">
+          <div class="fc-av-wrap">
+            <div class="fc-av">
+              <img src="{{ get_avatar_url(f) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="fc-av-init" style="display:none;">{{ f.username[0].upper() }}</div>
+            </div>
+            <div class="status-dot {% if gaming %}dot-gaming{% else %}dot-online{% endif %}"></div>
+          </div>
+          <div class="fc-info">
+            <div class="fc-name"><a href="/user/{{ f.id }}">{{ f.username }}</a>{% if f.is_verified %}<span class="fc-verified">✓</span>{% endif %}</div>
+            <div class="fc-status {% if gaming %}gaming{% else %}online{% endif %}">
+              <span class="fc-status-dot {% if gaming %}red{% else %}green{% endif %}"></span>
+              {% if gaming %}Играет сейчас 🎮{% else %}Онлайн{% endif %}
+            </div>
+          </div>
+          <div class="fc-actions">
+            <a href="/messages?with={{ f.id }}" class="fc-btn msg" title="Написать">💬</a>
+            <a href="/user/{{ f.id }}" class="fc-btn" title="Профиль">👤</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🟢</div>
+        <div class="empty-title">Никого нет онлайн</div>
+        <div class="empty-sub">Все твои друзья сейчас офлайн. Напиши им — может, зайдут!</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB: REQUESTS -->
+    <div id="pane-requests" class="tab-pane">
+      {% if incoming %}
+      <div style="margin-bottom:8px;font-size:13px;color:var(--text3);">Входящие заявки</div>
+      {% for req in incoming %}
+      <div class="incoming-card">
+        <div class="fc-av-wrap">
+          <div class="fc-av">
+            <img src="{{ get_avatar_url(req.from_user) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="fc-av-init" style="display:none;">{{ req.from_user.username[0].upper() }}</div>
+          </div>
+          <div class="status-dot {% if is_online(req.from_user) %}dot-online{% else %}dot-offline{% endif %}"></div>
+        </div>
+        <div class="inc-info">
+          <div class="inc-name"><a href="/user/{{ req.from_user.id }}">{{ req.from_user.username }}</a>{% if req.from_user.is_verified %} <span style="color:#60aaff;font-size:11px;">✓</span>{% endif %}</div>
+          <div class="inc-sub">{% if is_online(req.from_user) %}● Онлайн{% else %}● Не в сети{% endif %}</div>
+        </div>
+        <div class="inc-actions">
+          <form method="POST" action="/friend/accept/{{ req.id }}" style="display:inline;">
+            <button class="inc-accept" type="submit">✓ Принять</button>
+          </form>
+          <form method="POST" action="/friend/decline/{{ req.id }}" style="display:inline;">
+            <button class="inc-decline" type="submit">✕</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📨</div>
+        <div class="empty-title">Заявок пока нет</div>
+        <div class="empty-sub">Здесь будут заявки от тех, кто хочет стать твоим другом. Будь активен — и они появятся!</div>
+      </div>
+      {% endif %}
+
+      <!-- SENT requests -->
+      {% if sent_requests %}
+      <div style="margin-top:20px;margin-bottom:8px;font-size:13px;color:var(--text3);">Исходящие заявки</div>
+      {% for req in sent_requests %}
+      <div class="incoming-card" style="border-color:var(--border);background:var(--card2);">
+        <div class="fc-av-wrap">
+          <div class="fc-av">
+            <img src="{{ get_avatar_url(req.to_user) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="fc-av-init" style="display:none;">{{ req.to_user.username[0].upper() }}</div>
+          </div>
+        </div>
+        <div class="inc-info">
+          <div class="inc-name"><a href="/user/{{ req.to_user.id }}">{{ req.to_user.username }}</a></div>
+          <div class="inc-sub">⏳ Ожидает подтверждения</div>
+        </div>
+        <div style="font-size:13px;color:var(--text3);">Отправлено</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+    <!-- Stats -->
+    <div class="widget">
+      <div class="widget-title">📊 Статистика</div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-num">{{ friends|length }}</div>
+          <div class="stat-label">Друзей</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--green);">{{ online_count }}</div>
+          <div class="stat-label">Онлайн</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--accent);">{{ incoming|length }}</div>
+          <div class="stat-label">Заявок</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--text3);">{{ sent_requests|length }}</div>
+          <div class="stat-label">Исходящих</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    {% if suggested %}
+    <div class="widget">
+      <div class="widget-title">✨ Может знаешь?</div>
+      {% for s in suggested %}
+      <div class="suggest-card">
+        <div class="sug-av">
+          <img src="{{ get_avatar_url(s) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="sug-av-init" style="display:none;">{{ s.username[0].upper() }}</div>
+          <div class="sug-dot {% if is_online(s) %}dot-online{% else %}dot-offline{% endif %}" style="border-color:var(--card2);"></div>
+        </div>
+        <div class="sug-info">
+          <a href="/user/{{ s.id }}" class="sug-name">{{ s.username }}{% if s.is_verified %} <span style="color:#60aaff;font-size:10px;">✓</span>{% endif %}</a>
+          <div class="sug-sub">{% if is_online(s) %}● Онлайн{% else %}● Не в сети{% endif %}</div>
+        </div>
+        <form method="POST" action="/friend/send/{{ s.id }}" style="display:inline;">
+          <button class="sug-add-btn" type="submit">+ Добавить</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Top active -->
+    {% if top_users %}
+    <div class="widget">
+      <div class="widget-title">🔥 Активные игроки</div>
+      {% for u in top_users %}
+      <div class="suggest-card">
+        <div class="sug-av">
+          <img src="{{ get_avatar_url(u) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="sug-av-init" style="display:none;">{{ u.username[0].upper() }}</div>
+          <div class="sug-dot {% if is_online(u) %}dot-online{% else %}dot-offline{% endif %}" style="border-color:var(--card2);"></div>
+        </div>
+        <div class="sug-info">
+          <a href="/user/{{ u.id }}" class="sug-name">{{ u.username }}</a>
+          <div class="sug-sub">Ур.{{ u.level }}</div>
+        </div>
+        <a href="/user/{{ u.id }}" class="sug-add-btn">Профиль</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + tab).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('friend-search').value = '';
+  filterFriends('');
+}
+
+function filterFriends(q) {
+  q = q.toLowerCase().trim();
+  const activePaneId = document.querySelector('.tab-pane.active').id;
+  const pane = document.getElementById(activePaneId);
+  pane.querySelectorAll('.friend-card, .incoming-card').forEach(card => {
+    const name = (card.dataset.name || card.querySelector('.fc-name, .inc-name')?.textContent || '').toLowerCase();
+    card.style.display = (!q || name.includes(q)) ? '' : 'none';
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Check URL param for tab
+const urlParams = new URLSearchParams(window.location.search);
+const tabParam = urlParams.get('tab');
+if (tabParam) {
+  const btn = document.getElementById('tab-btn-' + tabParam);
+  if (btn) switchTab(tabParam, btn);
+}
+</script>
+
+</body>
+</html>

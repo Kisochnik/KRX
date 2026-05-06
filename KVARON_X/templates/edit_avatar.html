@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>KisPar — Фото, баннер и музыка</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #fff; font-family: -apple-system, sans-serif; display: flex; }
+
+    .sidebar {
+      width: 220px; min-height: 100vh; background: #0d0d0d;
+      border-right: 1px solid #1e1e1e; padding: 20px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+      position: fixed; top: 0; left: 0; height: 100vh;
+    }
+    .logo { font-size: 22px; font-weight: 700; padding: 8px 12px 20px; }
+    .logo span { color: #444; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; font-size: 15px;
+      color: #666; text-decoration: none; position: relative;
+    }
+    .nav-item:hover { background: #151515; color: #aaa; }
+    .nav-item.active { color: #fff; background: #151515; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; background: #7F77DD; border-radius: 0 3px 3px 0;
+    }
+    .nav-spacer { flex: 1; }
+
+    .content {
+      margin-left: 220px; flex: 1; display: flex;
+      align-items: flex-start; justify-content: center;
+      padding: 40px 20px; min-height: 100vh;
+    }
+    .card {
+      background: #111; border: 1px solid #1e1e1e;
+      border-radius: 16px; padding: 32px;
+      width: 100%; max-width: 500px;
+    }
+    .card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .card-sub { font-size: 13px; color: #555; margin-bottom: 24px; }
+
+    .upload-section { margin-bottom: 22px; }
+    .upload-label { font-size: 12px; color: #555; margin-bottom: 8px; display: block; }
+    .upload-box {
+      border: 1px dashed #2a2a2a; border-radius: 12px;
+      padding: 20px; text-align: center; cursor: pointer;
+      position: relative; overflow: hidden; transition: border-color 0.2s;
+    }
+    .upload-box:hover { border-color: #7F77DD; }
+    .upload-box input[type=file] {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; opacity: 0; cursor: pointer;
+    }
+    .upload-icon { font-size: 26px; margin-bottom: 6px; }
+    .upload-text { font-size: 14px; color: #555; }
+    .upload-hint { font-size: 12px; color: #333; margin-top: 4px; }
+    .upload-hint strong { color: #666; }
+
+    .preview-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      object-fit: cover; margin-top: 12px; display: none;
+      border: 3px solid #7F77DD;
+    }
+    .preview-banner {
+      width: 100%; height: 90px; border-radius: 10px;
+      object-fit: cover; margin-top: 10px; display: none;
+    }
+    .current-av {
+      display: flex; align-items: center; gap: 10px; margin-top: 10px;
+    }
+    .current-av img {
+      width: 44px; height: 44px; border-radius: 50%;
+      object-fit: cover; border: 2px solid #333;
+    }
+    .current-av span { font-size: 12px; color: #444; }
+
+    .music-name-input {
+      width: 100%; background: #1a1a1a; border: 1px solid #2a2a2a;
+      border-radius: 10px; padding: 9px 14px; font-size: 14px;
+      color: #eee; margin-top: 8px; outline: none;
+      font-family: -apple-system, sans-serif;
+    }
+    .music-name-input:focus { border-color: #7F77DD; }
+
+    .save-btn {
+      width: 100%; background: #7F77DD; color: #fff; border: none;
+      border-radius: 10px; padding: 12px; font-size: 15px;
+      font-weight: 700; cursor: pointer; margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .save-btn:hover { background: #6a63cc; }
+    .back-link {
+      display: block; text-align: center; margin-top: 14px;
+      font-size: 13px; color: #555; text-decoration: none;
+    }
+    .back-link:hover { color: #aaa; }
+    .error { background: #1f0a0a; border: 1px solid #3a1010; color: #f08080; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+    .success { background: #0a1f0a; border: 1px solid #1a4a1a; color: #80f080; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+
+    @media (max-width: 700px) {
+      .sidebar { width: 60px; }
+      .nav-item span { display: none; }
+      .content { margin-left: 60px; }
+    }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">Kis<span>Par</span></div>
+  <a class="nav-item" href="/feed">🏠 <span>Главная</span></a>
+  <a class="nav-item" href="/feed">🔍 <span>Поиск</span></a>
+  <a class="nav-item" href="/messages">✉️ <span>Сообщения</span></a>
+  <a class="nav-item" href="/friends">👥 <span>Друзья</span></a>
+  <a class="nav-item active" href="/profile">👤 <span>Профиль</span></a>
+    <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">💎 <span>KisWallet</span><span class="kw-dot"></span></a>
+<div class="nav-spacer"></div>
+  <a class="nav-item" href="/logout">🚪 <span>Выйти</span></a>
+</div>
+
+<div class="content">
+  <div class="card">
+    <div class="card-title">🖼️ Фото, баннер и музыка</div>
+    <div class="card-sub">Фото: JPG, PNG, GIF, WEBP · Музыка: MP3, OGG, WAV, M4A</div>
+
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    {% if success %}<div class="success">✓ {{ success }}</div>{% endif %}
+
+    <form method="POST" action="/edit-avatar" enctype="multipart/form-data">
+
+      <div class="upload-section">
+        <span class="upload-label">Аватарка</span>
+        <div class="upload-box">
+          <input type="file" name="avatar" accept="image/*" onchange="prevImg(this,'prev-av')">
+          <div class="upload-icon">👤</div>
+          <div class="upload-text">Нажмите чтобы выбрать</div>
+          <div class="upload-hint">Рекомендуемый размер: <strong>400 × 400 px</strong></div>
+        </div>
+        <img id="prev-av" class="preview-avatar">
+        {% if user.avatar %}
+        <div class="current-av">
+          <img src="/static/uploads/{{ user.avatar }}">
+          <span>Текущая аватарка</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="upload-section">
+        <span class="upload-label">Баннер профиля</span>
+        <div class="upload-box">
+          <input type="file" name="banner" accept="image/*" onchange="prevImg(this,'prev-bn')">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Нажмите чтобы выбрать</div>
+          <div class="upload-hint">Рекомендуемый размер: <strong>1500 × 500 px</strong></div>
+        </div>
+        <img id="prev-bn" class="preview-banner">
+        {% if user.banner %}
+        <div style="font-size:11px;color:#333;margin-top:6px;text-align:center;">Баннер установлен ✓</div>
+        {% endif %}
+      </div>
+
+      <div class="upload-section">
+        <span class="upload-label">🎵 Музыка профиля</span>
+        <div class="upload-box">
+          <input type="file" name="music" accept="audio/*" onchange="showMusicName(this)">
+          <div class="upload-icon">🎵</div>
+          <div class="upload-text">Нажмите чтобы выбрать трек</div>
+          <div class="upload-hint">Форматы: <strong>MP3, OGG, WAV, M4A</strong></div>
+        </div>
+        <input class="music-name-input" type="text" name="music_name"
+               placeholder="Название трека (например: Drake - Gods Plan)"
+               value="{{ user.music_name if user.music_name else '' }}">
+        {% if user.music %}
+        <div style="font-size:11px;color:#333;margin-top:4px;text-align:center;">Текущий трек: {{ user.music_name }}</div>
+        {% endif %}
+      </div>
+
+      <button class="save-btn" type="submit">Сохранить</button>
+    </form>
+    <a class="back-link" href="/profile">← Назад к профилю</a>
+  </div>
+</div>
+
+<script>
+function prevImg(input, id) {
+  const el = document.getElementById(id);
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => { el.src = e.target.result; el.style.display = 'block'; };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+function showMusicName(input) {
+  if (input.files && input.files[0]) {
+    const nameInput = document.querySelector('.music-name-input');
+    if (!nameInput.value) {
+      nameInput.value = input.files[0].name.replace(/\.[^/.]+$/, '');
+    }
+  }
+}
+</script>
+</body>
+</html>

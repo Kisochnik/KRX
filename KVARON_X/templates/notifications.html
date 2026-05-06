@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRX — Уведомления</title>
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0f0f0f; --bg3: #161616;
+      --card: #111; --card2: #181818;
+      --border: #1e1e1e; --border2: #2a2a2a;
+      --text: #f0f0f0; --text2: #aaa; --text3: #666; --text4: #3a3a3a;
+      --red: #e0245e; --red2: #c0103e;
+      --green: #1D9E75; --accent: #7F77DD; --gold: #EF9F27;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 220px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; height: 100vh; overflow-y: auto; position: fixed; top: 0; left: 0; z-index: 100; }
+    .logo { font-size: 22px; font-weight: 900; padding: 6px 12px 16px; letter-spacing: -1px; }
+    .logo span { color: #333; }
+    .nav-section-label { font-size: 10px; color: #222; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; font-size: 14px; color: #555; text-decoration: none; position: relative; transition: all 0.15s; font-weight: 500; }
+    .nav-item:hover { background: #141414; color: #bbb; }
+    .nav-item.active { color: #fff; background: #1a1a1a; }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: var(--red); border-radius: 0 4px 4px 0; }
+    .nav-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 7px; }
+    .nav-div { height: 1px; background: #161616; margin: 6px 10px; }
+    .nav-spacer { flex: 1; }
+    .sidebar-user { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-top: 1px solid #161616; margin-top: 6px; text-decoration: none; border-radius: 12px; transition: background 0.15s; }
+    .sidebar-user:hover { background: #141414; }
+    .s-av { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
+    .s-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .admin-nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; font-size: 14px; color: var(--red); text-decoration: none; font-weight: 700; background: #150608; border: 1px solid #2a0a10; transition: all 0.15s; }
+    .admin-nav:hover { background: #1d080e; }
+
+    /* MAIN */
+    .main { margin-left: 220px; flex: 1; max-width: 700px; min-height: 100vh; border-right: 1px solid var(--border); }
+
+    /* HEADER */
+    .page-header { padding: 20px 24px 0; position: sticky; top: 0; background: rgba(8,8,8,0.97); z-index: 50; backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .page-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+    .unread-pill { font-size: 12px; font-weight: 700; background: var(--red); color: #fff; border-radius: 999px; padding: 3px 10px; }
+    .header-actions { display: flex; gap: 8px; }
+    .mark-all-btn { font-size: 13px; color: var(--text3); background: transparent; border: 1px solid var(--border2); border-radius: 999px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; text-decoration: none; font-family: inherit; }
+    .mark-all-btn:hover { background: #1a1a1a; color: var(--text2); }
+
+    /* Filter tabs */
+    .filter-tabs { display: flex; gap: 0; overflow-x: auto; }
+    .filter-tabs::-webkit-scrollbar { height: 0; }
+    .f-tab { padding: 10px 16px 8px; font-size: 13px; font-weight: 600; color: var(--text3); cursor: pointer; border-bottom: 2.5px solid transparent; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .f-tab:hover { color: var(--text2); }
+    .f-tab.active { color: #fff; border-bottom-color: var(--red); }
+
+    /* NOTIF SECTIONS */
+    .section-label { padding: 14px 24px 8px; font-size: 11px; font-weight: 700; color: var(--text4); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* NOTIF ITEM */
+    .notif-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 24px; border-bottom: 1px solid #111;
+      transition: background 0.12s; cursor: pointer;
+    }
+    .notif-item:hover { background: #0d0d0d; }
+    .notif-item.is-new { background: #0d0d14; border-left: 3px solid var(--red); padding-left: 21px; }
+    .notif-item.is-new:hover { background: #101018; }
+
+    .notif-icon-wrap {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; position: relative;
+    }
+    .notif-av { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #222; }
+    .notif-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .notif-av-init { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #1a1a2e, #2a1a2e); }
+
+    /* Small icon badge on avatar */
+    .notif-type-badge {
+      position: absolute; bottom: -2px; right: -2px;
+      width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--bg);
+      display: flex; align-items: center; justify-content: center; font-size: 10px;
+    }
+    .badge-like { background: var(--red); }
+    .badge-comment { background: var(--accent); }
+    .badge-friend { background: var(--green); }
+    .badge-follow { background: #378ADD; }
+    .badge-xp { background: var(--gold); }
+    .badge-system { background: #555; }
+
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-text { font-size: 14px; color: var(--text2); line-height: 1.5; }
+    .notif-text strong { color: var(--text); font-weight: 700; }
+    .notif-time { font-size: 11px; color: var(--text4); margin-top: 3px; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+
+    /* Preview image */
+    .notif-preview { width: 44px; height: 44px; border-radius: 10px; overflow: hidden; background: #222; flex-shrink: 0; }
+    .notif-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* EMPTY STATE */
+    .empty-state { padding: 60px 24px; text-align: center; }
+    .empty-icon { font-size: 54px; margin-bottom: 16px; opacity: 0.3; }
+    .empty-title { font-size: 18px; font-weight: 700; color: #444; margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; color: #2a2a2a; line-height: 1.6; }
+
+    /* NOTIF SETTINGS PANEL */
+    .settings-panel { padding: 14px 24px; background: #0d0d0d; border-bottom: 1px solid var(--border); display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+    .setting-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); cursor: pointer; }
+    .setting-toggle input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--red); }
+    .save-settings-btn { font-size: 12px; background: var(--red); color: #fff; border: none; border-radius: 999px; padding: 6px 14px; cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.15s; margin-left: auto; }
+    .save-settings-btn:hover { background: var(--red2); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 999px; }
+
+    @media (max-width: 800px) {
+      .sidebar { width: 60px; padding: 12px 6px; }
+      .nav-item span, .nav-section-label, .sidebar-user > div:last-child { display: none; }
+      .main { margin-left: 60px; }
+    }
+  
+    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
+    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+
+    .badge-warn { background: #2a0a00 !important; color: #ff6600 !important; border-color: #4a1a00 !important; }
+    .badge-report { background: #2a0000 !important; color: #ff4444 !important; border-color: #4a0000 !important; }
+    .notif-item[data-type="admin_warning"] { border-left: 3px solid #ff6600 !important; background: #120800 !important; }
+    .notif-item[data-type="report"] { border-left: 3px solid #ff4444 !important; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item" href="/music"><span class="nav-icon">🎵</span><span>Музыка</span></a>
+  <a class="nav-item" href="/gaming"><span class="nav-icon">🎮</span><span>Игровой</span></a>
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages"><span class="nav-icon">💬</span><span>Сообщения</span></a>
+  <a class="nav-item" href="/friends"><span class="nav-icon">👥</span><span>Друзья</span></a>
+  <a class="nav-item active" href="/notifications"><span class="nav-icon">🔔</span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item" href="/profile"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <a class="nav-item" href="/shop"><span class="nav-icon">🛍</span><span>Магазин</span></a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    <span class="nav-icon">💎</span><span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item" href="/settings"><span class="nav-icon">⚙️</span><span>Настройки</span></a>
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="admin-nav" href="/admin"><span class="nav-icon">🛡️</span><span>Админ</span></a>
+  {% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+      <div style="font-size:11px;color:var(--red);margin-top:1px;">💎 {{ user.kp }} KP</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px;"><span class="nav-icon">🚪</span><span>Выйти</span></a>
+</div>
+
+<div class="main">
+  <div class="page-header">
+    <div class="header-top">
+      <div class="page-title">
+        🔔 Уведомления
+        {% set unread_count = notifs|selectattr('is_read','eq',False)|list|length %}
+        {% if unread_count > 0 %}<span class="unread-pill">{{ unread_count }} новых</span>{% endif %}
+      </div>
+      <div class="header-actions">
+        <a href="/notifications/mark-all" class="mark-all-btn">Отметить все</a>
+      </div>
+    </div>
+
+    <div class="filter-tabs">
+      <div class="f-tab active" id="ft-all" onclick="filterNotifs('all', this)">🔔 Все</div>
+      <div class="f-tab" id="ft-like" onclick="filterNotifs('like', this)">♥ Лайки</div>
+      <div class="f-tab" id="ft-comment" onclick="filterNotifs('comment', this)">💬 Комментарии</div>
+      <div class="f-tab" id="ft-friend" onclick="filterNotifs('friend', this)">👥 Заявки</div>
+      <div class="f-tab" id="ft-follow" onclick="filterNotifs('follow', this)">👤 Подписки</div>
+      <div class="f-tab" id="ft-xp" onclick="filterNotifs('xp', this)">⚡ XP</div>
+    </div>
+  </div>
+
+  <!-- Settings row -->
+  <div class="settings-panel">
+    <form method="POST" action="/notifications/settings" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;width:100%;">
+      <label class="setting-toggle">
+        <input type="checkbox" name="notif_sound" {% if user.notif_sound %}checked{% endif %}> 🔊 Звук
+      </label>
+      <label class="setting-toggle">
+        <input type="checkbox" name="notif_popup" {% if user.notif_popup %}checked{% endif %}> 💬 Всплывающие
+      </label>
+      <button type="submit" class="save-settings-btn">Сохранить</button>
+    </form>
+  </div>
+
+  {% if notifs %}
+    {% set new_notifs = notifs|selectattr('is_read','eq',False)|list %}
+    {% set old_notifs = notifs|selectattr('is_read','eq',True)|list %}
+
+    {% if new_notifs %}
+    <div class="section-label" id="section-new">Новые</div>
+    {% for n in new_notifs %}
+    {% set types_match = n.notif_type %}
+    <div class="notif-item is-new" data-type="{{ n.notif_type }}">
+      <div class="notif-icon-wrap">
+        <div class="notif-av">
+          {% if n.from_user %}
+          <img src="{{ get_avatar_url(n.from_user) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="notif-av-init" style="display:none;">{{ n.from_user.username[0].upper() }}</div>
+          {% else %}
+          <div class="notif-av-init">🔔</div>
+          {% endif %}
+        </div>
+        <div class="notif-type-badge
+          {% if n.notif_type == 'like' %}badge-like
+          {% elif n.notif_type == 'comment' %}badge-comment
+          {% elif n.notif_type in ['friend_request','friend_accept'] %}badge-friend
+          {% elif n.notif_type == 'follow' %}badge-follow
+          {% elif n.notif_type == 'xp' %}badge-xp
+          {% elif n.notif_type == 'admin_warning' %}badge-warn
+          {% elif n.notif_type == 'report' %}badge-report
+          {% else %}badge-system{% endif %}">
+          {% if n.notif_type == 'like' %}♥
+          {% elif n.notif_type == 'comment' %}💬
+          {% elif n.notif_type == 'friend_request' %}➕
+          {% elif n.notif_type == 'friend_accept' %}✓
+          {% elif n.notif_type == 'follow' %}👤
+          {% elif n.notif_type == 'xp' %}⚡
+          {% elif n.notif_type == 'admin_warning' %}⚠️
+          {% elif n.notif_type == 'report' %}🚩
+          {% else %}🔔{% endif %}
+        </div>
+      </div>
+      <div class="notif-body">
+        <div class="notif-text">{{ n.text }}</div>
+        <div class="notif-time">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+      <div class="notif-dot"></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if old_notifs %}
+    <div class="section-label" id="section-old">Прочитанные</div>
+    {% for n in old_notifs %}
+    <div class="notif-item" data-type="{{ n.notif_type }}">
+      <div class="notif-icon-wrap">
+        <div class="notif-av">
+          {% if n.from_user %}
+          <img src="{{ get_avatar_url(n.from_user) }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="notif-av-init" style="display:none;">{{ n.from_user.username[0].upper() }}</div>
+          {% else %}
+          <div class="notif-av-init">🔔</div>
+          {% endif %}
+        </div>
+        <div class="notif-type-badge
+          {% if n.notif_type == 'like' %}badge-like
+          {% elif n.notif_type == 'comment' %}badge-comment
+          {% elif n.notif_type in ['friend_request','friend_accept'] %}badge-friend
+          {% elif n.notif_type == 'follow' %}badge-follow
+          {% elif n.notif_type == 'xp' %}badge-xp
+          {% elif n.notif_type == 'admin_warning' %}badge-warn
+          {% elif n.notif_type == 'report' %}badge-report
+          {% else %}badge-system{% endif %}"
+          style="opacity:0.7;">
+          {% if n.notif_type == 'like' %}♥
+          {% elif n.notif_type == 'comment' %}💬
+          {% elif n.notif_type == 'friend_request' %}➕
+          {% elif n.notif_type == 'friend_accept' %}✓
+          {% elif n.notif_type == 'follow' %}👤
+          {% elif n.notif_type == 'xp' %}⚡
+          {% elif n.notif_type == 'admin_warning' %}⚠️
+          {% elif n.notif_type == 'report' %}🚩
+          {% else %}🔔{% endif %}
+        </div>
+      </div>
+      <div class="notif-body">
+        <div class="notif-text" style="color:var(--text3);">{{ n.text }}</div>
+        <div class="notif-time">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🔔</div>
+    <div class="empty-title">Тихо как в космосе...</div>
+    <div class="empty-sub">Здесь появятся уведомления о лайках, комментариях и заявках в друзья. Будь активен!</div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function filterNotifs(type, el) {
+  document.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const items = document.querySelectorAll('.notif-item');
+  const snNew = document.getElementById('section-new');
+  const snOld = document.getElementById('section-old');
+  if (type === 'all') {
+    items.forEach(i => i.style.display = '');
+    if (snNew) snNew.style.display = '';
+    if (snOld) snOld.style.display = '';
+    return;
+  }
+  const typeMap = {
+    'like': ['like'],
+    'comment': ['comment'],
+    'friend': ['friend_request', 'friend_accept'],
+    'follow': ['follow'],
+    'xp': ['xp']
+  };
+  const allowed = typeMap[type] || [];
+  let hasNew = false, hasOld = false;
+  items.forEach(i => {
+    const t = i.dataset.type;
+    const show = allowed.includes(t);
+    i.style.display = show ? '' : 'none';
+    if (show) {
+      if (i.classList.contains('is-new')) hasNew = true;
+      else hasOld = true;
+    }
+  });
+  if (snNew) snNew.style.display = hasNew ? '' : 'none';
+  if (snOld) snOld.style.display = hasOld ? '' : 'none';
+}
+</script>
+
+</body>
+</html>

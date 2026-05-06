@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRX— Админ панель</title>
+  <style>
+    :root{--bg:#080808;--bg2:#0f0f0f;--card:#111;--border:#1e1e1e;--border2:#2a2a2a;--text:#f0f0f0;--text2:#aaa;--text3:#666;--text4:#3a3a3a;--red:#e0245e;--red2:#c0103e;--green:#1D9E75;--accent:#7F77DD;--gold:#EF9F27}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;display:flex;min-height:100vh}
+
+    .sidebar{width:220px;background:#080808;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:2px;flex-shrink:0;height:100vh;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+    .logo{font-size:20px;font-weight:900;padding:6px 12px 16px;color:var(--red);letter-spacing:-.5px}
+    .logo span{color:#333}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;font-size:14px;color:#555;text-decoration:none;position:relative;transition:all .15s;font-weight:500;cursor:pointer;border:none;background:transparent;width:100%;text-align:left;font-family:inherit}
+    .nav-item:hover{background:#141414;color:#bbb}
+    .nav-item.active{color:#fff;background:#1a1a1a}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--red);border-radius:0 4px 4px 0}
+    .nav-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+    .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:2px 7px}
+    .nav-div{height:1px;background:#161616;margin:6px 10px}
+    .nav-spacer{flex:1}
+
+    .main{margin-left:220px;flex:1;padding:28px;min-height:100vh}
+    .page-title{font-size:24px;font-weight:900;margin-bottom:4px;color:var(--red)}
+    .page-sub{font-size:13px;color:var(--text4);margin-bottom:24px}
+
+    .section{display:none}
+    .section.active{display:block}
+
+    /* DASHBOARD METRICS */
+    .metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+    .metric-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+    .metric-card.red-card{border-color:#3a0a10;background:#100406}
+    .metric-card.green-card{border-color:#0a3a1a;background:#040e06}
+    .metric-card.accent-card{border-color:#1a1a3a;background:#060610}
+    .metric-card.gold-card{border-color:#3a2a00;background:#100c00}
+    .metric-num{font-size:32px;font-weight:900;line-height:1}
+    .metric-label{font-size:12px;color:var(--text3);margin-top:4px}
+
+    /* FILTERS (chips) */
+    .filter-chips{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+    .chip{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--border2);color:var(--text3);cursor:pointer;background:transparent;transition:all .15s;font-family:inherit}
+    .chip:hover{border-color:var(--accent);color:var(--accent)}
+    .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    /* TABLE */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+    .card-title{font-size:15px;font-weight:800;margin-bottom:14px;color:var(--text)}
+    .user-table{width:100%;border-collapse:collapse;font-size:13px}
+    .user-table th{text-align:left;padding:10px 12px;color:var(--text4);font-weight:600;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+    .user-table td{padding:10px 8px;border-bottom:1px solid #141414;vertical-align:middle}
+    .user-table tr:hover td{background:#0d0d0d}
+    .u-av{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#222;display:block}
+    .badge-tag{font-size:10px;padding:2px 6px;border-radius:999px;margin-left:3px}
+    .badge-admin{background:#2a0a0a;color:var(--red);border:1px solid #4a1010}
+    .badge-verified{background:#0a1a2a;color:#60aaff;border:1px solid #1a3a6a}
+    .badge-banned{background:#2a0000;color:#ff5555;border:1px solid #4a0000}
+    .badge-muted{background:#2a2000;color:#ffaa00;border:1px solid #4a3000}
+
+    /* BUTTONS */
+    .btn{border:none;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+    .btn:hover{opacity:.8}
+    .btn-red{background:var(--red);color:#fff}
+    .btn-green{background:var(--green);color:#fff}
+    .btn-gold{background:var(--gold);color:#000}
+    .btn-blue{background:#378ADD;color:#fff}
+    .btn-grey{background:#1a1a1a;color:var(--text3);border:1px solid var(--border2)}
+    .btn-sm{padding:4px 9px;font-size:11px}
+
+    .actions-row{display:flex;gap:4px;flex-wrap:wrap}
+
+    /* FORMS */
+    label{font-size:12px;color:var(--text3);display:block;margin-bottom:4px;margin-top:8px}
+    input[type=text],input[type=number],input[type=password],select,textarea{width:100%;background:#1a1a1a;border:1px solid var(--border2);border-radius:10px;padding:9px 14px;font-size:14px;color:var(--text);outline:none;font-family:inherit;margin-bottom:8px}
+    input:focus,select:focus,textarea:focus{border-color:var(--red)}
+    .search-bar{background:#141414;border:1px solid var(--border);border-radius:999px;padding:9px 16px;font-size:14px;color:var(--text);outline:none;width:100%;margin-bottom:14px;font-family:inherit}
+    .search-bar:focus{border-color:var(--accent)}
+
+    /* UPLOAD BOX */
+    .upload-box{border:1px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:10px;font-size:13px;color:var(--text3)}
+    .upload-box:hover{border-color:var(--red)}
+    .upload-box input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer}
+
+    /* SHOP ITEMS */
+    .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:14px}
+    .shop-card{background:#0f0f0f;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .shop-card-img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#1a1a1a}
+    .shop-card-info{padding:8px 10px}
+    .shop-card-name{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:2px}
+    .shop-card-meta{font-size:11px;color:var(--text4)}
+    .shop-card-actions{display:flex;gap:4px;margin-top:6px}
+
+    /* EDIT MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:#111;border:1px solid var(--border2);border-radius:20px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+    .modal-title{font-size:17px;font-weight:800;margin-bottom:16px}
+    .modal-close{float:right;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;margin-top:-4px}
+
+    /* REPORTS */
+    .report-card{background:#0f0f0f;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+    .report-card.urgent{border-color:#3a0a10}
+    .report-post-preview{background:#1a1a1a;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text2);margin:8px 0;line-height:1.5}
+    .report-meta{display:flex;gap:16px;font-size:12px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap}
+    .reason-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#1f0a0a;border:1px solid #3a1010;color:#f08080}
+
+    /* AUDIT LOG */
+    .log-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #141414}
+    .log-row:last-child{border-bottom:none}
+    .log-time{font-size:11px;color:var(--text4);min-width:110px}
+    .log-admin{font-size:12px;font-weight:700;color:var(--accent);min-width:100px}
+    .log-action{font-size:13px;color:var(--text2);flex:1}
+    .log-target{font-size:11px;color:var(--text3)}
+
+    /* ALERTS */
+    .alert{border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+    .alert-success{background:#0a1f0a;border:1px solid #1a4a1a;color:#80f080}
+    .alert-error{background:#1f0a0a;border:1px solid #3a1010;color:#f08080}
+
+    /* CHARTS */
+    .chart-bar-wrap{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+    .chart-bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
+    .chart-bar-label{min-width:110px;color:var(--text2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chart-bar-bg{flex:1;background:#1a1a1a;border-radius:999px;height:18px;overflow:hidden}
+    .chart-bar-fill{height:100%;border-radius:999px;background:var(--accent);transition:width .5s}
+    .chart-bar-val{min-width:40px;color:var(--text3);font-size:11px}
+
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:999px}
+    @media(max-width:800px){.sidebar{width:60px;padding:12px 6px}.nav-item span{display:none}.main{margin-left:60px;padding:16px}}
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="logo"> KRX <span>Admin</span></div>
+  <button class="nav-item active" id="nav-dashboard" onclick="show('dashboard',this)"><span class="nav-icon">📊</span><span>Дашборд</span></button>
+  <button class="nav-item" id="nav-users" onclick="show('users',this)"><span class="nav-icon">👥</span><span>Пользователи</span></button>
+  <button class="nav-item" id="nav-reports" onclick="show('reports',this)">
+    <span class="nav-icon">🚩</span><span>Жалобы</span>
+    {% if reports_count %}<span class="nav-badge">{{ reports_count }}</span>{% endif %}
+  </button>
+  <button class="nav-item" id="nav-shop" onclick="show('shop',this)"><span class="nav-icon">🛒</span><span>Магазин</span></button>
+  <button class="nav-item" id="nav-ban" onclick="show('ban',this)"><span class="nav-icon">🚫</span><span>Бан</span></button>
+  <button class="nav-item" id="nav-kp" onclick="show('kp',this)"><span class="nav-icon">💎</span><span>Выдать KP</span></button>
+  <button class="nav-item" id="nav-history" onclick="show('history',this)"><span class="nav-icon">📋</span><span>История</span></button>
+  <button class="nav-item" id="nav-audit" onclick="show('audit',this)"><span class="nav-icon">🔍</span><span>Аудит лог</span></button>
+  <div class="nav-div"></div>
+  <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item" href="/profile"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <div class="nav-spacer"></div>
+  <a class="nav-item" href="/logout"><span class="nav-icon">🚪</span><span>Выйти</span></a>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="page-title">🛡️ Админ панель</div>
+  <div class="page-sub"> KRX· {{ me.username }} · Управление платформой</div>
+
+  {% set url_tab = request.args.get('tab') %}
+
+  <!-- ══════════ ДАШБОРД ══════════ -->
+  <div id="s-dashboard" class="section active">
+    <div class="metrics-grid">
+      <div class="metric-card red-card">
+        <div class="metric-num" style="color:var(--red)">{{ users|length }}</div>
+        <div class="metric-label">Всего пользователей</div>
+      </div>
+      <div class="metric-card green-card">
+        <div class="metric-num" style="color:var(--green)">{{ online_now }}</div>
+        <div class="metric-label">Сейчас онлайн</div>
+      </div>
+      <div class="metric-card accent-card">
+        <div class="metric-num" style="color:var(--accent)">{{ regs_today }}</div>
+        <div class="metric-label">Регистраций сегодня</div>
+      </div>
+      <div class="metric-card accent-card">
+        <div class="metric-num" style="color:var(--accent)">{{ regs_week }}</div>
+        <div class="metric-label">За 7 дней</div>
+      </div>
+      <div class="metric-card gold-card">
+        <div class="metric-num" style="color:var(--gold)">{{ posts_today }}</div>
+        <div class="metric-label">Постов сегодня</div>
+      </div>
+      <div class="metric-card red-card">
+        <div class="metric-num" style="color:#ff5555">{{ reports_count }}</div>
+        <div class="metric-label">Жалоб ожидает</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" style="color:var(--text2)">{{ users|selectattr('is_banned')|list|length }}</div>
+        <div class="metric-label">Заблокировано</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" style="color:#60aaff">{{ users|selectattr('is_verified')|list|length }}</div>
+        <div class="metric-label">Верифицировано</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap">
+      <div class="card">
+        <div class="card-title">🛒 Топ товаров по покупкам</div>
+        {% if top_items %}
+        <div class="chart-bar-wrap">
+          {% set max_cnt = top_items[0][1] or 1 %}
+          {% for item, cnt in top_items %}
+          <div class="chart-bar-row">
+            <div class="chart-bar-label">{{ item.name }}</div>
+            <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:{{ (cnt / max_cnt * 100)|int }}%"></div></div>
+            <div class="chart-bar-val">{{ cnt }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="color:var(--text4);font-size:13px">Покупок ещё не было</div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ Быстрые действия</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-red" onclick="show('reports', document.getElementById('nav-reports'))">🚩 Посмотреть жалобы ({{ reports_count }})</button>
+          <button class="btn btn-blue" onclick="show('users', document.getElementById('nav-users'))">👥 Список пользователей</button>
+          <button class="btn btn-grey" onclick="show('shop', document.getElementById('nav-shop'))">🛒 Управление магазином</button>
+          <button class="btn btn-grey" onclick="show('audit', document.getElementById('nav-audit'))">🔍 Журнал аудита</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ПОЛЬЗОВАТЕЛИ ══════════ -->
+  <div id="s-users" class="section">
+    <div class="card">
+      <div class="card-title">👥 Пользователи</div>
+      <input class="search-bar" type="text" placeholder="🔍 Поиск по нику, email, IP..." oninput="filterUsers(this.value)">
+      <div class="filter-chips">
+        <button class="chip active" onclick="filterChip('all',this)">Все ({{ users|length }})</button>
+        <button class="chip" onclick="filterChip('admin',this)">🛡️ Админы</button>
+        <button class="chip" onclick="filterChip('banned',this)">🚫 Забанены</button>
+        <button class="chip" onclick="filterChip('verified',this)">✓ Верифицированы</button>
+        <button class="chip" onclick="filterChip('new',this)">🆕 Новые (7д)</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>Пользователь</th>
+              <th>Email / IP</th>
+              <th>Ур / XP / KP</th>
+              <th>Регистрация</th>
+              <th>Последний вход</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="user-tbody">
+            {% for u in users %}
+            <tr data-name="{{ u.username }}" data-email="{{ u.email }}" data-ip="{{ u.last_ip or '' }}"
+                data-admin="{{ 'yes' if u.is_admin else 'no' }}"
+                data-banned="{{ 'yes' if u.is_banned else 'no' }}"
+                data-verified="{{ 'yes' if u.is_verified else 'no' }}"
+                data-created="{{ u.created_at.isoformat() if u.created_at else '' }}">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <img class="u-av" src="{{ get_avatar_url(u) }}" onerror="this.src='/static/default_avatar.jpg'">
+                  <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">
+                      {{ u.username }}
+                      {% if u.is_admin %}<span class="badge-tag badge-admin">Admin</span>{% endif %}
+                      {% if u.is_verified %}<span class="badge-tag badge-verified">✓</span>{% endif %}
+                    </div>
+                    <div style="font-size:10px;color:var(--text4)">ID: {{ u.id }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-size:12px;color:var(--text3)">{{ u.email }}</div>
+                <div style="font-size:11px;color:var(--text4)">{{ u.last_ip or '—' }}</div>
+              </td>
+              <td>
+                <div style="font-size:13px;font-weight:700">Ур.{{ u.level }}</div>
+                <div style="font-size:11px;color:var(--text3)">{{ u.xp }} XP</div>
+                <div style="font-size:11px;color:var(--accent)">💎 {{ u.kp }}</div>
+              </td>
+              <td style="font-size:11px;color:var(--text4)">
+                {{ u.created_at.strftime('%d.%m.%Y') if u.created_at else '—' }}
+              </td>
+              <td style="font-size:11px;color:var(--text4)">
+                {{ u.last_seen.strftime('%d.%m %H:%M') if u.last_seen else '—' }}
+              </td>
+              <td>
+                {% if u.is_banned %}<span class="badge-tag badge-banned">Бан</span>{% endif %}
+                {% if u.is_muted %}<span class="badge-tag badge-muted">Мьют</span>{% endif %}
+                {% if not u.is_banned and not u.is_muted %}<span style="font-size:11px;color:#333">Активен</span>{% endif %}
+              </td>
+              <td>
+                <div class="actions-row">
+                  {% if not u.is_admin or me.username == 'Kvarden' %}
+                  {% if u.is_banned %}
+                  <form method="POST" action="/admin/unban/{{ u.id }}">
+                    <button class="btn btn-green btn-sm">Разбан</button>
+                  </form>
+                  {% else %}
+                  <form method="POST" action="/admin/ban">
+                    <input type="hidden" name="username" value="{{ u.username }}">
+                    <input type="hidden" name="reason" value="Admin action">
+                    <button class="btn btn-red btn-sm">Бан</button>
+                  </form>
+                  {% endif %}
+                  <form method="POST" action="/admin/mute/{{ u.id }}">
+                    <button class="btn btn-gold btn-sm">{% if u.is_muted %}Снять мьют{% else %}Мьют{% endif %}</button>
+                  </form>
+                  <form method="POST" action="/admin/verify/{{ u.id }}">
+                    <button class="btn btn-blue btn-sm">{% if u.is_verified %}Снять ✓{% else %}Дать ✓{% endif %}</button>
+                  </form>
+                  <button class="btn btn-gold btn-sm" onclick="openWarnModal({{ u.id }},'{{ u.username }}')">⚠️ Предупредить</button>
+                  <form method="POST" action="/admin/make-admin/{{ u.id }}">
+                    <button class="btn btn-grey btn-sm">{% if u.is_admin %}Снять Admin{% else %}Admin{% endif %}</button>
+                  </form>
+                  {% endif %}
+                  <a href="/user/{{ u.id }}" class="btn btn-grey btn-sm" style="text-decoration:none">Профиль</a>
+                </div>
+                {% if u.last_ip and not u.is_admin %}
+                <form method="POST" action="/admin/ban" style="margin-top:4px">
+                  <input type="hidden" name="ip" value="{{ u.last_ip }}">
+                  <input type="hidden" name="reason" value="IP ban">
+                  <button class="btn btn-red btn-sm">IP-бан</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ЖАЛОБЫ ══════════ -->
+  <div id="s-reports" class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:800">🚩 Жалобы</div>
+        <div style="font-size:13px;color:var(--text3)">Ожидают рассмотрения: {{ reports_count }}</div>
+      </div>
+    </div>
+
+    {% if reports %}
+    {% for rep in reports %}
+    <div class="report-card urgent">
+      <div class="report-meta">
+        <span>🆔 #{{ rep.id }}</span>
+        <span>📅 {{ rep.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+        <span>👤 Автор: <a href="/user/{{ rep.post.user.id }}" style="color:var(--red);font-weight:700">{{ rep.post.user.username }}</a></span>
+        <span>🚩 Жалоба от: <a href="/user/{{ rep.reporter.id }}" style="color:var(--accent)">{{ rep.reporter.username }}</a></span>
+        <span class="reason-pill">{{ rep.reason }}</span>
+      </div>
+      <div class="report-post-preview">
+        {% if rep.post.content %}{{ rep.post.content[:200] }}{% if rep.post.content|length > 200 %}…{% endif %}{% endif %}
+        {% if rep.post.media and rep.post.media_type == 'image' %}
+        <div style="margin-top:8px"><img src="/static/uploads/{{ rep.post.media }}" style="max-width:180px;border-radius:8px;display:block"></div>
+        {% endif %}
+      </div>
+      <div class="actions-row">
+        <form method="POST" action="/admin/report/delete/{{ rep.id }}">
+          <button class="btn btn-red">🗑️ Удалить пост</button>
+        </form>
+        <form method="POST" action="/admin/ban">
+          <input type="hidden" name="username" value="{{ rep.post.user.username }}">
+          <input type="hidden" name="reason" value="Жалоба #{{ rep.id }}: {{ rep.reason }}">
+          <button class="btn btn-red">🚫 Забанить автора</button>
+        </form>
+        <form method="POST" action="/admin/report/ignore/{{ rep.id }}">
+          <button class="btn btn-grey">✓ Игнорировать</button>
+        </form>
+        <a href="/user/{{ rep.post.user.id }}" class="btn btn-blue" style="text-decoration:none">👤 Профиль автора</a>
+      </div>
+    </div>
+    {% endfor %}
+    {# Also show report notifications sent to this admin #}
+    {% if report_notifs %}
+    <div style="margin-bottom:16px;font-size:13px;color:var(--text3);padding:0 4px">📬 Уведомления о жалобах (от пользователей)</div>
+    {% for rn in report_notifs %}
+    <div class="report-card" style="border-color:#2a1a00">
+      <div class="report-meta">
+        <span>📅 {{ rn.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+        {% if rn.from_user %}<span>🚩 От: <a href="/user/{{ rn.from_user.id }}" style="color:var(--accent)">@{{ rn.from_user.username }}</a></span>{% endif %}
+      </div>
+      <div class="report-post-preview">{{ rn.text }}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% else %}
+    <div style="padding:60px;text-align:center;color:var(--text4)">
+      <div style="font-size:48px;margin-bottom:12px">✓</div>
+      <div style="font-size:16px;color:#444;font-weight:700">Жалоб нет</div>
+      <div style="font-size:13px;color:#2a2a2a;margin-top:6px">Все материалы в порядке</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══════════ МАГАЗИН ══════════ -->
+  <div id="s-shop" class="section">
+    {% if request.args.get('success') %}<div class="alert alert-success">✓ Товар успешно добавлен!</div>{% endif %}
+    {% if request.args.get('error') %}<div class="alert alert-error">❌ Ошибка при добавлении</div>{% endif %}
+
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start">
+      <!-- ADD FORM -->
+      <div class="card" style="position:sticky;top:20px">
+        <div class="card-title">➕ Добавить товар</div>
+        <form method="POST" action="/admin/shop/add" enctype="multipart/form-data">
+          <label>Название</label>
+          <input type="text" name="name" placeholder="Огненная рамка" required>
+          <label>Тип товара</label>
+          <select name="item_type" id="type-select" onchange="toggleHexField()">
+            <option value="avatar">👤 Аватарка</option>
+            <option value="banner">🖼️ Баннер</option>
+            <option value="frame">✨ Рамка</option>
+            <option value="wallpaper">🏞️ Обои профиля</option>
+            <option value="effect">🌟 Эффект профиля</option>
+            <option value="nick_color">🎨 Цвет ника</option>
+          </select>
+          <div id="hex-field" style="display:none">
+            <label>Hex-цвет ника</label>
+            <input type="text" name="hex_color" placeholder="#FF5733">
+          </div>
+          <div id="file-field">
+            <label>Файл товара</label>
+            <div class="upload-box">
+              <input type="file" name="file" id="file-inp" onchange="updateFileName(this)">
+              <div id="file-name" style="font-size:13px;color:var(--text3)">📁 Нажми для выбора файла</div>
+            </div>
+          </div>
+          <label>Описание</label>
+          <input type="text" name="description" placeholder="Описание товара...">
+          <label>Цена (KP)</label>
+          <input type="number" name="price_kp" value="100" min="0">
+          <button class="btn btn-red" type="submit" style="width:100%;padding:10px;font-size:14px;margin-top:4px">Добавить</button>
+        </form>
+      </div>
+
+      <!-- ITEMS LIST -->
+      <div>
+        <div class="card-title" style="margin-bottom:12px">📦 Товары в магазине ({{ items|length }})</div>
+        {% if items %}
+        <div class="shop-grid">
+          {% for item in items %}
+          <div class="shop-card">
+            {% if item.item_type == 'nick_color' %}
+              <div class="shop-card-img" style="background:{{ item.filename }};display:flex;align-items:center;justify-content:center;font-size:32px">🎨</div>
+            {% elif item.item_type == 'effect' %}
+              <div class="shop-card-img" style="background:linear-gradient(135deg,#0d0d20,#200d20);display:flex;align-items:center;justify-content:center;font-size:32px">🌟</div>
+            {% else %}
+              {% set folder = {'avatar':'avatars','banner':'banners','frame':'frames','wallpaper':'wallpapers','effect':'effects'}.get(item.item_type,'avatars') %}
+              <img class="shop-card-img" src="/static/shop/{{ folder }}/{{ item.preview }}" onerror="this.style.background='#1a1a1a'">
+            {% endif %}
+            <div class="shop-card-info">
+              <div class="shop-card-name">{{ item.name }}</div>
+              <div class="shop-card-meta">ID:{{ item.id }} · {{ {'avatar':'Аватарка','banner':'Баннер','frame':'Рамка','wallpaper':'Обои','effect':'Эффект','nick_color':'Цвет ника'}.get(item.item_type,'?') }} · 💎{{ item.price_kp }}</div>
+              <div class="shop-card-actions">
+                <button class="btn btn-grey btn-sm" onclick="openEditModal({{ item.id }},'{{ item.name|replace("'","\\'")|e }}','{{ item.description|replace("'","\\'")|e }}',{{ item.price_kp }})">✏️</button>
+                <form method="POST" action="/admin/shop/delete/{{ item.id }}" onsubmit="return confirm('Удалить «{{ item.name }}»?')">
+                  <button class="btn btn-red btn-sm">🗑️</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="color:var(--text4);font-size:13px;padding:20px">Товаров нет. Добавьте первый!</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ БАН ══════════ -->
+  <div id="s-ban" class="section">
+    <div class="card" style="max-width:480px">
+      <div class="card-title">🚫 Выдать бан</div>
+      <form method="POST" action="/admin/ban">
+        <label>Ник пользователя</label>
+        <input type="text" name="username" placeholder="Введи ник...">
+        <label>Или IP-адрес</label>
+        <input type="text" name="ip" placeholder="192.168.1.1">
+        <label>Причина</label>
+        <input type="text" name="reason" placeholder="Нарушение правил..." value="">
+        <button class="btn btn-red" type="submit" style="width:100%;padding:10px;font-size:14px;margin-top:4px">Забанить</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════ KP ══════════ -->
+  <div id="s-kp" class="section">
+    <div class="card" style="max-width:480px">
+      <div class="card-title">💎 Выдать Kiso-коины</div>
+      <label>Пользователь</label>
+      <select id="kp-user-select">
+        {% for u in users %}
+        <option value="{{ u.id }}">{{ u.username }} ({{ u.kp }} KP)</option>
+        {% endfor %}
+      </select>
+      <label>Количество KP</label>
+      <input type="number" id="kp-amount" placeholder="100" min="1">
+      <button class="btn btn-green" onclick="giveKP()" style="width:100%;padding:10px;font-size:14px;margin-top:4px">Выдать KP</button>
+    </div>
+  </div>
+
+  <!-- ══════════ ИСТОРИЯ БАНОВ ══════════ -->
+  <div id="s-history" class="section">
+    <div class="card">
+      <div class="card-title">📋 История банов</div>
+      {% if bans %}
+      <table class="user-table">
+        <thead><tr><th>Пользователь</th><th>IP</th><th>Причина</th><th>Дата</th></tr></thead>
+        <tbody>
+          {% for b in bans %}
+          <tr>
+            <td style="font-size:12px">{% if b.user_id %}ID:{{ b.user_id }}{% else %}—{% endif %}</td>
+            <td style="font-size:11px;color:var(--text4)">{{ b.ip or '—' }}</td>
+            <td style="font-size:12px;color:var(--text3)">{{ b.reason or '—' }}</td>
+            <td style="font-size:11px;color:var(--text4)">{{ b.banned_at.strftime('%d.%m.%Y %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="color:var(--text4);font-size:13px">Банов пока не было</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══════════ АУДИТ ЛОГ ══════════ -->
+  <div id="s-audit" class="section">
+    <div class="card">
+      <div class="card-title">🔍 Журнал действий (Audit Log)</div>
+      {% if audit_logs %}
+      <div>
+        {% for log in audit_logs %}
+        <div class="log-row">
+          <div class="log-time">{{ log.created_at.strftime('%d.%m %H:%M') }}</div>
+          <div class="log-admin">{{ log.admin.username if log.admin else '?' }}</div>
+          <div class="log-action">{{ log.action }}</div>
+          {% if log.target %}<div class="log-target">→ {{ log.target }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="color:var(--text4);font-size:13px">Лог пуст</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditModal()">✕</button>
+    <div class="modal-title">✏️ Редактировать товар</div>
+    <form method="POST" id="edit-form">
+      <label>Название</label>
+      <input type="text" name="name" id="edit-name">
+      <label>Описание</label>
+      <input type="text" name="description" id="edit-description">
+      <label>Цена (KP)</label>
+      <input type="number" name="price_kp" id="edit-price" min="0">
+      <button class="btn btn-red" type="submit" style="width:100%;padding:10px;font-size:14px;margin-top:8px">Сохранить</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// ── Section switching ──
+function show(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// On load — check URL tab param
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  if (tab) {
+    const el = document.getElementById('nav-' + tab);
+    if (el) show(tab, el);
+  }
+});
+
+// ── User filters ──
+let activeChip = 'all';
+function filterChip(type, btn) {
+  activeChip = type;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function filterUsers(q) {
+  applyFilter(q);
+}
+
+function applyFilter(q) {
+  const query = (q || document.querySelector('.search-bar')?.value || '').toLowerCase();
+  const now = Date.now();
+  const week = 7 * 24 * 60 * 60 * 1000;
+  document.querySelectorAll('#user-tbody tr').forEach(r => {
+    const name  = r.dataset.name.toLowerCase();
+    const email = r.dataset.email?.toLowerCase() || '';
+    const ip    = r.dataset.ip?.toLowerCase() || '';
+    const matchQ = !query || name.includes(query) || email.includes(query) || ip.includes(query);
+    let matchChip = true;
+    if (activeChip === 'admin')    matchChip = r.dataset.admin === 'yes';
+    if (activeChip === 'banned')   matchChip = r.dataset.banned === 'yes';
+    if (activeChip === 'verified') matchChip = r.dataset.verified === 'yes';
+    if (activeChip === 'new') {
+      const d = r.dataset.created ? new Date(r.dataset.created) : null;
+      matchChip = d && (now - d.getTime()) < week;
+    }
+    r.style.display = (matchQ && matchChip) ? '' : 'none';
+  });
+}
+
+// ── Give KP ──
+function giveKP() {
+  const uid = document.getElementById('kp-user-select').value;
+  const amount = document.getElementById('kp-amount').value;
+  if (!uid || !amount) return;
+  const fd = new FormData(); fd.append('amount', amount);
+  fetch(`/admin/give-kp/${uid}`, {method:'POST', body:fd})
+    .then(() => { alert('KP выдано!'); location.reload(); });
+}
+
+// ── Shop form helpers ──
+function toggleHexField() {
+  const t = document.getElementById('type-select').value;
+  document.getElementById('hex-field').style.display = t === 'nick_color' ? 'block' : 'none';
+  document.getElementById('file-field').style.display = t === 'nick_color' ? 'none' : 'block';
+}
+
+function updateFileName(inp) {
+  document.getElementById('file-name').textContent = inp.files[0]?.name || '📁 Нажми для выбора файла';
+}
+
+// ── Edit modal ──
+function openEditModal(id, name, desc, price) {
+  document.getElementById('edit-form').action = `/admin/shop/edit/${id}`;
+  document.getElementById('edit-name').value = name;
+  document.getElementById('edit-description').value = desc;
+  document.getElementById('edit-price').value = price;
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+document.getElementById('edit-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('edit-modal')) closeEditModal();
+});
+</script>
+
+<!-- WARN USER MODAL -->
+<div id="warn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:#111;border:1px solid #3a2a00;border-radius:20px;padding:28px;width:90%;max-width:440px;position:relative">
+    <button onclick="closeWarnModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#555;font-size:22px;cursor:pointer">✕</button>
+    <div style="font-size:17px;font-weight:800;color:#EF9F27;margin-bottom:6px">⚠️ Предупреждение пользователю</div>
+    <div id="warn-modal-user" style="font-size:13px;color:#aaa;margin-bottom:16px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button class="w-btn" onclick="pickW(this,'Нарушение правил')">📋 Нарушение правил</button>
+      <button class="w-btn" onclick="pickW(this,'Спам')">🔁 Спам</button>
+      <button class="w-btn" onclick="pickW(this,'Оскорбления')">💢 Оскорбления</button>
+      <button class="w-btn" onclick="pickW(this,'Контент 18+')">🔞 Контент 18+</button>
+      <button class="w-btn" onclick="pickW(this,'Последнее предупреждение')">🚨 Последнее предупр.</button>
+      <button class="w-btn" onclick="pickW(this,'Мошенничество')">💀 Мошенничество</button>
+    </div>
+    <textarea id="warn-custom" rows="2" placeholder="Своя причина предупреждения..." style="width:100%;background:#0f0f0f;border:1px solid #3a2a00;border-radius:10px;padding:10px 14px;font-size:14px;color:#fff;outline:none;font-family:inherit;margin-bottom:12px;resize:none"></textarea>
+    <button onclick="sendWarn()" id="warn-send-btn" style="width:100%;padding:12px;background:#EF9F27;color:#000;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">⚠️ Отправить предупреждение</button>
+    <div id="warn-result" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center"></div>
+  </div>
+</div>
+<style>
+.w-btn{padding:8px 12px;border-radius:10px;background:#1a1500;border:1px solid #3a2a00;color:#aaa;font-size:12px;cursor:pointer;font-family:inherit;text-align:left;transition:all .15s}
+.w-btn:hover,.w-btn.sel{background:#2a1f00;border-color:#EF9F27;color:#EF9F27}
+</style>
+<script>
+let _wUid=0, _wReason='';
+function openWarnModal(uid, username){
+  _wUid=uid; _wReason='';
+  document.querySelectorAll('.w-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('warn-custom').value='';
+  document.getElementById('warn-result').style.display='none';
+  document.getElementById('warn-send-btn').disabled=false;
+  document.getElementById('warn-send-btn').textContent='⚠️ Отправить предупреждение';
+  document.getElementById('warn-modal-user').textContent='Пользователь: @'+username;
+  document.getElementById('warn-modal').style.display='flex';
+}
+function closeWarnModal(){document.getElementById('warn-modal').style.display='none';}
+document.getElementById('warn-modal').addEventListener('click',e=>{if(e.target===document.getElementById('warn-modal'))closeWarnModal();});
+function pickW(btn,r){document.querySelectorAll('.w-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');_wReason=r;}
+function sendWarn(){
+  const custom=document.getElementById('warn-custom').value.trim();
+  const reason=custom||_wReason;
+  if(!reason){showWR('Выбери или напиши причину!',false);return;}
+  const btn=document.getElementById('warn-send-btn');
+  btn.disabled=true;btn.textContent='Отправляю...';
+  const fd=new FormData();fd.append('reason',reason);
+  fetch('/admin/warn/user/'+_wUid,{method:'POST',body:fd})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){showWR('✓ Предупреждение отправлено! Пользователь увидит его.',true);setTimeout(closeWarnModal,2000);}
+      else{showWR(d.error||'Ошибка',false);btn.disabled=false;btn.textContent='⚠️ Отправить предупреждение';}
+    }).catch(()=>{showWR('Ошибка сети',false);btn.disabled=false;btn.textContent='⚠️ Отправить предупреждение';});
+}
+function showWR(msg,ok){
+  const el=document.getElementById('warn-result');
+  el.textContent=msg;
+  el.style.cssText='display:block;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center;'
+    +(ok?'background:#0a1f0a;border:1px solid #1a4a1a;color:#80f080':'background:#1f0a0a;border:1px solid #3a1010;color:#f08080');
+}
+</script>
+
+</body>
+</html>

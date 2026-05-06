@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRX — Магазин</title>
+  <style>
+    :root {
+      --bg:#080808; --bg2:#0f0f0f; --bg3:#161616;
+      --card:#111; --card2:#181818;
+      --border:#1e1e1e; --border2:#2a2a2a;
+      --text:#f0f0f0; --text2:#aaa; --text3:#666; --text4:#3a3a3a;
+      --red:#e0245e; --red2:#c0103e;
+      --green:#1D9E75; --accent:#7F77DD; --gold:#EF9F27;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;display:flex;min-height:100vh}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:220px;background:#0a0a0a;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:2px;flex-shrink:0;height:100vh;overflow-y:auto;position:fixed;top:0;left:0;z-index:100}
+    .logo{font-size:22px;font-weight:900;padding:6px 12px 16px;letter-spacing:-1px}
+    .logo span{color:#333}
+    .nav-section-label{font-size:10px;color:#222;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 12px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;font-size:14px;color:#555;text-decoration:none;position:relative;transition:all .15s;font-weight:500}
+    .nav-item:hover{background:#141414;color:#bbb}
+    .nav-item.active{color:#fff;background:#1a1a1a}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--red);border-radius:0 4px 4px 0}
+    .nav-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+    .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:2px 7px}
+    .nav-div{height:1px;background:#161616;margin:6px 10px}
+    .nav-spacer{flex:1}
+    .sidebar-user{display:flex;align-items:center;gap:9px;padding:10px 12px;border-top:1px solid #161616;margin-top:6px;text-decoration:none;border-radius:12px;transition:background .15s}
+    .sidebar-user:hover{background:#141414}
+    .s-av{width:34px;height:34px;border-radius:50%;overflow:hidden;background:#222;flex-shrink:0}
+    .s-av img{width:100%;height:100%;object-fit:cover;display:block}
+    .balance-mobile{display:none}
+    .admin-nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;font-size:14px;color:var(--red);text-decoration:none;font-weight:700;background:#150608;border:1px solid #2a0a10;transition:all .15s}
+    .admin-nav:hover{background:#1d080e}
+
+    /* ── MAIN ── */
+    .main{margin-left:220px;flex:1;padding:28px 28px 60px;min-height:100vh;max-width:1000px}
+    .page-header{margin-bottom:24px}
+    .page-title{font-size:26px;font-weight:900;letter-spacing:-.5px}
+    .page-sub{font-size:14px;color:var(--text3);margin-top:4px}
+
+    /* ── KP BALANCE CARD ── */
+    .balance-card{background:linear-gradient(135deg,#0d0d20,#1a1030);border:1px solid #2a2a4a;border-radius:18px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .balance-icon{font-size:42px;filter:drop-shadow(0 0 12px rgba(127,119,221,.6))}
+    .balance-main{flex:1;min-width:140px}
+    .balance-val{font-size:34px;font-weight:900;color:var(--accent);line-height:1}
+    .balance-label{font-size:13px;color:#555;margin-top:3px}
+    .balance-earn{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+    .earn-pill{background:#111;border:1px solid var(--border2);border-radius:999px;padding:5px 12px;font-size:11px;color:var(--text3)}
+    .earn-pill span{color:var(--accent);font-weight:700}
+
+    /* ── SEARCH BAR ── */
+    .search-block{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .search-input{flex:1;min-width:180px;background:#0f0f0f;border:1px solid var(--border2);border-radius:10px;padding:9px 14px;font-size:14px;color:var(--text);outline:none;font-family:inherit}
+    .search-input:focus{border-color:var(--accent)}
+    .search-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+    .search-btn:hover{opacity:.85}
+    .search-label{font-size:13px;color:var(--text3);white-space:nowrap}
+
+    /* ── CATEGORY TABS ── */
+    .cat-tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+    .cat-tab{padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid var(--border2);color:var(--text3);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:transparent}
+    .cat-tab:hover{border-color:var(--accent);color:var(--accent)}
+    .cat-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    /* ── SHOP GRID ── */
+    .section-title{font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:36px}
+
+    .shop-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .15s,transform .15s;position:relative}
+    .shop-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+    .shop-card.owned-card{border-color:var(--green)}
+    .shop-card.owned-card::after{content:'✓';position:absolute;top:8px;right:8px;background:var(--green);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px}
+
+    .shop-preview{width:100%;aspect-ratio:1;background:#0a0a0a;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+    .shop-preview.banner-prev{aspect-ratio:3/1}
+    .shop-preview.color-prev{aspect-ratio:1;font-size:36px}
+    .shop-preview.effect-prev{aspect-ratio:1;background:linear-gradient(135deg,#0d0d20,#200d20)}
+    .shop-preview img{width:100%;height:100%;object-fit:cover;display:block}
+    .shop-preview-empty{font-size:44px;color:#2a2a2a}
+
+    .shop-info{padding:12px}
+    .shop-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .shop-desc{font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4;height:30px;overflow:hidden}
+    .shop-price{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+    .price-num{font-size:15px;font-weight:800;color:var(--accent)}
+    .price-label{font-size:11px;color:var(--text3)}
+    .shop-id{font-size:10px;color:var(--text4);margin-bottom:6px}
+
+    .shop-btn{width:100%;padding:8px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+    .shop-btn.buy{background:var(--accent);color:#fff}
+    .shop-btn.buy:hover{opacity:.85}
+    .shop-btn.equip{background:var(--green);color:#fff}
+    .shop-btn.equip:hover{opacity:.85}
+    .shop-btn.owned{background:#0a1f0a;color:var(--green);border:1px solid #1a4a1a;cursor:default}
+    .shop-btn.no-kp{background:#1a1a1a;color:#333;cursor:not-allowed}
+
+    /* ── ALERTS ── */
+    .alert{border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;display:flex;align-items:center;gap:10px}
+    .alert.success{background:#0a1f0a;border:1px solid #1a4a1a;color:#80f080}
+    .alert.error{background:#1f0a0a;border:1px solid #3a1010;color:#f08080}
+    .alert.info{background:#0a0a1f;border:1px solid #1a1a4a;color:#8080f0}
+
+    /* ── DAILY QUESTS ── */
+    .quests-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:28px}
+    .quest-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .15s}
+    .quest-card:hover{border-color:var(--border2)}
+    .quest-card.done{border-color:var(--green)}
+    .quest-icon{font-size:24px;flex-shrink:0}
+    .quest-name{font-size:13px;font-weight:600;color:var(--text2)}
+    .quest-reward{font-size:11px;color:var(--accent);margin-top:2px}
+    .quest-check{margin-left:auto;font-size:16px;color:var(--green)}
+
+    /* ── LEADERBOARD ── */
+    .leaderboard-section{margin-top:8px;margin-bottom:36px}
+    .lb-tabs{display:flex;gap:0;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .lb-tab{flex:1;padding:10px;font-size:13px;font-weight:700;text-align:center;cursor:pointer;color:var(--text3);transition:all .15s;border:none;background:transparent;font-family:inherit}
+    .lb-tab.active{background:var(--accent);color:#fff}
+    .lb-pane{display:none}
+    .lb-pane.active{display:block}
+
+    .lb-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .12s}
+    .lb-row:last-child{border-bottom:none}
+    .lb-row:hover{background:#0d0d0d}
+    .lb-rank{font-size:18px;font-weight:900;min-width:36px;text-align:center}
+    .rank-1{color:var(--gold)}
+    .rank-2{color:#C0C0C0}
+    .rank-3{color:#CD7F32}
+    .rank-n{color:var(--text4)}
+    .lb-av{width:38px;height:38px;border-radius:50%;overflow:hidden;background:#222;flex-shrink:0}
+    .lb-av img{width:100%;height:100%;object-fit:cover;display:block}
+    .lb-name{flex:1;font-size:14px;font-weight:700;color:var(--text);text-decoration:none}
+    .lb-name:hover{color:var(--accent)}
+    .lb-val{font-size:15px;font-weight:800;color:var(--accent)}
+    .lb-val.xp-col{color:var(--red)}
+    .lb-me{background:#0a0a1a;border-left:3px solid var(--accent)}
+
+    /* ── EMPTY ── */
+    .empty-shop{padding:60px 20px;text-align:center;color:var(--text4)}
+    .empty-icon{font-size:52px;margin-bottom:14px;opacity:.4}
+    .empty-title{font-size:17px;color:#444;font-weight:700}
+    .empty-sub{font-size:13px;color:#2a2a2a;margin-top:6px}
+
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:999px}
+
+    @media(max-width:800px){
+      .sidebar{width:60px;padding:12px 6px}
+      .nav-item span,.nav-section-label,.sidebar-user>div:last-child{display:none}
+      .sidebar-user .balance-mobile{display:block !important}
+      .main{margin-left:60px;padding:16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item" href="/music"><span class="nav-icon">🎵</span><span>Музыка</span></a>
+  <a class="nav-item" href="/gaming"><span class="nav-icon">🎮</span><span>Игровой</span></a>
+  <div class="nav-section-label" style="margin-top:6px">Социальное</div>
+  <a class="nav-item" href="/messages"><span class="nav-icon">💬</span><span>Сообщения</span></a>
+  <a class="nav-item" href="/friends"><span class="nav-icon">👥</span><span>Друзья</span></a>
+  <a class="nav-item" href="/notifications"><span class="nav-icon">🔔</span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+  <div class="nav-section-label" style="margin-top:6px">Личное</div>
+  <a class="nav-item" href="/profile"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <a class="nav-item active" href="/shop"><span class="nav-icon">🛍</span><span>Магазин</span></a>
+  <a class="nav-item" href="/settings"><span class="nav-icon">⚙️</span><span>Настройки</span></a>
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="admin-nav" href="/admin"><span class="nav-icon">🛡️</span><span>Админ</span></a>
+  {% endif %}
+  <div class="nav-spacer"></div>
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ user.username }}</div>
+      <div class="balance-mobile" style="font-size:11px;color:var(--accent);margin-top:1px">💎 {{ user.kp }} KP</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px"><span class="nav-icon">🚪</span><span>Выйти</span></a>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <div class="page-header">
+    <div class="page-title">🛒 Магазин KRX</div>
+    <div class="page-sub">Трать KRX-коины на уникальные предметы для кастомизации профиля</div>
+  </div>
+
+  <!-- Alerts -->
+  {% set suc = request.args.get('success') %}
+  {% set err = request.args.get('error') %}
+  {% set eq  = request.args.get('equipped') %}
+  {% if suc %}<div class="alert success">✓ Куплено! +5 KP кэшбэк. Предмет надет автоматически.</div>{% endif %}
+  {% if eq  %}<div class="alert success">✓ Надет!</div>{% endif %}
+  {% if err == 'not_enough_kp'   %}<div class="alert error">❌ Недостаточно KRX-коинов!</div>{% endif %}
+  {% if err == 'already_owned'   %}<div class="alert error">Этот предмет уже есть в коллекции.</div>{% endif %}
+
+  <!-- KP Balance -->
+  <div class="balance-card">
+    <div class="balance-icon">💎</div>
+    <div class="balance-main">
+      <div class="balance-val">{{ user.kp }}</div>
+      <div class="balance-label">KRX-коины (KP)</div>
+    </div>
+    <div class="balance-earn">
+      <div class="earn-pill">Пост → <span>+5 KP</span></div>
+      <div class="earn-pill">Лайк → <span>+1 KP</span></div>
+      <div class="earn-pill">Трек → <span>+10 KP</span></div>
+      <div class="earn-pill">Покупка → <span>+5 KP</span> кэшбэк</div>
+    </div>
+  </div>
+
+  <!-- ══ ПОИСК ПО ID ══ -->
+  <div class="search-block">
+    <span class="search-label">🔍 Поиск товара:</span>
+    <form method="GET" action="/shop" style="display:flex;gap:8px;flex:1;flex-wrap:wrap">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <input class="search-input" type="text" name="q" value="{{ search_q }}" placeholder="Название товара...">
+      <input class="search-input" type="number" name="item_id" value="{{ request.args.get('item_id','') }}" placeholder="Поиск по ID товара..." style="max-width:200px">
+      <button class="search-btn" type="submit">Найти</button>
+      {% if search_q or request.args.get('item_id') %}
+      <a href="/shop?tab={{ tab }}" style="padding:9px 14px;border-radius:10px;background:#1a1a1a;color:var(--text3);text-decoration:none;font-size:13px">✕</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- ══ CATEGORY TABS ══ -->
+  <div class="cat-tabs">
+    <a href="/shop?tab=avatar{% if search_q %}&q={{ search_q }}{% endif %}"
+       class="cat-tab {% if tab=='avatar' %}active{% endif %}">👤 Аватарки
+       {% if avatars %}<span style="font-size:10px;opacity:.7">({{ avatars|length }})</span>{% endif %}</a>
+    <a href="/shop?tab=banner{% if search_q %}&q={{ search_q }}{% endif %}"
+       class="cat-tab {% if tab=='banner' %}active{% endif %}">🖼️ Баннеры
+       {% if banners %}<span style="font-size:10px;opacity:.7">({{ banners|length }})</span>{% endif %}</a>
+    <a href="/shop?tab=frame{% if search_q %}&q={{ search_q }}{% endif %}"
+       class="cat-tab {% if tab=='frame' %}active{% endif %}">✨ Рамки
+       {% if frames %}<span style="font-size:10px;opacity:.7">({{ frames|length }})</span>{% endif %}</a>
+    <a href="/shop?tab=wallpaper{% if search_q %}&q={{ search_q }}{% endif %}"
+       class="cat-tab {% if tab=='wallpaper' %}active{% endif %}">🏞️ Обои
+       {% if wallpapers %}<span style="font-size:10px;opacity:.7">({{ wallpapers|length }})</span>{% endif %}</a>
+    <a href="/shop?tab=effect{% if search_q %}&q={{ search_q }}{% endif %}"
+       class="cat-tab {% if tab=='effect' %}active{% endif %}">🌟 Эффекты
+       {% if effects %}<span style="font-size:10px;opacity:.7">({{ effects|length }})</span>{% endif %}</a>
+    <a href="/shop?tab=nick_color{% if search_q %}&q={{ search_q }}{% endif %}"
+       class="cat-tab {% if tab=='nick_color' %}active{% endif %}">🎨 Цвет ника
+       {% if nick_colors %}<span style="font-size:10px;opacity:.7">({{ nick_colors|length }})</span>{% endif %}</a>
+    <a href="/shop?tab=leaderboard"
+       class="cat-tab {% if tab=='leaderboard' %}active{% endif %}">🏆 Лидеры</a>
+    <a href="/shop?tab=quests"
+       class="cat-tab {% if tab=='quests' %}active{% endif %}">📅 Задания</a>
+  </div>
+
+  <!-- ══ МАКРОС КАРТОЧКИ ТОВАРА ══ -->
+  {% macro item_card(item, folder, preview_class='') %}
+  <div class="shop-card {% if item.id in owned %}owned-card{% endif %}">
+    <div class="shop-preview {{ preview_class }}">
+      {% if item.item_type == 'nick_color' %}
+        <div style="width:100%;height:100%;background:{{ item.filename }};display:flex;align-items:center;justify-content:center;font-size:40px">🎨</div>
+      {% elif item.item_type == 'effect' %}
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(135deg,#0d0d20,#200d20)">🌟</div>
+      {% elif item.preview %}
+        <img src="/static/shop/{{ folder }}/{{ item.preview }}" alt="{{ item.name }}" loading="lazy">
+      {% else %}
+        <div class="shop-preview-empty">🎁</div>
+      {% endif %}
+    </div>
+    <div class="shop-info">
+      <div class="shop-id">ID: {{ item.id }}</div>
+      <div class="shop-name">{{ item.name }}</div>
+      <div class="shop-desc">{{ item.description or '—' }}</div>
+      <div class="shop-price">
+        <span class="price-num">💎 {{ item.price_kp }}</span>
+        <span class="price-label">KP</span>
+      </div>
+      {% if item.id in owned %}
+        <form method="POST" action="/shop/equip/{{ item.id }}">
+          <input type="hidden" name="tab" value="{{ tab }}">
+          <button class="shop-btn equip" type="submit">✓ Надеть</button>
+        </form>
+      {% elif user.kp >= item.price_kp or user.is_admin %}
+        <form method="POST" action="/shop/buy/{{ item.id }}">
+          <input type="hidden" name="tab" value="{{ tab }}">
+          <button class="shop-btn buy" type="submit">Купить</button>
+        </form>
+      {% else %}
+        <button class="shop-btn no-kp" disabled>Нужно {{ item.price_kp }} KP</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endmacro %}
+
+  <!-- ══ ВИТРИНА — АВАТАРКИ ══ -->
+  {% if tab == 'avatar' %}
+  <div class="section-title">👤 Аватарки</div>
+  {% if avatars %}
+  <div class="shop-grid">
+    {% for item in avatars %}{{ item_card(item, 'avatars') }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-shop"><div class="empty-icon">👤</div><div class="empty-title">Аватарок нет</div><div class="empty-sub">Администратор скоро добавит товары</div></div>
+  {% endif %}
+
+  <!-- ══ БАННЕРЫ ══ -->
+  {% elif tab == 'banner' %}
+  <div class="section-title">🖼️ Баннеры</div>
+  {% if banners %}
+  <div class="shop-grid">
+    {% for item in banners %}{{ item_card(item, 'banners', 'banner-prev') }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-shop"><div class="empty-icon">🖼️</div><div class="empty-title">Баннеров нет</div></div>
+  {% endif %}
+
+  <!-- ══ РАМКИ ══ -->
+  {% elif tab == 'frame' %}
+  <div class="section-title">✨ Рамки для аватарки</div>
+  {% if frames %}
+  <div class="shop-grid">
+    {% for item in frames %}{{ item_card(item, 'frames') }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-shop"><div class="empty-icon">✨</div><div class="empty-title">Рамок нет</div></div>
+  {% endif %}
+
+  <!-- ══ ОБОИ ══ -->
+  {% elif tab == 'wallpaper' %}
+  <div class="section-title">🏞️ Обои профиля</div>
+  {% if wallpapers %}
+  <div class="shop-grid">
+    {% for item in wallpapers %}{{ item_card(item, 'wallpapers') }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-shop"><div class="empty-icon">🏞️</div><div class="empty-title">Обоев нет</div></div>
+  {% endif %}
+
+  <!-- ══ ЭФФЕКТЫ ══ -->
+  {% elif tab == 'effect' %}
+  <div class="section-title">🌟 Эффекты профиля</div>
+  {% if effects %}
+  <div class="shop-grid">
+    {% for item in effects %}{{ item_card(item, 'effects', 'effect-prev') }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-shop"><div class="empty-icon">🌟</div><div class="empty-title">Эффектов нет</div></div>
+  {% endif %}
+
+  <!-- ══ ЦВЕТА НИКА ══ -->
+  {% elif tab == 'nick_color' %}
+  <div class="section-title">🎨 Цвет ника</div>
+  {% if nick_colors %}
+  <div class="shop-grid">
+    {% for item in nick_colors %}{{ item_card(item, 'nick_colors', 'color-prev') }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-shop"><div class="empty-icon">🎨</div><div class="empty-title">Цветов ника нет</div></div>
+  {% endif %}
+
+  <!-- ══ ЗАДАНИЯ ══ -->
+  {% elif tab == 'quests' %}
+  <div class="section-title">📅 Ежедневные задания</div>
+  <div class="quests-grid">
+    <div class="quest-card {% if user.posts_today > 0 %}done{% endif %}">
+      <div class="quest-icon">📝</div>
+      <div>
+        <div class="quest-name">Опубликуй пост</div>
+        <div class="quest-reward">+20 XP · +5 KP</div>
+      </div>
+      {% if user.posts_today > 0 %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+    <div class="quest-card {% if user.bio %}done{% endif %}">
+      <div class="quest-icon">✍️</div>
+      <div>
+        <div class="quest-name">Заполни описание</div>
+        <div class="quest-reward">+100 XP (разовый)</div>
+      </div>
+      {% if user.bio %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+    <div class="quest-card {% if user.music %}done{% endif %}">
+      <div class="quest-icon">🎵</div>
+      <div>
+        <div class="quest-name">Добавь музыку в профиль</div>
+        <div class="quest-reward">+10 KP (разовый)</div>
+      </div>
+      {% if user.music %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+    <div class="quest-card {% if user.avatar and user.avatar != 'default_avatar.jpg' %}done{% endif %}">
+      <div class="quest-icon">🖼️</div>
+      <div>
+        <div class="quest-name">Установи аватарку</div>
+        <div class="quest-reward">+10 XP</div>
+      </div>
+      {% if user.avatar and user.avatar != 'default_avatar.jpg' %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+    <div class="quest-card {% if user.location %}done{% endif %}">
+      <div class="quest-icon">📍</div>
+      <div>
+        <div class="quest-name">Укажи местоположение</div>
+        <div class="quest-reward">+5 XP</div>
+      </div>
+      {% if user.location %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+    <div class="quest-card {% if user.level >= 10 %}done{% endif %}">
+      <div class="quest-icon">⚡</div>
+      <div>
+        <div class="quest-name">Достигни 10 уровня</div>
+        <div class="quest-reward">Разблокирует функции</div>
+      </div>
+      {% if user.level >= 10 %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+    <div class="quest-card {% if inventory %}done{% endif %}">
+      <div class="quest-icon">🛒</div>
+      <div>
+        <div class="quest-name">Купи первый предмет</div>
+        <div class="quest-reward">Начало коллекции</div>
+      </div>
+      {% if inventory %}<div class="quest-check">✓</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ══ ДОСКА ЛИДЕРОВ ══ -->
+  {% elif tab == 'leaderboard' %}
+  <div class="section-title">🏆 Доска лидеров</div>
+  <div class="leaderboard-section">
+    <div class="lb-tabs">
+      <button class="lb-tab active" id="lb-kp-tab" onclick="switchLb('kp')">💎 По KRX-коинам</button>
+      <button class="lb-tab" id="lb-xp-tab" onclick="switchLb('xp')">⚡ По Опыту (XP)</button>
+    </div>
+
+    <!-- Топ по KP -->
+    <div class="lb-pane active" id="lb-kp" style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      {% for u in top_kp %}
+      {% set rank = loop.index %}
+      <div class="lb-row {% if u.id == user.id %}lb-me{% endif %}">
+        <div class="lb-rank {% if rank==1 %}rank-1{% elif rank==2 %}rank-2{% elif rank==3 %}rank-3{% else %}rank-n{% endif %}">
+          {% if rank == 1 %}🥇{% elif rank == 2 %}🥈{% elif rank == 3 %}🥉{% else %}{{ rank }}{% endif %}
+        </div>
+        <div class="lb-av"><img src="{{ get_avatar_url(u) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+        <a class="lb-name" href="/user/{{ u.id }}">{{ u.username }}{% if u.id == user.id %} <span style="font-size:11px;color:var(--accent)">(ты)</span>{% endif %}</a>
+        <div class="lb-val">💎 {{ u.kp }}</div>
+      </div>
+      {% else %}
+      <div style="padding:30px;text-align:center;color:var(--text4)">Нет данных</div>
+      {% endfor %}
+    </div>
+
+    <!-- Топ по XP -->
+    <div class="lb-pane" id="lb-xp" style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:none">
+      {% for u in top_xp %}
+      {% set rank = loop.index %}
+      <div class="lb-row {% if u.id == user.id %}lb-me{% endif %}">
+        <div class="lb-rank {% if rank==1 %}rank-1{% elif rank==2 %}rank-2{% elif rank==3 %}rank-3{% else %}rank-n{% endif %}">
+          {% if rank == 1 %}🥇{% elif rank == 2 %}🥈{% elif rank == 3 %}🥉{% else %}{{ rank }}{% endif %}
+        </div>
+        <div class="lb-av"><img src="{{ get_avatar_url(u) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+        <a class="lb-name" href="/user/{{ u.id }}">{{ u.username }}{% if u.id == user.id %} <span style="font-size:11px;color:var(--red)">(ты)</span>{% endif %}</a>
+        <div class="lb-val xp-col">⚡ {{ u.xp }}</div>
+      </div>
+      {% else %}
+      <div style="padding:30px;text-align:center;color:var(--text4)">Нет данных</div>
+      {% endfor %}
+    </div>
+
+    <!-- Позиция текущего юзера -->
+    <div style="margin-top:14px;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:13px;color:var(--text3)">Твоя позиция:</div>
+      <div style="font-size:14px;font-weight:700;color:var(--accent)">💎 #{{ my_kp_rank }} по KP</div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);margin-left:16px">⚡ #{{ my_xp_rank }} по XP</div>
+    </div>
+  </div>
+
+  {% endif %}
+
+  {% if user.is_admin %}
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+    <a href="/admin/shop/add" style="display:inline-flex;align-items:center;gap:8px;background:var(--red);color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:700">🛡️ Управление магазином</a>
+  </div>
+  {% endif %}
+
+</div><!-- /main -->
+
+<script>
+function switchLb(type) {
+  document.getElementById('lb-kp').style.display = type === 'kp' ? 'block' : 'none';
+  document.getElementById('lb-xp').style.display = type === 'xp' ? 'block' : 'none';
+  document.getElementById('lb-kp-tab').classList.toggle('active', type === 'kp');
+  document.getElementById('lb-xp-tab').classList.toggle('active', type === 'xp');
+}
+</script>
+</body>
+</html>
