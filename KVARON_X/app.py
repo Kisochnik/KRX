@@ -29,6 +29,7 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 MAIL_FROM = 'kisparbiznes@gmail.com'
 MAIL_PASSWORD = 'KisPar_1_2026'
 ADMIN_TG_ID = '7929358879'
+BOT_TOKEN = '8729170777:AAH2iDgyGbeB7xZHqAlvbTKgiPpzVZH0ecE'
 
 ALLOWED_IMG = {'png', 'jpg', 'jpeg', 'webp'}
 ALLOWED_GIF = {'gif'}
