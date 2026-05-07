@@ -180,9 +180,6 @@
   <a class="nav-item" href="/friends">👥 <span>Друзья</span></a>
   <a class="nav-item" href="/profile">👤 <span>Профиль</span></a>
     <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">💎 <span>KRXWallet</span><span class="kw-dot"></span></a>
-  {% if me and me.is_admin %}
-  <a class="nav-item" href="/admin" style="color:#e0245e;background:#1a0808;border:1px solid #2a1010;border-radius:10px;margin-top:4px;">🛡️ <span>Админ панель</span></a>
-  {% endif %}
 <div class="nav-spacer"></div>
   <a class="nav-item" href="/logout">🚪 <span>Выйти</span></a>
 </div>
@@ -191,22 +188,15 @@
   <a href="/feed" class="back-link">← Назад</a>
 
   <div class="banner">
-    {% set burl = get_banner_url(target) %}
-    {% if target.banner and target.banner != 'default_banner.jpg' %}
-      {% if target.banner.startswith('__color__') %}
-        <div style="width:100%;height:100%;background:{{ target.banner[9:] }}"></div>
-      {% else %}
-        <img class="banner-img" src="{{ burl }}" onerror="this.parentElement.innerHTML='<div class=banner-grid></div>'">
-      {% endif %}
-    {% else %}
-      <div class="banner-grid"></div>
-    {% endif %}
+    {% if target.banner %}<img class="banner-img" src="/static/uploads/{{ target.banner }}">
+    {% else %}<div class="banner-grid"></div>{% endif %}
   </div>
 
   <div class="profile-area">
     <div class="avatar-row">
       <div class="avatar-wrap">
-        <img src="{{ get_avatar_url(target) }}" onerror="this.src='/static/default_avatar.jpg'">
+        {% if target.avatar %}<img src="/static/uploads/{{ target.avatar }}">
+        {% else %}<div class="avatar-initials">{{ target.username[0].upper() }}</div>{% endif %}
       </div>
       <div style="display:flex;gap:8px;align-items:flex-end;">
         {% if target.id == me.id %}
@@ -224,7 +214,11 @@
       </div>
     </div>
 
-
+    {% if report_status == 'sent' %}
+      <div class="notice">✅ Жалоба отправлена модераторам.</div>
+    {% elif report_status == 'no_reason' %}
+      <div class="notice error">⚠️ Укажите причину жалобы.</div>
+    {% endif %}
 
     <div class="online-indicator {% if online %}online{% else %}offline{% endif %}">
       <span class="dot"></span>
@@ -250,7 +244,13 @@
     </div>
 
     {% if target.id != me.id %}
-    <button onclick="openReportModal()" style="margin-top:12px;padding:7px 16px;border-radius:999px;border:1px solid #3a1010;background:#1a0808;color:#ff7070;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;">🚩 Пожаловаться</button>
+    <details class="report-box">
+      <summary>⚠️ Пожаловаться на профиль</summary>
+      <form method="POST" action="/report/user/{{ target.id }}" class="report-form">
+        <textarea name="reason" placeholder="Кратко опишите причину жалобы" required></textarea>
+        <button type="submit" class="friend-btn">Отправить жалобу</button>
+      </form>
+    </details>
     {% endif %}
 
     {% if target.music %}
@@ -320,112 +320,5 @@ function toggleMusic() {
   }
 }
 </script>
-
-<!-- ===== ADMIN WARNING TOAST ===== -->
-<div id="admin-warn" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;animation:warnSlide .4s ease">
-  <div style="background:linear-gradient(135deg,#200606,#2a0a0a);border-bottom:3px solid #e0245e;padding:16px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 30px rgba(224,36,94,.4)">
-    <span style="font-size:32px;flex-shrink:0">⚠️</span>
-    <div style="flex:1">
-      <div style="font-size:15px;font-weight:800;color:#e0245e;margin-bottom:4px">⚠️ Предупреждение от Администратора</div>
-      <div id="admin-warn-text" style="font-size:13px;color:#f0a0a0;line-height:1.5"></div>
-    </div>
-    <button onclick="closeAdminWarn()" style="background:none;border:none;color:#ff5555;font-size:22px;cursor:pointer;flex-shrink:0">✕</button>
-  </div>
-  <div id="admin-warn-bar" style="height:3px;background:#e0245e;transform-origin:left;animation:shrinkBar 5s linear forwards"></div>
-</div>
-
-<!-- ===== REPORT MODAL ===== -->
-<div id="report-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9998;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-  <div style="background:#111;border:1px solid #3a1010;border-radius:20px;padding:28px;width:90%;max-width:400px;position:relative;animation:fadeInM .2s ease">
-    <button onclick="closeReportModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1">✕</button>
-    <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:18px">🚩 Жалоба на @{{ target.username }}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <button class="r-btn" onclick="pickR(this,'Спам')">🔁 Спам</button>
-      <button class="r-btn" onclick="pickR(this,'Оскорбления')">💢 Оскорбления</button>
-      <button class="r-btn" onclick="pickR(this,'Контент 18+')">🔞 Контент 18+</button>
-      <button class="r-btn" onclick="pickR(this,'Мошенничество')">💀 Мошенничество</button>
-      <button class="r-btn" onclick="pickR(this,'Насилие')">⚠️ Насилие</button>
-      <button class="r-btn" onclick="pickR(this,'Другое')">❓ Другое</button>
-    </div>
-    <textarea id="r-custom" rows="2" placeholder="Своя причина..." style="width:100%;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:10px;padding:10px 14px;font-size:14px;color:#fff;outline:none;font-family:inherit;margin-bottom:12px;resize:none"></textarea>
-    <button onclick="submitReport({{ target.id }})" id="r-send" style="width:100%;padding:12px;background:#e0245e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s">Отправить жалобу</button>
-    <div id="r-result" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center"></div>
-  </div>
-</div>
-
-<style>
-.r-btn{padding:10px 14px;border-radius:10px;background:#1a1a1a;border:1px solid #2a2a2a;color:#aaa;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;transition:all .15s}
-.r-btn:hover,.r-btn.sel{background:#200a0a;border-color:#4a1010;color:#ff8080}
-@keyframes shrinkBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@keyframes warnSlide{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes fadeInM{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-</style>
-
-<script>
-// Report modal
-let _r = '';
-let _warnTimer;
-
-function openReportModal(){
-  _r='';
-  document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('sel'));
-  document.getElementById('r-custom').value='';
-  document.getElementById('r-result').style.display='none';
-  const btn=document.getElementById('r-send');
-  btn.disabled=false;btn.textContent='Отправить жалобу';
-  const el=document.getElementById('report-overlay');
-  el.style.display='flex';
-}
-function closeReportModal(){document.getElementById('report-overlay').style.display='none';}
-document.getElementById('report-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('report-overlay'))closeReportModal();});
-function pickR(btn,r){document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');_r=r;}
-function submitReport(uid){
-  const custom=document.getElementById('r-custom').value.trim();
-  const reason=custom||_r;
-  if(!reason){showRR('Выбери причину!',false);return;}
-  const btn=document.getElementById('r-send');
-  btn.disabled=true;btn.textContent='Отправляю...';
-  const fd=new FormData();fd.append('reason',reason);
-  fetch('/report/user/'+uid,{method:'POST',body:fd})
-    .then(r=>r.json()).then(d=>{
-      if(d.ok){showRR('✓ Жалоба отправлена!',true);setTimeout(closeReportModal,1800);}
-      else{showRR(d.error||'Ошибка',false);btn.disabled=false;btn.textContent='Отправить жалобу';}
-    }).catch(()=>{showRR('Ошибка сети',false);btn.disabled=false;btn.textContent='Отправить жалобу';});
-}
-function showRR(msg,ok){
-  const el=document.getElementById('r-result');
-  el.textContent=msg;
-  el.style.cssText='display:block;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center;'
-    +(ok?'background:#0a1f0a;border:1px solid #1a4a1a;color:#80f080':'background:#1f0a0a;border:1px solid #3a1010;color:#f08080');
-}
-
-// Admin warning toast
-function closeAdminWarn(){
-  document.getElementById('admin-warn').style.display='none';
-  clearTimeout(_warnTimer);
-}
-let _lastId=0;
-function pollAdminWarn(){
-  fetch('/notifications/poll?after='+_lastId)
-    .then(r=>r.json()).then(data=>{
-      if(data.length) _lastId=Math.max(...data.map(n=>n.id));
-      const w=data.find(n=>n.type==='admin_warning');
-      if(w){
-        const txt=w.text.replace('⚠️ Предупреждение от Администратора: ','');
-        document.getElementById('admin-warn-text').textContent=txt;
-        const el=document.getElementById('admin-warn');
-        el.style.display='block';
-        const bar=document.getElementById('admin-warn-bar');
-        bar.style.animation='none';bar.offsetHeight;bar.style.animation='shrinkBar 5s linear forwards';
-        clearTimeout(_warnTimer);
-        _warnTimer=setTimeout(closeAdminWarn,5000);
-      }
-    }).catch(()=>{});
-}
-pollAdminWarn();
-setInterval(pollAdminWarn,20000);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeReportModal();});
-</script>
-
 </body>
 </html>
