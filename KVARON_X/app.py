@@ -537,7 +537,7 @@ def register():
 def login():
     lang = request.args.get('lang', 'ru')
     error = success = None
-    require_2fa = False
+    require_2fa = 'login_2fa_user' in session
     user_pending = None
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -555,6 +555,7 @@ def login():
                 session.pop('login_2fa_user', None)
                 return redirect('/feed')
             error = 'Неверный код!'
+            require_2fa = True
         else:
             user = User.query.filter_by(username=username, password=password).first()
             if user:
@@ -665,11 +666,14 @@ def build_feed_context(user, tab, search_query, search_results):
             ((Post.visibility=='friends')&(Post.user_id.in_(friend_ids)))
         ).order_by(Post.created_at.desc()).limit(50).all()
 
-    if tab == 'news':
-        story_user_ids = set([p.user_id for p in Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id])).all()])
-    else:
-        story_user_ids = set([p.user_id for p in Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id])).all()])
+    story_posts = Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id]))\
+        .order_by(Post.created_at.desc()).all()
+    story_user_ids = []
+    for p in story_posts:
+        if p.user_id not in story_user_ids:
+            story_user_ids.append(p.user_id)
     story_users = User.query.filter(User.id.in_(story_user_ids)).all() if story_user_ids else []
+    story_users.sort(key=lambda u: story_user_ids.index(u.id))
     friends_list = get_friends(user.id)
     stories = story_users if story_users else friends_list[:8]
     likes = {l.post_id for l in Like.query.filter_by(user_id=user.id).all()}

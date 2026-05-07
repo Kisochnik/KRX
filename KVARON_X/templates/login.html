@@ -78,6 +78,15 @@
       font-size: 13px;
       margin-bottom: 14px;
     }
+    .success {
+      background: #0a1910;
+      border: 1px solid #146433;
+      color: #7bd08a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
     .lang-row{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
     .lang-btn{padding:5px 14px;border-radius:999px;border:1px solid #2a2a2a;background:transparent;color:#555;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
     .lang-btn.active{background:#e0245e;color:#fff;border-color:#e0245e}
@@ -96,6 +105,9 @@
       <button class="lang-btn" onclick="setLang('en',this)" id="lang-en">Eng</button>
     </div>
 
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
     {% if success %}
     <div class="success">{{ success }}</div>
     {% endif %}
