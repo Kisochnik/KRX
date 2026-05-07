@@ -4,7 +4,8 @@ from database import (db, User, Post, Like, Comment, FriendRequest, Message,
                       Group, GroupMember, GroupMessage, LFGPost,
                       Track, TrackLike, Playlist, PlaylistItem, LibraryTrack,
                       TgChatMember, Report, AuditLog, Transaction,
-                      Chat, ChatMember, MessageReaction)
+                      Chat, ChatMember, MessageReaction,
+                      Poll, PollOption, PollVote)
 import os, random, string, smtplib, sqlite3
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -196,6 +197,20 @@ def seed_music_content(user):
         copyright_owner='KRX',
         copyright_url='',
     ))
+    db.session.commit()
+
+
+def seed_poll_content(user):
+    if Poll.query.count() > 0:
+        return
+    p1 = Poll(user_id=user.id, question='Какую музыку ты хочешь услышать в KRX сегодня?', is_public=True)
+    db.session.add(p1); db.session.commit()
+    for option in ['Lo-fi \u2014 спокойный бит', 'EDM \u2014 танцевальный ритм', 'Rap & Trap \u2014 энергично', 'Rock & Metal \u2014 мощно']:
+        db.session.add(PollOption(poll_id=p1.id, text=option))
+    p2 = Poll(user_id=user.id, question='Где ты чаще всего играешь с друзьями?', is_public=True)
+    db.session.add(p2); db.session.commit()
+    for option in ['В Discord', 'В голосовом чате игры', 'В Telegram', 'В личных звонках']:
+        db.session.add(PollOption(poll_id=p2.id, text=option))
     db.session.commit()
 
 
@@ -658,6 +673,10 @@ def feed():
     xp_gained = request.args.get('xp', 0, type=int)
     kp_gained = request.args.get('kp', 0, type=int)
     friend_ids = [f.id for f in get_friends(user.id)]
+    polls = []
+    poll_vote_counts = {}
+    poll_total_votes = {}
+    user_votes = {}
     if tab == 'friends':
         posts = Post.query.filter(Post.user_id.in_(friend_ids + [user.id])).order_by(Post.created_at.desc()).limit(50).all()
     elif tab == 'top':
@@ -668,6 +687,22 @@ def feed():
         top_ids = [p.id for p in top_q]
         posts = Post.query.filter(Post.id.in_(top_ids)).all() if top_ids else []
         if posts: posts.sort(key=lambda p: top_ids.index(p.id))
+    elif tab == 'news':
+        if Poll.query.count() == 0:
+            seed_poll_content(user)
+        polls = Poll.query.filter_by(is_public=True).order_by(Poll.created_at.desc()).limit(12).all()
+        posts = Post.query.filter(
+            (Post.visibility=='public')|(Post.user_id==user.id)|
+            ((Post.visibility=='friends')&(Post.user_id.in_(friend_ids)))
+        ).order_by(Post.created_at.desc()).limit(30).all()
+        user_votes = {pv.poll_id: pv.option_id for pv in PollVote.query.filter_by(user_id=user.id).all()}
+        for poll in polls:
+            total = 0
+            for option in poll.options:
+                count = PollVote.query.filter_by(option_id=option.id).count()
+                poll_vote_counts[option.id] = count
+                total += count
+            poll_total_votes[poll.id] = total
     else:
         posts = Post.query.filter(
             (Post.visibility=='public')|(Post.user_id==user.id)|
@@ -691,7 +726,79 @@ def feed():
                            tab=tab, xp_gained=xp_gained, kp_gained=kp_gained,
                            xp_pct=xp_pct, next_xp=next_xp, notifs_unread=notifs_unread,
                            is_online=is_online, get_avatar_url=get_avatar_url,
-                           get_banner_url=get_banner_url)
+                           get_banner_url=get_banner_url,
+                           polls=polls, poll_vote_counts=poll_vote_counts,
+                           poll_total_votes=poll_total_votes, user_votes=user_votes)
+
+
+@app.route('/news')
+def news():
+    return redirect('/feed?tab=news')
+
+
+@app.route('/polls')
+def polls():
+    if 'user_id' not in session: return redirect('/login')
+    user = User.query.get(session['user_id'])
+    if user.is_banned: session.clear(); return redirect('/login')
+    if Poll.query.count() == 0:
+        seed_poll_content(user)
+    polls = Poll.query.filter_by(is_public=True).order_by(Poll.created_at.desc()).limit(25).all()
+    poll_vote_counts = {}
+    poll_total_votes = {}
+    user_votes = {pv.poll_id: pv.option_id for pv in PollVote.query.filter_by(user_id=user.id).all()}
+    for poll in polls:
+        total = 0
+        for option in poll.options:
+            count = PollVote.query.filter_by(option_id=option.id).count()
+            poll_vote_counts[option.id] = count
+            total += count
+        poll_total_votes[poll.id] = total
+    notifs_unread = get_unread_notifs(user.id)
+    return render_template('polls.html', user=user, polls=polls,
+                           poll_vote_counts=poll_vote_counts,
+                           poll_total_votes=poll_total_votes,
+                           user_votes=user_votes,
+                           notifs_unread=notifs_unread,
+                           get_avatar_url=get_avatar_url)
+
+
+@app.route('/polls/create', methods=['POST'])
+def poll_create():
+    if 'user_id' not in session: return redirect('/login')
+    user = User.query.get(session['user_id'])
+    if user.is_muted: return redirect('/feed?tab=news')
+    question = request.form.get('question', '').strip()
+    options = [request.form.get(f'option{i}', '').strip() for i in range(1, 5)]
+    options = [opt for opt in options if opt]
+    if len(question) < 6 or len(options) < 2:
+        return redirect('/feed?tab=news&error=bad_poll')
+    poll = Poll(user_id=user.id, question=question, is_public=True)
+    db.session.add(poll); db.session.commit()
+    for option_text in options:
+        db.session.add(PollOption(poll_id=poll.id, text=option_text))
+    db.session.commit()
+    return redirect('/feed?tab=news&success=poll_created')
+
+
+@app.route('/polls/<int:poll_id>/vote', methods=['POST'])
+def poll_vote(poll_id):
+    if 'user_id' not in session: return jsonify({'error': 'not logged in'}), 401
+    user = User.query.get(session['user_id'])
+    poll = Poll.query.get_or_404(poll_id)
+    option_id = request.form.get('option_id', type=int)
+    option = PollOption.query.filter_by(id=option_id, poll_id=poll.id).first()
+    if not option:
+        return jsonify({'error': 'invalid option'}), 400
+    vote = PollVote.query.filter_by(poll_id=poll.id, user_id=user.id).first()
+    if vote:
+        vote.option_id = option.id
+    else:
+        db.session.add(PollVote(poll_id=poll.id, option_id=option.id, user_id=user.id))
+    db.session.commit()
+    counts = {opt.id: PollVote.query.filter_by(option_id=opt.id).count() for opt in poll.options}
+    total = sum(counts.values())
+    return jsonify({'ok': True, 'counts': counts, 'total': total, 'selected': option.id})
 
 
 @app.route('/post/delete/<int:post_id>', methods=['POST'])
@@ -2265,7 +2372,6 @@ def wallet_transfer():
     if target.tg_id:
         try:
             import requests as req_lib
-            BOT_TOKEN = 'ВАШ_BOT_TOKEN'
             req_lib.post(
                 f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
                 json={'chat_id': target.tg_id,
@@ -2313,8 +2419,7 @@ def admin_warn_user(uid):
     if target.tg_id:
         try:
             import requests as rlib
-            BOT_TOKEN_LOCAL = 'ВАШ_BOT_TOKEN'
-            rlib.post(f'https://api.telegram.org/bot{BOT_TOKEN_LOCAL}/sendMessage',
+            rlib.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
                 json={'chat_id': target.tg_id,
                       'text': f'⚠️ <b>Предупреждение от Администратора @{me.username}</b>\n{reason}',
                       'parse_mode': 'HTML'}, timeout=5)

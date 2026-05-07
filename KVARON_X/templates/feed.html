@@ -202,6 +202,29 @@
     .publish-btn:hover { transform: scale(1.04); box-shadow: 0 6px 20px rgba(224,36,94,0.4); }
     .publish-btn:active { transform: scale(0.98); }
 
+    .poll-compose-box { margin-top: 16px; background: #111; border: 1px solid var(--border2); border-radius: 16px; padding: 18px; }
+    .poll-form { display: grid; gap: 10px; }
+    .poll-heading { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .poll-input { width: 100%; background: #151515; border: 1px solid var(--border2); border-radius: 14px; color: var(--text); padding: 12px 14px; outline: none; font-family: inherit; }
+    .poll-input:focus { border-color: var(--accent); }
+    .poll-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .poll-actions .secondary { background: #1a1a1a; color: var(--text2); }
+
+    .news-polls-section { padding: 0 20px 16px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .section-title { font-size: 16px; font-weight: 800; }
+    .section-link { color: var(--accent); font-size: 13px; text-decoration: none; }
+    .poll-list { display: grid; gap: 14px; }
+    .poll-card { background: #111; border: 1px solid var(--border2); border-radius: 18px; padding: 18px; }
+    .poll-question { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+    .poll-author { font-size: 12px; color: var(--text4); margin-bottom: 14px; }
+    .poll-options { display: grid; gap: 10px; }
+    .poll-option-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border2); border-radius: 14px; background: #0f0f13; color: var(--text); padding: 12px 14px; cursor: pointer; transition: all 0.15s; font-size: 14px; }
+    .poll-option-btn:hover { border-color: var(--accent); }
+    .poll-option-btn.selected { border-color: var(--accent); background: rgba(127,119,221,0.16); }
+    .option-text { font-weight: 600; }
+    .option-meta { font-size: 12px; color: var(--text3); }
+
     .media-preview-area { margin-top: 10px; display: none; position: relative; }
     .media-preview-area img, .media-preview-area video { max-width: 100%; border-radius: 12px; max-height: 220px; object-fit: cover; display: block; }
     .remove-media {
@@ -396,11 +419,11 @@
   <div class="logo">KR<span>X</span></div>
 
   <div class="nav-section-label">Основное</div>
-  <a class="nav-item active" href="/feed">
+  <a class="nav-item {% if tab != 'news' %}active{% endif %}" href="/feed">
     <span class="icon">🏠</span><span>Главная</span>
   </a>
-  <a class="nav-item" href="/music">
-    <span class="icon">🎵</span><span>Музыка</span>
+  <a class="nav-item {% if tab == 'news' %}active{% endif %}" href="/news">
+    <span class="icon">📰</span><span>Новости</span>
   </a>
   <a class="nav-item" href="/gaming">
     <span class="icon">🎮</span><span>Игровой</span>
@@ -466,6 +489,7 @@
       </div>
       <div class="feed-tabs">
         <a class="feed-tab {% if tab=='global' %}active{% endif %}" href="/feed?tab=global">🌍 Все</a>
+        <a class="feed-tab {% if tab=='news' %}active{% endif %}" href="/feed?tab=news">📰 Новости</a>
         <a class="feed-tab {% if tab=='friends' %}active{% endif %}" href="/feed?tab=friends">👥 Друзья</a>
         <a class="feed-tab {% if tab=='top' %}active{% endif %}" href="/feed?tab=top">🔥 Топ</a>
       </div>
@@ -556,9 +580,52 @@
               </div>
             </div>
           </form>
+
+          <div class="poll-compose-box hidden" id="poll-compose-box">
+            <form method="POST" action="/polls/create" class="poll-form">
+              <div class="poll-heading">Создать опрос</div>
+              <input class="poll-input" type="text" name="question" placeholder="Текст опроса" maxlength="200">
+              <input class="poll-input" type="text" name="option1" placeholder="Вариант 1" maxlength="100">
+              <input class="poll-input" type="text" name="option2" placeholder="Вариант 2" maxlength="100">
+              <input class="poll-input" type="text" name="option3" placeholder="Вариант 3 (необязательно)" maxlength="100">
+              <input class="poll-input" type="text" name="option4" placeholder="Вариант 4 (необязательно)" maxlength="100">
+              <div class="poll-actions">
+                <button type="submit" class="publish-btn">Опубликовать опрос</button>
+                <button type="button" class="publish-btn secondary" onclick="togglePollComposer()">Отмена</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
+
+    {% if tab == 'news' and polls %}
+    <div class="news-polls-section">
+      <div class="section-header">
+        <div class="section-title">📊 Горячие опросы</div>
+        <a class="section-link" href="/polls">Все опросы →</a>
+      </div>
+      <div class="poll-list">
+        {% for poll in polls %}
+        <div class="poll-card">
+          <div class="poll-question">{{ poll.question }}</div>
+          <div class="poll-author">Создал {{ poll.user.username }}</div>
+          <div class="poll-options">
+            {% for option in poll.options %}
+            {% set count = poll_vote_counts.get(option.id, 0) %}
+            {% set total = poll_total_votes.get(poll.id, 0) %}
+            <button class="poll-option-btn {% if user_votes.get(poll.id) == option.id %}selected{% endif %}"
+                    onclick="votePoll({{ poll.id }}, {{ option.id }}, this)">
+              <span class="option-text">{{ option.text }}</span>
+              <span class="option-meta">{{ count }} голосов{% if total > 0 %} · {{ (count / total * 100)|round(0) }}%{% endif %}</span>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- POSTS -->
     {% if not posts %}
@@ -767,8 +834,47 @@ function removeMedia() {
   document.querySelectorAll('.compose-icon-btn').forEach(b => b.classList.remove('active'));
 }
 
+function togglePollComposer() {
+  const box = document.getElementById('poll-compose-box');
+  if (!box) return;
+  if (box.classList.contains('hidden')) {
+    box.classList.remove('hidden');
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    box.classList.add('hidden');
+  }
+}
+
 function showPollHint() {
-  showToast('📊 Опросы — скоро!');
+  togglePollComposer();
+}
+
+function votePoll(pollId, optionId, btn) {
+  fetch('/polls/' + pollId + '/vote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'option_id=' + encodeURIComponent(optionId)
+  })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) {
+        showToast(d.error || 'Ошибка голосования');
+        return;
+      }
+      const buttons = btn.closest('.poll-options').querySelectorAll('.poll-option-btn');
+      buttons.forEach(el => el.classList.remove('selected'));
+      btn.classList.add('selected');
+      const total = d.total || 0;
+      buttons.forEach(el => {
+        const optId = el.getAttribute('onclick').match(/,(\s*)(\d+)\)/);
+        if (!optId) return;
+        const optionKey = parseInt(optId[2], 10);
+        const count = d.counts[optionKey] || 0;
+        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+        const meta = el.querySelector('.option-meta');
+        if (meta) meta.textContent = count + ' голосов · ' + percent + '%';
+      });
+    });
 }
 
 // ===== LIKE =====
