@@ -96,6 +96,27 @@ def migrate_database_schema():
     conn.commit()
     conn.close()
 
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(message)")
+    existing_message_columns = {row[1] for row in cur.fetchall()}
+    message_new_columns = {
+        'chat_id': 'INTEGER',
+        'msg_type': "VARCHAR(20) DEFAULT 'text'",
+        'media_file': "VARCHAR(300) DEFAULT ''",
+        'is_deleted': 'BOOLEAN DEFAULT 0',
+        'is_edited': 'BOOLEAN DEFAULT 0',
+        'edited_at': 'DATETIME NULL',
+    }
+    for column, definition in message_new_columns.items():
+        if column not in existing_message_columns:
+            try:
+                cur.execute(f"ALTER TABLE message ADD COLUMN {column} {definition}")
+            except Exception as e:
+                print(f'[DB MIGRATION ERROR] message.{column}: {e}')
+    conn.commit()
+    conn.close()
+
 
 def seed_shop_items():
     if ShopItem.query.count() > 0:
@@ -942,13 +963,16 @@ def messages():
     chat_messages = []
     if selected_id:
         selected_user = User.query.get(selected_id)
-        chat_messages = Message.query.filter(
-            Message.chat_id == None,
-            ((Message.from_user_id==user.id)&(Message.to_user_id==selected_id))|
-            ((Message.from_user_id==selected_id)&(Message.to_user_id==user.id))
-        ).order_by(Message.created_at).all()
-        Message.query.filter_by(from_user_id=selected_id, to_user_id=user.id, is_read=False).update({'is_read': True})
-        db.session.commit()
+        if selected_user:
+            chat_messages = Message.query.filter(
+                Message.chat_id == None,
+                ((Message.from_user_id==user.id)&(Message.to_user_id==selected_id))|
+                ((Message.from_user_id==selected_id)&(Message.to_user_id==user.id))
+            ).order_by(Message.created_at).all()
+            Message.query.filter_by(from_user_id=selected_id, to_user_id=user.id, is_read=False).update({'is_read': True})
+            db.session.commit()
+        else:
+            selected_id = None
     elif selected_chat_id:
         cm = ChatMember.query.filter_by(chat_id=selected_chat_id, user_id=user.id).first()
         if cm:
