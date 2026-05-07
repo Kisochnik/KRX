@@ -6,11 +6,12 @@ from database import (db, User, Post, Like, Comment, FriendRequest, Message,
                       TgChatMember, Report, AuditLog, Transaction,
                       Chat, ChatMember, MessageReaction,
                       Poll, PollOption, PollVote)
-import os, random, string, smtplib, sqlite3
+import os, random, string, smtplib, sqlite3, traceback
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 
 app = Flask(__name__)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -52,6 +53,12 @@ SHOP_TYPE_LABELS = {
 
 
 db.init_app(app)
+
+
+@app.errorhandler(500)
+def handle_internal_error(e):
+    print('[500 ERROR]', e)
+    return '<h1>Внутренняя ошибка сервера</h1><p>Попробуйте обновить страницу и повторить попытку.</p>', 500
 
 
 def migrate_database_schema():
@@ -515,21 +522,31 @@ def register():
     lang = request.args.get('lang', 'ru')
     error = None
     if request.method == 'POST':
-        username = request.form['username'].strip()
-        email = request.form['email'].strip()
-        password = request.form['password']
-        birthday = request.form.get('birthday', '')
-        lang = request.form.get('lang', 'ru')
-        if len(password) < 8: error = 'Пароль минимум 8 символов!'
-        elif User.query.filter_by(username=username).first(): error = 'Ник уже занят!'
-        elif User.query.filter_by(email=email).first(): error = 'Email уже зарегистрирован!'
-        else:
-            user = User(username=username, email=email, password=password, birthday=birthday, kp=100, lang=lang)
-            db.session.add(user); db.session.commit()
-            setup_special_user(user); db.session.commit()
-            session['user_id'] = user.id
-            email_welcome(user)
-            return redirect('/feed')
+        try:
+            username = request.form['username'].strip()
+            email = request.form['email'].strip()
+            password = request.form['password']
+            birthday = request.form.get('birthday', '')
+            lang = request.form.get('lang', 'ru')
+            if len(password) < 8:
+                error = 'Пароль минимум 8 символов!'
+            elif User.query.filter_by(username=username).first():
+                error = 'Ник уже занят!'
+            elif User.query.filter_by(email=email).first():
+                error = 'Email уже зарегистрирован!'
+            else:
+                user = User(username=username, email=email, password=password, birthday=birthday, kp=100, lang=lang)
+                db.session.add(user)
+                db.session.commit()
+                setup_special_user(user)
+                db.session.commit()
+                session['user_id'] = user.id
+                email_welcome(user)
+                return redirect('/feed')
+        except Exception as e:
+            print('[REGISTER ERROR]', e)
+            traceback.print_exc()
+            error = 'Произошла ошибка при регистрации. Попробуйте ещё раз.'
     return render_template('register.html', error=error, lang=lang)
 
 
@@ -538,49 +555,53 @@ def login():
     lang = request.args.get('lang', 'ru')
     error = success = None
     require_2fa = 'login_2fa_user' in session
-    user_pending = None
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        code_input = request.form.get('code', '').strip()
-        lang = request.form.get('lang', 'ru')
+        try:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '')
+            code_input = request.form.get('code', '').strip()
+            lang = request.form.get('lang', 'ru')
 
-        if code_input:
-            login_user_id = session.get('login_2fa_user')
-            user = User.query.get(login_user_id) if login_user_id else None
-            if user and code_input == user.tg_login_code:
-                user.tg_login_code = ''
-                db.session.commit()
-                session['user_id'] = user.id
-                session.pop('login_2fa_user', None)
-                return redirect('/feed')
-            error = 'Неверный код!'
-            require_2fa = True
-        else:
-            user = User.query.filter_by(username=username, password=password).first()
-            if user:
-                if user.is_banned:
-                    error = 'Аккаунт заблокирован!'
-                elif user.tg_id:
-                    # 2FA через ТГ
-                    code = gen_code(6)
-                    user.tg_login_code = code
+            if code_input:
+                login_user_id = session.get('login_2fa_user')
+                user = User.query.get(login_user_id) if login_user_id else None
+                if user and code_input == user.tg_login_code:
+                    user.tg_login_code = ''
                     db.session.commit()
-                    try:
-                        import requests as rlib
-                        rlib.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                                  json={'chat_id': user.tg_id, 'text': f'KRX — Вход в аккаунт\n\nКод подтверждения: {code}\n\nВведи этот код на сайте для входа.'})
-                        session['login_2fa_user'] = user.id
-                        require_2fa = True
-                        success = 'Код отправлен в Telegram!'
-                    except Exception as e:
-                        print(f'[LOGIN TG ERROR] {e}')
-                        error = 'Ошибка отправки кода в Telegram!'
-                else:
                     session['user_id'] = user.id
+                    session.pop('login_2fa_user', None)
                     return redirect('/feed')
+                error = 'Неверный код!'
+                require_2fa = True
             else:
-                error = 'Неверный логин или пароль'
+                user = User.query.filter_by(username=username, password=password).first()
+                if user:
+                    if user.is_banned:
+                        error = 'Аккаунт заблокирован!'
+                    elif user.tg_id:
+                        code = gen_code(6)
+                        user.tg_login_code = code
+                        db.session.commit()
+                        try:
+                            import requests as rlib
+                            rlib.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
+                                      json={'chat_id': user.tg_id, 'text': f'KRX — Вход в аккаунт\n\nКод подтверждения: {code}\n\nВведи этот код на сайте для входа.'})
+                            session['login_2fa_user'] = user.id
+                            require_2fa = True
+                            success = 'Код отправлен в Telegram!'
+                        except Exception as e:
+                            print(f'[LOGIN TG ERROR] {e}')
+                            traceback.print_exc()
+                            error = 'Ошибка отправки кода в Telegram!'
+                    else:
+                        session['user_id'] = user.id
+                        return redirect('/feed')
+                else:
+                    error = 'Неверный логин или пароль'
+        except Exception as e:
+            print('[LOGIN ERROR]', e)
+            traceback.print_exc()
+            error = 'Произошла ошибка при входе. Попробуйте ещё раз.'
     return render_template('login.html', error=error, success=success, lang=lang, require_2fa=require_2fa)
 
 
@@ -642,26 +663,29 @@ def reset_password():
 
 
 def build_feed_context(user, tab, search_query, search_results):
-    friend_ids = [f.id for f in get_friends(user.id)]
+    friends_list = get_friends(user.id)
+    friend_ids = [f.id for f in friends_list]
     polls = []
     poll_vote_counts = {}
     poll_total_votes = {}
     user_votes = {}
     if tab == 'friends':
-        posts = Post.query.filter(Post.user_id.in_(friend_ids + [user.id])).order_by(Post.created_at.desc()).limit(50).all()
+        posts = Post.query.options(joinedload(Post.user)).filter(
+            Post.user_id.in_(friend_ids + [user.id])
+        ).order_by(Post.created_at.desc()).limit(50).all()
     elif tab == 'top':
         from sqlalchemy import func
         top_q = db.session.query(Post.id, func.count(Like.id).label('lc'))\
             .outerjoin(Like, Like.post_id==Post.id).group_by(Post.id)\
             .order_by(func.count(Like.id).desc()).limit(20).all()
         top_ids = [p.id for p in top_q]
-        posts = Post.query.filter(Post.id.in_(top_ids)).all() if top_ids else []
+        posts = Post.query.options(joinedload(Post.user)).filter(Post.id.in_(top_ids)).all() if top_ids else []
         if posts: posts.sort(key=lambda p: top_ids.index(p.id))
     elif tab == 'stories':
-        posts = Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id]))\
+        posts = Post.query.options(joinedload(Post.user)).filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id]))\
                     .order_by(Post.created_at.desc()).limit(50).all()
     else:
-        posts = Post.query.filter(
+        posts = Post.query.options(joinedload(Post.user)).filter(
             (Post.visibility=='public')|(Post.user_id==user.id)|
             ((Post.visibility=='friends')&(Post.user_id.in_(friend_ids)))
         ).order_by(Post.created_at.desc()).limit(50).all()
@@ -674,12 +698,21 @@ def build_feed_context(user, tab, search_query, search_results):
             story_user_ids.append(p.user_id)
     story_users = User.query.filter(User.id.in_(story_user_ids)).all() if story_user_ids else []
     story_users.sort(key=lambda u: story_user_ids.index(u.id))
-    friends_list = get_friends(user.id)
     stories = story_users if story_users else friends_list[:8]
-    likes = {l.post_id for l in Like.query.filter_by(user_id=user.id).all()}
-    like_counts = {p.id: Like.query.filter_by(post_id=p.id).count() for p in posts}
-    comment_counts = {p.id: Comment.query.filter_by(post_id=p.id).count() for p in posts}
-    comments_by_post = {p.id: Comment.query.filter_by(post_id=p.id).order_by(Comment.created_at).all() for p in posts}
+
+    post_ids = [p.id for p in posts]
+    likes = {l.post_id for l in Like.query.filter(Like.user_id==user.id, Like.post_id.in_(post_ids)).all()} if post_ids else set()
+    like_counts = {}
+    comment_counts = {}
+    comments_by_post = {pid: [] for pid in post_ids}
+    if post_ids:
+        from sqlalchemy import func
+        like_counts = dict(db.session.query(Like.post_id, func.count(Like.id)).filter(Like.post_id.in_(post_ids)).group_by(Like.post_id).all())
+        comment_counts = dict(db.session.query(Comment.post_id, func.count(Comment.id)).filter(Comment.post_id.in_(post_ids)).group_by(Comment.post_id).all())
+        comments = Comment.query.options(joinedload(Comment.user)).filter(Comment.post_id.in_(post_ids)).order_by(Comment.created_at).all()
+        for c in comments:
+            comments_by_post[c.post_id].append(c)
+
     incoming = FriendRequest.query.filter_by(to_user_id=user.id, status='pending').all()
     suggested = [u for u in User.query.filter(User.id!=user.id, User.is_banned==False).order_by(User.xp.desc()).limit(8).all() if u.id not in friend_ids][:3]
     notifs_unread = get_unread_notifs(user.id)
