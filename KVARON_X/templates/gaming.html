@@ -285,6 +285,7 @@
   <div class="logo">KR<span>X</span></div>
   <div class="nav-section-label">Основное</div>
   <a class="nav-item" href="/feed"><span class="nav-icon">🏠</span><span>Главная</span></a>
+  <a class="nav-item" href="/news"><span class="nav-icon">📰</span><span>Новости</span></a>
   <a class="nav-item" href="/music"><span class="nav-icon">🎵</span><span>Музыка</span></a>
   <a class="nav-item active" href="/gaming"><span class="nav-icon">🎮</span><span>Игровой</span></a>
   <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
@@ -327,7 +328,7 @@
         <span>KRX Gaming — Игровой раздел</span>
       </div>
       <div class="hero-title">Найди пати.<br><em>Победи вместе.</em></div>
-      <div class="hero-sub">Ищи напарников, создавай группы, следи за турнирами — всё в одном месте.</div>
+      <div class="hero-sub">Ищи напарников, создавай группы и находи команду — всё в одном месте.</div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hs-num">{{ groups|length }}</div><div class="hs-label">Групп</div></div>
         <div class="hero-stat"><div class="hs-num">{{ total_online }}</div><div class="hs-label">Онлайн</div></div>
@@ -344,42 +345,11 @@
   <div class="gaming-tabs">
     <div class="g-tab active" id="tab-btn-all" onclick="switchTab('all', this)">🎮 Все группы</div>
     <div class="g-tab" id="tab-btn-lfg" onclick="switchTab('lfg', this)">🔍 Поиск напарника</div>
-    <div class="g-tab" id="tab-btn-tournaments" onclick="switchTab('tournaments', this)">🏆 Турниры</div>
     <div class="g-tab" id="tab-btn-my" onclick="switchTab('my', this)">👥 Мои группы</div>
   </div>
 
   <!-- ===== ALL GROUPS ===== -->
   <div id="pane-all" class="tab-pane active">
-
-    <!-- Game cards -->
-    <div class="section" style="padding-bottom:24px;">
-      <div class="section-header">
-        <div class="section-title">🕹️ Популярные игры</div>
-      </div>
-      <div class="games-grid">
-        {% set game_cards = [
-          ('🎯', 'CS2', 'Горячая', '#1a0a1a'),
-          ('⚡', 'Valorant', 'В тренде', '#1a0a10'),
-          ('🗡️', 'Dota 2', 'Топ', '#0a1a1a'),
-          ('🏟️', 'FIFA 25', 'Новинка', '#0a1a0a'),
-          ('🏔️', 'Minecraft', '', '#101a0a'),
-          ('🤖', 'Apex Legends', 'Горячая', '#1a1a0a'),
-          ('🎭', 'GTA V', '', '#1a0a0a'),
-          ('🌊', 'Fortnite', 'В тренде', '#0a0a1a'),
-        ] %}
-        {% for icon, name, tag, color in game_cards %}
-        <div class="game-card" onclick="filterByGame('{{ name }}')" style="background: linear-gradient(135deg, {{ color }}, #080808);">
-          <div class="game-card-placeholder">{{ icon }}</div>
-          <div class="game-card-overlay"></div>
-          <div class="game-card-info">
-            <div class="game-card-name">{{ name }}</div>
-            <div class="game-card-online"><span class="gc-dot"></span>{{ range(5, 50)|random if range else 12 }} онлайн</div>
-          </div>
-          {% if tag %}<div class="game-card-tag">{{ tag }}</div>{% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
 
     <!-- Active groups -->
     <div class="section">
@@ -517,72 +487,39 @@
     </div>
   </div>
 
-  <!-- ===== TOURNAMENTS ===== -->
-  <div id="pane-tournaments" class="tab-pane">
-    <div class="section">
-      <div class="section-header">
-        <div class="section-title">🏆 Турниры и события</div>
-      </div>
-      <div class="tournaments-grid">
-        <!-- Static demo tournaments - replace with DB in future -->
-        <div class="tourn-card">
-          <div class="tourn-banner">🎯<div class="tourn-status live">🔴 LIVE</div></div>
-          <div class="tourn-body">
-            <div class="tourn-name">KRX CS2 Cup #1</div>
-            <div class="tourn-game">Counter-Strike 2</div>
-            <div class="tourn-meta">
-              <div class="tourn-meta-item">👥 <span class="tourn-meta-val">8/16 команд</span></div>
-              <div class="tourn-meta-item">🏆 <span class="tourn-meta-val">500 KP</span></div>
-              <div class="tourn-meta-item">📅 <span class="tourn-meta-val">Сегодня</span></div>
-            </div>
-            <button class="tourn-reg-btn" disabled>Идёт трансляция</button>
-          </div>
-        </div>
-
-        <div class="tourn-card">
-          <div class="tourn-banner">⚡<div class="tourn-status open">✅ Открыта запись</div></div>
-          <div class="tourn-body">
-            <div class="tourn-name">Valorant Weekend Cup</div>
-            <div class="tourn-game">Valorant</div>
-            <div class="tourn-meta">
-              <div class="tourn-meta-item">👥 <span class="tourn-meta-val">3/8 команд</span></div>
-              <div class="tourn-meta-item">🏆 <span class="tourn-meta-val">1000 KP</span></div>
-              <div class="tourn-meta-item">📅 <span class="tourn-meta-val">22 апреля</span></div>
-            </div>
-            <button class="tourn-reg-btn" onclick="showToast('✓ Заявка отправлена!')">Зарегистрироваться</button>
-          </div>
-        </div>
-
-        <div class="tourn-card">
-          <div class="tourn-banner">🗡️<div class="tourn-status soon">⏳ Скоро</div></div>
-          <div class="tourn-body">
-            <div class="tourn-name">Dota 2 KRX League</div>
-            <div class="tourn-game">Dota 2</div>
-            <div class="tourn-meta">
-              <div class="tourn-meta-item">👥 <span class="tourn-meta-val">0/16 команд</span></div>
-              <div class="tourn-meta-item">🏆 <span class="tourn-meta-val">2000 KP</span></div>
-              <div class="tourn-meta-item">📅 <span class="tourn-meta-val">1 мая</span></div>
-            </div>
-            <button class="tourn-reg-btn" onclick="showToast('🔔 Уведомим когда откроется запись!')">Уведомить меня</button>
-          </div>
-        </div>
-
-        <div class="tourn-card">
-          <div class="tourn-banner" style="background:linear-gradient(135deg,#0a1a0a,#080808);">⚽<div class="tourn-status soon">⏳ Скоро</div></div>
-          <div class="tourn-body">
-            <div class="tourn-name">FIFA 25 Championship</div>
-            <div class="tourn-game">FIFA 25</div>
-            <div class="tourn-meta">
-              <div class="tourn-meta-item">👥 <span class="tourn-meta-val">1v1</span></div>
-              <div class="tourn-meta-item">🏆 <span class="tourn-meta-val">800 KP</span></div>
-              <div class="tourn-meta-item">📅 <span class="tourn-meta-val">5 мая</span></div>
-            </div>
-            <button class="tourn-reg-btn" onclick="showToast('🔔 Уведомим когда откроется!')">Уведомить меня</button>
-          </div>
-        </div>
-      </div>
+  {% if user.is_admin %}
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🏆 Турниры</div>
+      <button class="btn-ghost" style="padding:8px 16px;font-size:13px;" onclick="openCreateTournament()">+ Создать турнир</button>
     </div>
+    {% if tournaments %}
+    <div class="tournaments-grid">
+      {% for t in tournaments %}
+      <div class="tourn-card">
+        <div class="tourn-banner">🎮<div class="tourn-status {{ 'open' if t.status=='open' else 'soon' }}">{{ 'Открыта запись' if t.status=='open' else 'Скоро' }}</div></div>
+        <div class="tourn-body">
+          <div class="tourn-name">{{ t.title }}</div>
+          <div class="tourn-game">{{ t.game }}</div>
+          <div class="tourn-meta">
+            <div class="tourn-meta-item">🏆 <span class="tourn-meta-val">{{ t.reward or '—' }}</span></div>
+            <div class="tourn-meta-item">📅 <span class="tourn-meta-val">{{ t.date or 'Дата позже' }}</span></div>
+          </div>
+          <div class="tourn-meta-item" style="font-size:13px;color:var(--text3);margin-bottom:10px;">{{ t.description or 'Описание турнира' }}</div>
+          <button class="tourn-reg-btn" disabled>Только для админа</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-visual">🏆</div>
+      <div class="empty-title">Турниров пока нет</div>
+      <div class="empty-sub">Администратор может создать первый турнир.</div>
+    </div>
+    {% endif %}
   </div>
+  {% endif %}
 
   <!-- ===== MY GROUPS ===== -->
   <div id="pane-my" class="tab-pane">
@@ -653,8 +590,40 @@
   </div>
 </div>
 
+<!-- CREATE TOURNAMENT MODAL -->
+<div class="modal-overlay" id="create-tournament-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏆 Создать турнир</div>
+      <button class="modal-close" onclick="closeCreateTournament()">✕</button>
+    </div>
+    <form method="POST" action="/gaming/tournament/create">
+      <div class="form-row">
+        <label class="form-label">Название турнира *</label>
+        <input class="form-input" name="title" type="text" required maxlength="100" placeholder="Например: KRX CS2 Cup #1">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Игра *</label>
+        <input class="form-input" name="game" type="text" required placeholder="CS2, Valorant, Dota 2">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Приз *</label>
+        <input class="form-input" name="reward" type="text" placeholder="500 KP или другой приз">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Дата</label>
+        <input class="form-input" name="date" type="text" placeholder="22 апреля">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Описание</label>
+        <textarea class="form-textarea" name="description" placeholder="Кратко о формате, составе, правилах"></textarea>
+      </div>
+      <button class="submit-btn" type="submit">Создать турнир</button>
+    </form>
+  </div>
+</div>
+
 <!-- LFG POST MODAL -->
-<div class="modal-overlay" id="lfg-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">🔍 Ищу напарника</div>
@@ -715,6 +684,10 @@ function switchTab(tab, el) {
 function openCreateGroup() { document.getElementById('create-group-modal').classList.add('open'); }
 function closeCreateGroup() { document.getElementById('create-group-modal').classList.remove('open'); }
 document.getElementById('create-group-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCreateGroup(); });
+
+function openCreateTournament() { document.getElementById('create-tournament-modal').classList.add('open'); }
+function closeCreateTournament() { document.getElementById('create-tournament-modal').classList.remove('open'); }
+document.getElementById('create-tournament-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCreateTournament(); });
 
 function openLFGPost() { document.getElementById('lfg-modal').classList.add('open'); }
 document.getElementById('lfg-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });

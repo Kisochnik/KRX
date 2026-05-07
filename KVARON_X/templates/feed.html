@@ -192,6 +192,23 @@
     }
     .vis-select:focus { border-color: var(--accent); }
 
+    .stories-bar {
+      display: flex; gap: 12px; overflow-x: auto; padding: 16px 20px 0;
+      margin-bottom: 16px;
+    }
+    .story-item {
+      display: inline-flex; flex-direction: column; align-items: center;
+      width: 76px; text-decoration: none; color: var(--text); font-size: 12px;
+    }
+    .story-avatar {
+      width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(127,119,221,0.35);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      background: #111; margin-bottom: 8px; position: relative;
+    }
+    .story-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .story-avatar.story-add { border-color: #7F77DD; color: #7F77DD; font-size: 28px; font-weight: 900; }
+    .story-label { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
     .publish-btn {
       background: linear-gradient(135deg, #e0245e, #c0103e);
       color: #fff; border: none; border-radius: 999px; padding: 8px 22px;
@@ -426,6 +443,9 @@
   <a class="nav-item {% if tab == 'news' %}active{% endif %}" href="/news">
     <span class="icon">📰</span><span>Новости</span>
   </a>
+  <a class="nav-item" href="/music">
+    <span class="icon">🎵</span><span>Музыка</span>
+  </a>
   <a class="nav-item" href="/gaming">
     <span class="icon">🎮</span><span>Игровой</span>
   </a>
@@ -492,6 +512,18 @@
         <a class="feed-tab {% if tab=='global' %}active{% endif %}" href="/feed?tab=global">🌍 Все</a>
         <a class="feed-tab {% if tab=='friends' %}active{% endif %}" href="/feed?tab=friends">👥 Друзья</a>
         <a class="feed-tab {% if tab=='top' %}active{% endif %}" href="/feed?tab=top">🔥 Топ</a>
+      </div>
+      <div class="stories-bar">
+        <a class="story-item" href="/feed?tab=stories">
+          <div class="story-avatar story-add">+</div>
+          <div class="story-label">Моя история</div>
+        </a>
+        {% for friend in stories %}
+        <a class="story-item" href="/user/{{ friend.id }}">
+          <div class="story-avatar"><img src="{{ get_avatar_url(friend) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+          <div class="story-label">{{ friend.username }}</div>
+        </a>
+        {% endfor %}
       </div>
     </div>
 

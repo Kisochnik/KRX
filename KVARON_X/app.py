@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify, s
 from database import (db, User, Post, Like, Comment, FriendRequest, Message,
                       Follow, BanRecord, ShopItem, Purchase, Notification,
                       Group, GroupMember, GroupMessage, LFGPost,
-                      Track, TrackLike, Playlist, PlaylistItem, LibraryTrack,
+                      Tournament, Track, TrackLike, Playlist, PlaylistItem, LibraryTrack,
                       TgChatMember, Report, AuditLog, Transaction,
                       Chat, ChatMember, MessageReaction,
                       Poll, PollOption, PollVote)
@@ -715,6 +715,7 @@ def feed():
     incoming = FriendRequest.query.filter_by(to_user_id=user.id, status='pending').all()
     friends_list = get_friends(user.id)
     suggested = [u for u in User.query.filter(User.id!=user.id, User.is_banned==False).order_by(User.xp.desc()).limit(8).all() if u.id not in friend_ids][:3]
+    stories = friends_list[:8]
     notifs_unread = get_unread_notifs(user.id)
     next_xp = get_next_xp(user.xp)
     xp_pct = min(100, int(user.xp/max(next_xp,1)*100))
@@ -723,7 +724,7 @@ def feed():
                            comments_by_post=comments_by_post,
                            search_results=search_results, search_query=search_query,
                            incoming=incoming, friends=friends_list, suggested=suggested,
-                           tab=tab, xp_gained=xp_gained, kp_gained=kp_gained,
+                           stories=stories, tab=tab, xp_gained=xp_gained, kp_gained=kp_gained,
                            xp_pct=xp_pct, next_xp=next_xp, notifs_unread=notifs_unread,
                            is_online=is_online, get_avatar_url=get_avatar_url,
                            get_banner_url=get_banner_url,
@@ -1176,11 +1177,30 @@ def gaming():
     lfg_count = LFGPost.query.filter_by(is_active=True).count()
     live_groups_count = max(0, len(groups) // 3)
     member_counts = {g.id: GroupMember.query.filter_by(group_id=g.id).count() for g in groups}
+    tournaments = Tournament.query.order_by(Tournament.created_at.desc()).all() if user.is_admin else []
     return render_template('gaming.html', user=user, groups=groups, my_groups=my_groups,
                            notifs_unread=notifs_unread, total_online=total_online,
                            lfg_count=lfg_count, live_groups_count=live_groups_count,
                            lfg_posts=lfg_posts, member_counts=member_counts,
-                           get_avatar_url=get_avatar_url)
+                           tournaments=tournaments, get_avatar_url=get_avatar_url)
+
+
+@app.route('/gaming/tournament/create', methods=['POST'])
+def gaming_tournament_create():
+    if 'user_id' not in session: return redirect('/login')
+    user = User.query.get(session['user_id'])
+    if not user.is_admin: return redirect('/gaming')
+    title = request.form.get('title', '').strip()
+    game = request.form.get('game', '').strip()
+    reward = request.form.get('reward', '').strip()
+    date = request.form.get('date', '').strip()
+    description = request.form.get('description', '').strip()
+    if title and game:
+        t = Tournament(title=title, game=game, reward=reward, date=date,
+                       description=description, author_id=user.id,
+                       status='open')
+        db.session.add(t); db.session.commit()
+    return redirect('/gaming')
 
 
 @app.route('/gaming/create', methods=['POST'])

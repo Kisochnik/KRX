@@ -228,6 +228,20 @@ class LFGPost(db.Model):
     user = db.relationship('User')
 
 
+class Tournament(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    game = db.Column(db.String(80), default='')
+    description = db.Column(db.String(300), default='')
+    status = db.Column(db.String(20), default='open')
+    teams = db.Column(db.String(50), default='0/0')
+    reward = db.Column(db.String(50), default='')
+    date = db.Column(db.String(50), default='')
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    author = db.relationship('User')
+
+
 class Track(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
