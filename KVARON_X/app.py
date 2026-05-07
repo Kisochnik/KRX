@@ -65,6 +65,7 @@ def migrate_database_schema():
         'hide_online': 'BOOLEAN DEFAULT 0',
         'hide_level': 'BOOLEAN DEFAULT 0',
         'hide_birthday': 'BOOLEAN DEFAULT 0',
+        'is_story': 'BOOLEAN DEFAULT 0',
         'password_reset_code': "VARCHAR(10) DEFAULT ''",
         'tg_login_code': "VARCHAR(10) DEFAULT ''",
         'profile_effect': "VARCHAR(100) DEFAULT ''",
@@ -639,39 +640,7 @@ def reset_password():
     return render_template('reset_password.html', error=error, success=success)
 
 
-@app.route('/feed', methods=['GET', 'POST'])
-def feed():
-    if 'user_id' not in session: return redirect('/login')
-    user = User.query.get(session['user_id'])
-    if user.is_banned: session.clear(); return redirect('/login')
-    tab = request.args.get('tab', 'global')
-    search_query = request.args.get('q', '')
-    search_results = []
-    if search_query:
-        search_results = User.query.filter(User.username.ilike(f'%{search_query}%'), User.id != user.id).all()
-    xp_gained = kp_gained = 0
-    if request.method == 'POST':
-        if user.is_muted: return redirect('/feed')
-        content = request.form.get('content', '').strip()
-        visibility = request.form.get('visibility', 'public')
-        media_file = request.files.get('media')
-        media_filename = media_type = ''
-        if media_file and media_file.filename:
-            ext, ok = allowed_file(media_file.filename)
-            if ok:
-                fn = secure_filename(f"post_{user.id}_{int(datetime.utcnow().timestamp())}.{ext}")
-                media_file.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
-                media_filename = fn; media_type = get_media_type(ext)
-        if content or media_filename:
-            db.session.add(Post(user_id=user.id, content=content, media=media_filename,
-                               media_type=media_type, visibility=visibility))
-            db.session.commit()
-            if can_post_xp(user):
-                add_xp(user, 20); user.kp += 5; user.posts_today += 1
-                db.session.commit(); xp_gained = 20; kp_gained = 5
-        return redirect(f'/feed?xp={xp_gained}&kp={kp_gained}&tab={tab}')
-    xp_gained = request.args.get('xp', 0, type=int)
-    kp_gained = request.args.get('kp', 0, type=int)
+def build_feed_context(user, tab, search_query, search_results):
     friend_ids = [f.id for f in get_friends(user.id)]
     polls = []
     poll_vote_counts = {}
@@ -687,54 +656,111 @@ def feed():
         top_ids = [p.id for p in top_q]
         posts = Post.query.filter(Post.id.in_(top_ids)).all() if top_ids else []
         if posts: posts.sort(key=lambda p: top_ids.index(p.id))
-    elif tab == 'news':
-        if Poll.query.count() == 0:
-            seed_poll_content(user)
-        polls = Poll.query.filter_by(is_public=True).order_by(Poll.created_at.desc()).limit(12).all()
-        posts = Post.query.filter(
-            (Post.visibility=='public')|(Post.user_id==user.id)|
-            ((Post.visibility=='friends')&(Post.user_id.in_(friend_ids)))
-        ).order_by(Post.created_at.desc()).limit(30).all()
-        user_votes = {pv.poll_id: pv.option_id for pv in PollVote.query.filter_by(user_id=user.id).all()}
-        for poll in polls:
-            total = 0
-            for option in poll.options:
-                count = PollVote.query.filter_by(option_id=option.id).count()
-                poll_vote_counts[option.id] = count
-                total += count
-            poll_total_votes[poll.id] = total
+    elif tab == 'stories':
+        posts = Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id]))\
+                    .order_by(Post.created_at.desc()).limit(50).all()
     else:
         posts = Post.query.filter(
             (Post.visibility=='public')|(Post.user_id==user.id)|
             ((Post.visibility=='friends')&(Post.user_id.in_(friend_ids)))
         ).order_by(Post.created_at.desc()).limit(50).all()
+
+    if tab == 'news':
+        story_user_ids = set([p.user_id for p in Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id])).all()])
+    else:
+        story_user_ids = set([p.user_id for p in Post.query.filter(Post.is_story==True, Post.user_id.in_(friend_ids + [user.id])).all()])
+    story_users = User.query.filter(User.id.in_(story_user_ids)).all() if story_user_ids else []
+    friends_list = get_friends(user.id)
+    stories = story_users if story_users else friends_list[:8]
     likes = {l.post_id for l in Like.query.filter_by(user_id=user.id).all()}
     like_counts = {p.id: Like.query.filter_by(post_id=p.id).count() for p in posts}
     comment_counts = {p.id: Comment.query.filter_by(post_id=p.id).count() for p in posts}
     comments_by_post = {p.id: Comment.query.filter_by(post_id=p.id).order_by(Comment.created_at).all() for p in posts}
     incoming = FriendRequest.query.filter_by(to_user_id=user.id, status='pending').all()
-    friends_list = get_friends(user.id)
     suggested = [u for u in User.query.filter(User.id!=user.id, User.is_banned==False).order_by(User.xp.desc()).limit(8).all() if u.id not in friend_ids][:3]
-    stories = friends_list[:8]
     notifs_unread = get_unread_notifs(user.id)
     next_xp = get_next_xp(user.xp)
     xp_pct = min(100, int(user.xp/max(next_xp,1)*100))
-    return render_template('feed.html', user=user, posts=posts, likes=likes,
-                           like_counts=like_counts, comment_counts=comment_counts,
-                           comments_by_post=comments_by_post,
-                           search_results=search_results, search_query=search_query,
-                           incoming=incoming, friends=friends_list, suggested=suggested,
-                           stories=stories, tab=tab, xp_gained=xp_gained, kp_gained=kp_gained,
-                           xp_pct=xp_pct, next_xp=next_xp, notifs_unread=notifs_unread,
-                           is_online=is_online, get_avatar_url=get_avatar_url,
-                           get_banner_url=get_banner_url,
-                           polls=polls, poll_vote_counts=poll_vote_counts,
-                           poll_total_votes=poll_total_votes, user_votes=user_votes)
+    return {
+        'posts': posts,
+        'polls': polls,
+        'poll_vote_counts': poll_vote_counts,
+        'poll_total_votes': poll_total_votes,
+        'user_votes': user_votes,
+        'likes': likes,
+        'like_counts': like_counts,
+        'comment_counts': comment_counts,
+        'comments_by_post': comments_by_post,
+        'incoming': incoming,
+        'friends_list': friends_list,
+        'suggested': suggested,
+        'stories': stories,
+        'notifs_unread': notifs_unread,
+        'xp_pct': xp_pct,
+    }
+
+
+@app.route('/feed', methods=['GET', 'POST'])
+def feed():
+    if 'user_id' not in session: return redirect('/login')
+    user = User.query.get(session['user_id'])
+    if user.is_banned: session.clear(); return redirect('/login')
+    tab = request.args.get('tab', 'global')
+    search_query = request.args.get('q', '')
+    search_results = []
+    if search_query:
+        search_results = User.query.filter(User.username.ilike(f'%{search_query}%'), User.id != user.id).all()
+    xp_gained = kp_gained = 0
+    if request.method == 'POST':
+        if user.is_muted: return redirect('/feed')
+        content = request.form.get('content', '').strip()
+        visibility = request.form.get('visibility', 'public')
+        is_story = request.form.get('story') == '1'
+        media_file = request.files.get('media')
+        media_filename = media_type = ''
+        if media_file and media_file.filename:
+            ext, ok = allowed_file(media_file.filename)
+            if ok:
+                fn = secure_filename(f"post_{user.id}_{int(datetime.utcnow().timestamp())}.{ext}")
+                media_file.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
+                media_filename = fn; media_type = get_media_type(ext)
+        if content or media_filename:
+            db.session.add(Post(user_id=user.id, content=content, media=media_filename,
+                               media_type=media_type, visibility=visibility, is_story=is_story))
+            db.session.commit()
+            if can_post_xp(user):
+                add_xp(user, 20); user.kp += 5; user.posts_today += 1
+                db.session.commit(); xp_gained = 20; kp_gained = 5
+        redirect_tab = 'stories' if is_story else tab
+        return redirect(f'/feed?xp={xp_gained}&kp={kp_gained}&tab={redirect_tab}')
+    xp_gained = request.args.get('xp', 0, type=int)
+    kp_gained = request.args.get('kp', 0, type=int)
+    context = build_feed_context(user, tab, search_query, search_results)
+    return render_template('feed.html', user=user, search_results=search_results,
+                           search_query=search_query, tab=tab,
+                           xp_gained=xp_gained, kp_gained=kp_gained,
+                           page_title='Лента', show_poll_composer=False,
+                           **context, is_online=is_online,
+                           get_avatar_url=get_avatar_url, get_banner_url=get_banner_url)
 
 
 @app.route('/news')
 def news():
-    return redirect('/feed?tab=news')
+    if 'user_id' not in session: return redirect('/login')
+    user = User.query.get(session['user_id'])
+    if user.is_banned: session.clear(); return redirect('/login')
+    tab = 'news'
+    search_query = request.args.get('q', '')
+    search_results = []
+    if search_query:
+        search_results = User.query.filter(User.username.ilike(f'%{search_query}%'), User.id != user.id).all()
+    context = build_feed_context(user, tab, search_query, search_results)
+    return render_template('feed.html', user=user, search_results=search_results,
+                           search_query=search_query, tab=tab,
+                           xp_gained=0, kp_gained=0, page_title='Новости',
+                           show_poll_composer=True, **context,
+                           is_online=is_online, get_avatar_url=get_avatar_url,
+                           get_banner_url=get_banner_url)
 
 
 @app.route('/polls')
@@ -2012,7 +2038,7 @@ def settings():
             db.session.commit(); success = 'Сохранено!'
         elif action == 'language':
             user.lang = request.form.get('lang', 'ru')
-            db.session.commit(); success = 'Язык сохранён!'
+            db.session.commit(); session['lang'] = user.lang; success = 'Язык сохранён!'
         elif action == 'wallpaper':
             if user.is_admin or user.is_verified:
                 wf = request.files.get('wallpaper_file')

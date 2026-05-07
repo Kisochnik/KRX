@@ -208,6 +208,9 @@
     .story-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .story-avatar.story-add { border-color: #7F77DD; color: #7F77DD; font-size: 28px; font-weight: 900; }
     .story-label { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+    .story-composer { padding: 0 20px 16px; background: #0d0d12; border-bottom: 1px solid var(--border); }
+    .story-composer.hidden { display: none; }
+    .story-composer textarea { width: 100%; }
 
     .publish-btn {
       background: linear-gradient(135deg, #e0245e, #c0103e);
@@ -506,15 +509,16 @@
     <!-- HEADER -->
     <div class="feed-header">
       <div class="feed-header-top">
-        <div class="feed-title">KRX</div>
+        <div class="feed-title">{{ page_title }}</div>
       </div>
+      {% if tab != 'news' %}
       <div class="feed-tabs">
         <a class="feed-tab {% if tab=='global' %}active{% endif %}" href="/feed?tab=global">🌍 Все</a>
         <a class="feed-tab {% if tab=='friends' %}active{% endif %}" href="/feed?tab=friends">👥 Друзья</a>
         <a class="feed-tab {% if tab=='top' %}active{% endif %}" href="/feed?tab=top">🔥 Топ</a>
       </div>
       <div class="stories-bar">
-        <a class="story-item" href="/feed?tab=stories">
+        <a class="story-item story-add" href="#" onclick="toggleStoryComposer(); return false;">
           <div class="story-avatar story-add">+</div>
           <div class="story-label">Моя история</div>
         </a>
@@ -525,12 +529,40 @@
         </a>
         {% endfor %}
       </div>
+      <div class="story-composer hidden" id="story-composer">
+        <form method="POST" action="/feed" enctype="multipart/form-data" id="story-form">
+          <input type="hidden" name="story" value="1">
+          <div class="compose-textarea" style="margin:0 20px 12px;">
+            <textarea name="content" placeholder="Расскажи о своей истории..." rows="2" style="width:100%;background:#161616;border:1px solid var(--border2);border-radius:14px;color:var(--text);padding:12px 14px;font-size:14px;outline:none;resize:none;font-family:inherit;"></textarea>
+          </div>
+          <div class="compose-tools" style="padding:0 20px 16px;">
+            <div class="compose-icons">
+              <label class="compose-icon-btn" title="Фото">
+                <span>📷</span> <span>Фото</span>
+                <input type="file" name="media" id="story-media-photo" accept="image/*" style="display:none" onchange="previewStoryMedia(this, 'image')">
+              </label>
+              <label class="compose-icon-btn" title="Видео">
+                <span>🎬</span> <span>Видео</span>
+                <input type="file" name="media" id="story-media-video" accept="video/*" style="display:none" onchange="previewStoryMedia(this, 'video')">
+              </label>
+            </div>
+            <button class="publish-btn" type="submit" style="margin-left:auto;">Опубликовать историю</button>
+          </div>
+          <div class="media-preview-area" id="story-media-wrap" style="display:none;">
+            <img id="story-img-prev" style="display:none;">
+            <video id="story-vid-prev" controls style="display:none;max-width:100%;border-radius:12px;max-height:220px;"></video>
+            <button type="button" class="remove-media" onclick="removeStoryMedia()">✕</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- SEARCH -->
     <div class="search-bar">
-      <form method="GET" action="/feed">
+      <form method="GET" action="{% if tab == 'news' %}/news{% else %}/feed{% endif %}">
+        {% if tab != 'news' %}
         <input type="hidden" name="tab" value="{{ tab }}">
+        {% endif %}
         <div class="search-inner">
           <input class="search-input" type="text" name="q" placeholder="🔍 Найти пользователей..." value="{{ search_query }}">
           <button class="search-btn" type="submit">Найти</button>
@@ -599,9 +631,11 @@
                   <span>🎬</span> <span>Видео</span>
                   <input type="file" name="media" id="media-video" accept="video/*" style="display:none" onchange="previewMedia(this, 'video')">
                 </label>
+                {% if show_poll_composer %}
                 <button type="button" class="compose-icon-btn" onclick="showPollHint()">
                   <span>📊</span> <span>Опрос</span>
                 </button>
+                {% endif %}
               </div>
               <div class="compose-right-tools">
                 <select class="vis-select" name="visibility">
@@ -613,7 +647,7 @@
             </div>
           </form>
 
-          <div class="poll-compose-box hidden" id="poll-compose-box">
+          <div class="poll-compose-box hidden" id="poll-compose-box" {% if not show_poll_composer %}style="display:none;"{% endif %}>
             <form method="POST" action="/polls/create" class="poll-form">
               <div class="poll-heading">Создать опрос</div>
               <input class="poll-input" type="text" name="question" placeholder="Текст опроса" maxlength="200">
@@ -631,33 +665,6 @@
       </div>
     </div>
 
-    {% if tab == 'news' and polls %}
-    <div class="news-polls-section">
-      <div class="section-header">
-        <div class="section-title">📊 Горячие опросы</div>
-        <a class="section-link" href="/polls">Все опросы →</a>
-      </div>
-      <div class="poll-list">
-        {% for poll in polls %}
-        <div class="poll-card">
-          <div class="poll-question">{{ poll.question }}</div>
-          <div class="poll-author">Создал {{ poll.user.username }}</div>
-          <div class="poll-options">
-            {% for option in poll.options %}
-            {% set count = poll_vote_counts.get(option.id, 0) %}
-            {% set total = poll_total_votes.get(poll.id, 0) %}
-            <button class="poll-option-btn {% if user_votes.get(poll.id) == option.id %}selected{% endif %}"
-                    onclick="votePoll({{ poll.id }}, {{ option.id }}, this)">
-              <span class="option-text">{{ option.text }}</span>
-              <span class="option-meta">{{ count }} голосов{% if total > 0 %} · {{ (count / total * 100)|round(0) }}%{% endif %}</span>
-            </button>
-            {% endfor %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
 
     <!-- POSTS -->
     {% if not posts %}
@@ -879,6 +886,40 @@ function togglePollComposer() {
 
 function showPollHint() {
   togglePollComposer();
+}
+
+function toggleStoryComposer() {
+  const box = document.getElementById('story-composer');
+  if (!box) return;
+  box.classList.toggle('hidden');
+  if (!box.classList.contains('hidden')) {
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function previewStoryMedia(input, type) {
+  if (!input.files || !input.files[0]) return;
+  const wrap = document.getElementById('story-media-wrap');
+  const img = document.getElementById('story-img-prev');
+  const vid = document.getElementById('story-vid-prev');
+  const url = URL.createObjectURL(input.files[0]);
+  wrap.style.display = 'block';
+  if (type === 'image') {
+    img.src = url; img.style.display = 'block'; vid.style.display = 'none';
+  } else {
+    vid.src = url; vid.style.display = 'block'; img.style.display = 'none';
+  }
+}
+
+function removeStoryMedia() {
+  const wrap = document.getElementById('story-media-wrap');
+  const img = document.getElementById('story-img-prev');
+  const vid = document.getElementById('story-vid-prev');
+  wrap.style.display = 'none';
+  img.src = '';
+  vid.src = '';
+  document.getElementById('story-media-photo').value = '';
+  document.getElementById('story-media-video').value = '';
 }
 
 function votePoll(pollId, optionId, btn) {

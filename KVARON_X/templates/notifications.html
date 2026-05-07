@@ -214,8 +214,8 @@
     {% if new_notifs %}
     <div class="section-label" id="section-new">Новые</div>
     {% for n in new_notifs %}
-    {% set types_match = n.notif_type %}
-    <div class="notif-item is-new" data-type="{{ n.notif_type }}">
+    {% set notif_link = n.from_user and '/user/' ~ n.from_user.id or '/notifications' %}
+    <a class="notif-item is-new" data-type="{{ n.notif_type }}" href="{{ notif_link }}">
       <div class="notif-icon-wrap">
         <div class="notif-av">
           {% if n.from_user %}
@@ -250,14 +250,15 @@
         <div class="notif-time">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
       </div>
       <div class="notif-dot"></div>
-    </div>
+    </a>
     {% endfor %}
     {% endif %}
 
     {% if old_notifs %}
     <div class="section-label" id="section-old">Прочитанные</div>
     {% for n in old_notifs %}
-    <div class="notif-item" data-type="{{ n.notif_type }}">
+    {% set notif_link = n.from_user and '/user/' ~ n.from_user.id or '/notifications' %}
+    <a class="notif-item" data-type="{{ n.notif_type }}" href="{{ notif_link }}">
       <div class="notif-icon-wrap">
         <div class="notif-av">
           {% if n.from_user %}
@@ -292,7 +293,7 @@
         <div class="notif-text" style="color:var(--text3);">{{ n.text }}</div>
         <div class="notif-time">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
       </div>
-    </div>
+    </a>
     {% endfor %}
     {% endif %}
 

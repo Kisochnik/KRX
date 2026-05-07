@@ -124,6 +124,8 @@
 
     /* Inventory */
     .inventory-strip { padding: 14px 24px; border-bottom: 1px solid var(--border); }
+  .inventory-section.hidden .inventory-strip { display: none; }
+  .toggle-inventory-btn { background: #121212; border: 1px solid var(--border2); color: var(--text); padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 14px; margin: 0 24px 16px; display: inline-flex; align-items: center; gap: 8px; }
     .inv-title { font-size: 13px; color: var(--text3); font-weight: 600; margin-bottom: 10px; }
     .inv-items { display: flex; gap: 8px; flex-wrap: wrap; }
     .inv-item { background: #111; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; width: 70px; cursor: pointer; transition: border-color 0.15s; }
@@ -360,9 +362,11 @@
 
   <!-- INVENTORY -->
   {% if inventory %}
-  <div class="inventory-strip">
-    <div class="inv-title">🎒 Инвентарь ({{ inventory|length }})</div>
-    <div class="inv-items">
+  <button type="button" class="toggle-inventory-btn" onclick="toggleInventory()">🎒 Показать инвентарь ({{ inventory|length }})</button>
+  <div class="inventory-section hidden" id="inventory-section">
+    <div class="inventory-strip">
+      <div class="inv-title">🎒 Инвентарь ({{ inventory|length }})</div>
+      <div class="inv-items">
       {% for p in inventory %}
       {% set item = p.item %}
       {% set folder = 'avatars' if item.item_type == 'avatar' else ('banners' if item.item_type == 'banner' else 'frames') %}
@@ -557,6 +561,10 @@ function toggleLike(postId, btn) {
     const lc = document.getElementById('lc-' + postId);
     if (lc) lc.textContent = d.count;
   });
+}
+
+function toggleInventory() {
+  document.getElementById('inventory-section')?.classList.toggle('hidden');
 }
 
 function toggleComments(postId) {

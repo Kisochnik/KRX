@@ -63,6 +63,7 @@ class Post(db.Model):
     content = db.Column(db.String(500), nullable=False)
     media = db.Column(db.String(200), default='')
     media_type = db.Column(db.String(10), default='')
+    is_story = db.Column(db.Boolean, default=False)
     pinned = db.Column(db.Boolean, default=False)
     visibility = db.Column(db.String(20), default='public')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
