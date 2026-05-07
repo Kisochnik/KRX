@@ -428,6 +428,7 @@
       </label>
       {% endfor %}
     </div>
+    <div id="gc-error" style="color:#ff7fa1;margin:10px 0 0;display:none;font-size:13px;"></div>
     <button class="send-btn" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--red);color:#fff;font-weight:700;cursor:pointer;" onclick="createGroupChat()">Создать</button>
   </div>
 </div>
@@ -871,14 +872,29 @@ function closeGroupCreate() {
 function createGroupChat() {
   const name = document.getElementById('gc-chat-name').value.trim();
   const checked = Array.from(document.querySelectorAll('.gc-member-check:checked')).map(el => el.value);
-  if (!name) { alert('Укажи название чата'); return; }
-  if (checked.length === 0) { alert('Добавь хотя бы одного участника'); return; }
+  const errorEl = document.getElementById('gc-error');
+  errorEl.style.display = 'none';
+  errorEl.textContent = '';
+  if (!name) {
+    errorEl.textContent = 'Укажи название чата';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (checked.length === 0) {
+    errorEl.textContent = 'Добавь хотя бы одного участника';
+    errorEl.style.display = 'block';
+    return;
+  }
   const fd = new FormData();
   fd.append('name', name);
   checked.forEach(uid => fd.append('members', uid));
   fetch('/chat/create', { method: 'POST', body: fd })
     .then(r => r.json()).then(d => {
       if (d.ok) { window.location.href = '/messages?chat=' + d.chat_id; }
+      else if (d.error) {
+        errorEl.textContent = d.error;
+        errorEl.style.display = 'block';
+      }
     });
 }
 </script>

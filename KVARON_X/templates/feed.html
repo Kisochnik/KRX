@@ -209,6 +209,7 @@
     .poll-input:focus { border-color: var(--accent); }
     .poll-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .poll-actions .secondary { background: #1a1a1a; color: var(--text2); }
+    .hidden { display: none !important; }
 
     .news-polls-section { padding: 0 20px 16px; }
     .section-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -489,7 +490,6 @@
       </div>
       <div class="feed-tabs">
         <a class="feed-tab {% if tab=='global' %}active{% endif %}" href="/feed?tab=global">🌍 Все</a>
-        <a class="feed-tab {% if tab=='news' %}active{% endif %}" href="/feed?tab=news">📰 Новости</a>
         <a class="feed-tab {% if tab=='friends' %}active{% endif %}" href="/feed?tab=friends">👥 Друзья</a>
         <a class="feed-tab {% if tab=='top' %}active{% endif %}" href="/feed?tab=top">🔥 Топ</a>
       </div>
