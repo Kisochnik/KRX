@@ -39,6 +39,8 @@
       content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
       width: 3px; height: 20px; background: var(--accent); border-radius: 0 3px 3px 0;
     }
+    .icon { width: 22px; height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .icon svg { width: 18px; height: 18px; fill: currentColor; }
     .nav-div { height: 1px; background: var(--border); margin: 4px 12px; }
     .nav-spacer { flex: 1; }
 
@@ -128,22 +130,40 @@
 <div class="sidebar">
   <div class="logo">KR<span>X</span></div>
   <div class="nav-section-label">Основное</div>
-  <a class="nav-item" href="/feed">🏠 <span>Главная</span></a>
-  <a class="nav-item" href="/news">📰 <span>Новости</span></a>
-  <a class="nav-item" href="/messages">✉️ <span>Сообщения</span></a>
-  <a class="nav-item" href="/friends">👥 <span>Друзья</span></a>
-  <a class="nav-item" href="/music">🎵 <span>Музыка</span></a>
-  <a class="nav-item" href="/gaming">🎮 <span>Игровой</span></a>
+  <a class="nav-item" href="/feed">
+    <span class="icon icon-home" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></span><span>Главная</span>
+  </a>
+  <a class="nav-item" href="/news">
+    <span class="icon icon-news" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg></span><span>Новости</span>
+  </a>
+  <a class="nav-item" href="/messages">
+    <span class="icon icon-messages" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span>Сообщения</span>
+  </a>
+  <a class="nav-item" href="/friends">
+    <span class="icon icon-friends" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 4h.01"/><path d="M16 20h.01"/><path d="M8 8a4 4 0 0 1 8 0v4a4 4 0 0 1-8 0V8z"/><path d="M12 12v6"/><path d="M8 16h8"/></svg></span><span>Друзья</span>
+  </a>
+  <a class="nav-item" href="/music">
+    <span class="icon icon-music" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="18" r="4"/><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="1"/><circle cx="18" cy="16" r="1"/></svg></span><span>Музыка</span>
+  </a>
+  <a class="nav-item" href="/gaming">
+    <span class="icon icon-gaming" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span>Игровой</span>
+  </a>
   <div class="nav-div"></div>
-  <a class="nav-item" href="/shop">🛒 <span>Магазин</span></a>
+  <a class="nav-item" href="/shop">
+    <span class="icon icon-shop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Магазин</span>
+  </a>
   <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
-    💎 <span>KRXWallet</span>
+    <span class="icon icon-wallet" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 9h20"/><circle cx="17" cy="12" r="1.5" fill="#378ADD"/></svg></span><span>KRXWallet</span>
     <span class="kw-dot"></span>
   </a>
-  <a class="nav-item active" href="/profile">👤 <span>Профиль</span></a>
+  <a class="nav-item active" href="/profile">
+    <span class="icon icon-profile" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Профиль</span>
+  </a>
   {% if user.is_admin %}
   <div class="nav-div"></div>
-  <a class="nav-item" href="/admin" style="color:#e0245e;">🛡️ <span>Админ</span></a>
+  <a class="nav-item" href="/admin" style="color:#e0245e;">
+    <span class="icon icon-admin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Админ</span>
+  </a>
   {% endif %}
   <div class="nav-spacer"></div>
   <a href="/profile" style="text-decoration:none;">
@@ -159,7 +179,9 @@
       </div>
     </div>
   </a>
-  <a class="nav-item" href="/logout">🚪 <span>Выйти</span></a>
+  <a class="nav-item" href="/logout">
+    <span class="icon icon-logout" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span>Выйти</span>
+  </a>
 </div>
 
 <div class="content">
