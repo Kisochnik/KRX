@@ -228,9 +228,11 @@ os.makedirs('static/shop/banners', exist_ok=True)
 os.makedirs('static/shop/frames', exist_ok=True)
 os.makedirs('static/music/audio', exist_ok=True)
 os.makedirs('static/music/covers', exist_ok=True)
+os.makedirs('static/icons/panels', exist_ok=True)
 os.makedirs('static/shop/wallpapers', exist_ok=True)
 os.makedirs('static/shop/effects', exist_ok=True)
 os.makedirs('static/shop/nick_colors', exist_ok=True)
+os.makedirs(os.path.join(BASE_DIR, 'instance'), exist_ok=True)
 
 with app.app_context():
     db.create_all()

@@ -167,7 +167,7 @@
   
     .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
     @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important
     /* ===== SIDEBAR ===== */
     .sidebar {
       width: 240px; background: #0d0d0d; border-right: 1px solid var(--border);
@@ -200,7 +200,7 @@
       width: 34px; height: 34px; display: inline-flex;
       align-items: center; justify-content: center;
       border-radius: 12px; background: #12121d;
-      color: #7F77DD; flex-shrink: 0; transition: background 0.15s, color 0.15s;
+      flex-shrink: 0; transition: background 0.15s;
     }
     .nav-item .icon svg {
       width: 18px; height: 18px; display: block;
@@ -221,7 +221,6 @@
     .nav-item .icon-logout svg { stroke: #7F77DD; }
     .nav-item.active .icon {
       background: linear-gradient(135deg, #171728, #302e56);
-      color: #fff;
     }
     .nav-item.active .icon svg { stroke: #fff; }
     .nav-badge {
@@ -234,7 +233,7 @@
     .sidebar-user {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px; border-top: 1px solid #181818; margin-top: 8px;
-      text-decoration: none; border-radius: 12px; transition: background 0.15s; cursor: pointer;
+      text-decoration: none; border-radius: 12px; transition: background 0.15s;
     }
     .sidebar-user:hover { background: #141414; }
     .s-av { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
@@ -246,195 +245,7 @@
       background: #1a080a; border: 1px solid #3a1015; transition: all 0.15s;
     }
     .admin-nav:hover { background: #220a0e; }
-    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
-    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
-</style>
-</head>
-<body>
-
-<div class="sidebar">
-  <div class="logo">KR<span>X</span></div>
-  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
-  <a class="nav-item" href="/messages">
-    <span class="icon icon-messages" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span>Сообщения</span>
-  </a>
-  <a class="nav-item" href="/friends">
-    <span class="icon icon-friends" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 0 0 7.75"/></svg></span><span>Друзья</span>
-    {% if incoming %}<span class="nav-badge">{{ incoming|length }}</span>{% endif %}
-  </a>
-  <a class="nav-item" href="/notifications">
-    <span class="icon icon-notifs" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span>Уведомления</span>
-    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
-  </a>
-  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
-  <a class="nav-item active" href="/profile">
-    <span class="icon icon-profile" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Профиль</span>
-  </a>
-  <a class="nav-item" href="/shop">
-    <span class="icon icon-shop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Магазин</span>
-  </a>
-  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
-    <span class="icon icon-wallet" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 9h20"/><circle cx="17" cy="12" r="1.5" fill="#378ADD"/></svg></span><span>KRXWallet</span>
-    <span class="kw-dot"></span>
-  </a>
-  <a class="nav-item" href="/settings">
-    <span class="icon icon-settings" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>Настройки</span>
-  </a>
-  {% if user.is_admin %}
-  <div class="nav-div"></div>
-  <a class="admin-nav" href="/admin">
-    <span class="icon icon-admin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Админ</span>
-  </a>
-  {% endif %}
-  <div class="nav-spacer"></div>
-  <a href="/profile" class="sidebar-user">
-    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
-      <div style="font-size:11px;color:var(--accent);margin-top:1px;">Ур.{{ user.level }} · <svg class="krx-coin-svg" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block;"><rect x="2" y="0" width="1" height="1" fill="#0C447C"/><rect x="3" y="0" width="1" height="1" fill="#0C447C"/><rect x="4" y="0" width="1" height="1" fill="#0C447C"/><rect x="5" y="0" width="1" height="1" fill="#0C447C"/><rect x="1" y="1" width="1" height="1" fill="#0C447C"/><rect x="2" y="1" width="1" height="1" fill="#185FA5"/><rect x="3" y="1" width="1" height="1" fill="#85B7EB"/><rect x="4" y="1" width="1" height="1" fill="#378ADD"/><rect x="5" y="1" width="1" height="1" fill="#85B7EB"/><rect x="6" y="1" width="1" height="1" fill="#185FA5"/><rect x="7" y="1" width="1" height="1" fill="#0C447C"/><rect x="1" y="2" width="1" height="1" fill="#0C447C"/><rect x="2" y="2" width="1" height="1" fill="#378ADD"/><rect x="3" y="2" width="1" height="1" fill="#378ADD"/><rect x="4" y="2" width="1" height="1" fill="#85B7EB"/><rect x="5" y="2" width="1" height="1" fill="#378ADD"/><rect x="6" y="2" width="1" height="1" fill="#378ADD"/><rect x="7" y="2" width="1" height="1" fill="#0C447C"/><rect x="1" y="3" width="1" height="1" fill="#0C447C"/><rect x="2" y="3" width="1" height="1" fill="#85B7EB"/><rect x="3" y="3" width="1" height="1" fill="#378ADD"/><rect x="4" y="3" width="1" height="1" fill="#378ADD"/><rect x="5" y="3" width="1" height="1" fill="#378ADD"/><rect x="6" y="3" width="1" height="1" fill="#85B7EB"/><rect x="7" y="3" width="1" height="1" fill="#0C447C"/><rect x="1" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="4" width="1" height="1" fill="#185FA5"/><rect x="3" y="4" width="1" height="1" fill="#85B7EB"/><rect x="4" y="4" width="1" height="1" fill="#378ADD"/><rect x="5" y="4" width="1" height="1" fill="#85B7EB"/><rect x="6" y="4" width="1" height="1" fill="#185FA5"/><rect x="7" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="5" width="1" height="1" fill="#0C447C"/><rect x="3" y="5" width="1" height="1" fill="#0C447C"/><rect x="4" y="5" width="1" height="1" fill="#0C447C"/><rect x="5" y="5" width="1" height="1" fill="#0C447C"/><rect x="6" y="5" width="1" height="1" fill="#0C447C"/></svg> {{ user.kp }}</div>
-    </div>
-  </a>
-  <a class="nav-item" href="/logout" style="margin-top:4px;">
-    <span class="icon icon-logout" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-2"/><path d="M14 12H6"/><path d="M10 9l-3 3 3 3"/></svg></span><span>Выйти</span>
-  </a>
-</div>
-
-<div class="main">
-  <a href="/feed" class="back-link">← Назад</a>
-
-  <div class="banner">
-    {% if target.banner %}<img class="banner-img" src="/static/uploads/{{ target.banner }}">
-    {% else %}<div class="banner-grid"></div>{% endif %}
-  </div>
-
-  <div class="profile-area">
-    <div class="avatar-row">
-      <div class="avatar-wrap">
-        {% if target.avatar %}<img src="/static/uploads/{{ target.avatar }}">
-        {% else %}<div class="avatar-initials">{{ target.username[0].upper() }}</div>{% endif %}
-      </div>
-      <div style="display:flex;gap:8px;align-items:flex-end;">
-        {% if target.id == me.id %}
-          <span class="friend-btn accepted">Это вы</span>
-        {% elif req2 and req2.status == 'accepted' or req and req.status == 'accepted' %}
-          <a href="/messages?with={{ target.id }}" class="msg-btn">✉️ Написать</a>
-          <span class="friend-btn accepted">✓ Друзья</span>
-        {% elif req %}
-          <span class="friend-btn sent">Заявка отправлена</span>
-        {% else %}
-          <form method="POST" action="/friend/send/{{ target.id }}">
-            <button class="friend-btn" type="submit">+ Добавить в друзья</button>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-
-    {% if report_status == 'sent' %}
-      <div class="notice">✅ Жалоба отправлена модераторам.</div>
-    {% elif report_status == 'no_reason' %}
-      <div class="notice error">⚠️ Укажите причину жалобы.</div>
-    {% endif %}
-
-    <div class="online-indicator {% if online %}online{% else %}offline{% endif %}">
-      <span class="dot"></span>
-      {% if online %}Онлайн{% else %}Не в сети{% endif %}
-    </div>
-
-    <div class="p-name-row">
-      <span class="p-name">{{ target.username }}</span>
-      {% if target.badge == 'founder' %}<span class="p-badge founder">👑 Основатель</span>
-      {% elif target.badge == 'top' %}<span class="p-badge top">⭐ Топ контент</span>
-      {% elif target.badge == 'legend' %}<span class="p-badge legend">💜 Легенда</span>{% endif %}
-      <span class="p-level">Ур. {{ target.level }}</span>
-    </div>
-
-    {% if target.status_emoji %}<div class="p-status">{{ target.status_emoji }}</div>{% endif %}
-    <div class="p-handle">@{{ target.username }}</div>
-    <div class="p-title">{{ target.title }}</div>
-    <div class="p-bio">{{ target.bio if target.bio else 'Нет описания' }}</div>
-    <div class="p-meta">
-      {% if target.location %}<span>📍 {{ target.location }}</span>{% endif %}
-      <span>📅 С апреля 2026</span>
-      <span>⚡ {{ target.xp }} XP</span>
-    </div>
-
-    {% if target.id != me.id %}
-    <details class="report-box">
-      <summary>⚠️ Пожаловаться на профиль</summary>
-      <form method="POST" action="/report/user/{{ target.id }}" class="report-form">
-        <textarea name="reason" placeholder="Кратко опишите причину жалобы" required></textarea>
-        <button type="submit" class="friend-btn">Отправить жалобу</button>
-      </form>
-    </details>
-    {% endif %}
-
-    {% if target.music %}
-    <div class="music-player">
-      <button class="music-play-btn" id="play-btn" onclick="toggleMusic()">▶</button>
-      <div class="music-info">
-        <div class="music-track">🎵 {{ target.music_name if target.music_name else 'Трек профиля' }}</div>
-        <div class="music-sub">Музыка профиля</div>
-      </div>
-      <div class="music-wave" id="music-wave"><span></span><span></span><span></span><span></span></div>
-    </div>
-    <audio id="profile-audio" src="/static/uploads/{{ target.music }}"></audio>
-    {% endif %}
-
-    <div class="stats-row">
-      <div class="stat-box">
-        <div class="stat-n">{{ posts|length }}</div>
-        <div class="stat-l">Постов</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-n">{{ target_friends|length }}</div>
-        <div class="stat-l">Друзей</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-n">0</div>
-        <div class="stat-l">Подписчиков</div>
-      </div>
-    </div>
-
-    <div class="tabs-bar">
-      <div class="tab active">Посты</div>
-    </div>
-  </div>
-
-  {% if posts %}
-    {% for post in posts %}
-    <div class="post">
-      <div class="post-header">
-        <span class="post-name">{{ target.username }}</span>
-        <span class="post-time">{{ post.created_at.strftime('%d.%m %H:%M') }}</span>
-      </div>
-      {% if post.content %}<div class="post-text">{{ post.content }}</div>{% endif %}
-      {% if post.media %}
-      <div class="post-media">
-        {% if post.media_type == 'image' %}<img src="/static/uploads/{{ post.media }}" loading="lazy">
-        {% elif post.media_type == 'video' %}<video controls><source src="/static/uploads/{{ post.media }}"></video>{% endif %}
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  {% else %}
-    <div class="empty-posts">Постов пока нет.</div>
-  {% endif %}
-</div>
-
-<script>
-let playing = false;
-function toggleMusic() {
-  const audio = document.getElementById('profile-audio');
-  const btn = document.getElementById('play-btn');
-  const wave = document.getElementById('music-wave');
-  if (!audio) return;
-  if (playing) {
-    audio.pause(); btn.textContent='▶'; wave.classList.remove('playing'); playing=false;
-  } else {
-    audio.play(); btn.textContent='⏸'; wave.classList.add('playing'); playing=true;
-  }
+    .kw-dot { width: 7px; height: 7px; background: #7F77DD; border-radius: 50%; margin-left: auto; flex-shrink: 0; box-shadow: 0 0 8px #7F77DD; animation: kwPulse 2s infinite; display: inline-block; }
+    @keyframes kwPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    a[href="/wallet"]:hover { background: #0d0d1f !important; color: #a09fff !important; }
 }
-</script>
-</body>
-</html>

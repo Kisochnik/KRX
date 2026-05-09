@@ -67,7 +67,7 @@
   
     .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
     @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important
     /* ===== SIDEBAR ===== */
     .sidebar {
       width: 240px; background: #0d0d0d; border-right: 1px solid var(--border);
@@ -100,7 +100,7 @@
       width: 34px; height: 34px; display: inline-flex;
       align-items: center; justify-content: center;
       border-radius: 12px; background: #12121d;
-      color: #7F77DD; flex-shrink: 0; transition: background 0.15s, color 0.15s;
+      flex-shrink: 0; transition: background 0.15s;
     }
     .nav-item .icon svg {
       width: 18px; height: 18px; display: block;
@@ -121,7 +121,6 @@
     .nav-item .icon-logout svg { stroke: #7F77DD; }
     .nav-item.active .icon {
       background: linear-gradient(135deg, #171728, #302e56);
-      color: #fff;
     }
     .nav-item.active .icon svg { stroke: #fff; }
     .nav-badge {
@@ -134,7 +133,7 @@
     .sidebar-user {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px; border-top: 1px solid #181818; margin-top: 8px;
-      text-decoration: none; border-radius: 12px; transition: background 0.15s; cursor: pointer;
+      text-decoration: none; border-radius: 12px; transition: background 0.15s;
     }
     .sidebar-user:hover { background: #141414; }
     .s-av { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #222; flex-shrink: 0; }
@@ -146,241 +145,7 @@
       background: #1a080a; border: 1px solid #3a1015; transition: all 0.15s;
     }
     .admin-nav:hover { background: #220a0e; }
-    .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
-    @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
-</style>
-</head>
-<body>
-<div class="sidebar">
-  <div class="logo">KR<span>X</span></div>
-  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
-  <a class="nav-item" href="/messages">
-    <span class="icon icon-messages" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span>Сообщения</span>
-  </a>
-  <a class="nav-item" href="/friends">
-    <span class="icon icon-friends" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 0 0 7.75"/></svg></span><span>Друзья</span>
-    {% if incoming %}<span class="nav-badge">{{ incoming|length }}</span>{% endif %}
-  </a>
-  <a class="nav-item" href="/notifications">
-    <span class="icon icon-notifs" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span>Уведомления</span>
-    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
-  </a>
-  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
-  <a class="nav-item" href="/profile">
-    <span class="icon icon-profile" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Профиль</span>
-  </a>
-  <a class="nav-item" href="/shop">
-    <span class="icon icon-shop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Магазин</span>
-  </a>
-  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
-    <span class="icon icon-wallet" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 9h20"/><circle cx="17" cy="12" r="1.5" fill="#378ADD"/></svg></span><span>KRXWallet</span>
-    <span class="kw-dot"></span>
-  </a>
-  <a class="nav-item" href="/settings">
-    <span class="icon icon-settings" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>Настройки</span>
-  </a>
-  {% if user.is_admin %}
-  <div class="nav-div"></div>
-  <a class="admin-nav" href="/admin">
-    <span class="icon icon-admin" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Админ</span>
-  </a>
-  {% endif %}
-  <div class="nav-spacer"></div>
-  <a href="/profile" class="sidebar-user">
-    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
-      <div style="font-size:11px;color:var(--accent);margin-top:1px;">Ур.{{ user.level }} · <svg class="krx-coin-svg" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block;"><rect x="2" y="0" width="1" height="1" fill="#0C447C"/><rect x="3" y="0" width="1" height="1" fill="#0C447C"/><rect x="4" y="0" width="1" height="1" fill="#0C447C"/><rect x="5" y="0" width="1" height="1" fill="#0C447C"/><rect x="1" y="1" width="1" height="1" fill="#0C447C"/><rect x="2" y="1" width="1" height="1" fill="#185FA5"/><rect x="3" y="1" width="1" height="1" fill="#85B7EB"/><rect x="4" y="1" width="1" height="1" fill="#378ADD"/><rect x="5" y="1" width="1" height="1" fill="#85B7EB"/><rect x="6" y="1" width="1" height="1" fill="#185FA5"/><rect x="7" y="1" width="1" height="1" fill="#0C447C"/><rect x="1" y="2" width="1" height="1" fill="#0C447C"/><rect x="2" y="2" width="1" height="1" fill="#378ADD"/><rect x="3" y="2" width="1" height="1" fill="#378ADD"/><rect x="4" y="2" width="1" height="1" fill="#85B7EB"/><rect x="5" y="2" width="1" height="1" fill="#378ADD"/><rect x="6" y="2" width="1" height="1" fill="#378ADD"/><rect x="7" y="2" width="1" height="1" fill="#0C447C"/><rect x="1" y="3" width="1" height="1" fill="#0C447C"/><rect x="2" y="3" width="1" height="1" fill="#85B7EB"/><rect x="3" y="3" width="1" height="1" fill="#378ADD"/><rect x="4" y="3" width="1" height="1" fill="#378ADD"/><rect x="5" y="3" width="1" height="1" fill="#378ADD"/><rect x="6" y="3" width="1" height="1" fill="#85B7EB"/><rect x="7" y="3" width="1" height="1" fill="#0C447C"/><rect x="1" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="4" width="1" height="1" fill="#185FA5"/><rect x="3" y="4" width="1" height="1" fill="#85B7EB"/><rect x="4" y="4" width="1" height="1" fill="#378ADD"/><rect x="5" y="4" width="1" height="1" fill="#85B7EB"/><rect x="6" y="4" width="1" height="1" fill="#185FA5"/><rect x="7" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="5" width="1" height="1" fill="#0C447C"/><rect x="3" y="5" width="1" height="1" fill="#0C447C"/><rect x="4" y="5" width="1" height="1" fill="#0C447C"/><rect x="5" y="5" width="1" height="1" fill="#0C447C"/><rect x="6" y="5" width="1" height="1" fill="#0C447C"/></svg> {{ user.kp }}</div>
-    </div>
-  </a>
-  <a class="nav-item" href="/logout" style="margin-top:4px;">
-    <span class="icon icon-logout" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-2"/><path d="M14 12H6"/><path d="M10 9l-3 3 3 3"/></svg></span><span>Выйти</span>
-  </a>
-</div>
-  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
-  <a class="nav-item" href="/messages">💬 <span>Сообщения</span></a>
-  <a class="nav-item" href="/friends">👥 <span>Друзья</span></a>
-  <a class="nav-item" href="/notifications">🔔 <span>Уведомления</span>
-    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
-  </a>
-  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
-  <a class="nav-item" href="/profile">👤 <span>Профиль</span></a>
-  <a class="nav-item" href="/shop">🛍 <span>Магазин</span></a>
-  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;"><svg class="krx-coin-svg" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block;"><rect x="2" y="0" width="1" height="1" fill="#0C447C"/><rect x="3" y="0" width="1" height="1" fill="#0C447C"/><rect x="4" y="0" width="1" height="1" fill="#0C447C"/><rect x="5" y="0" width="1" height="1" fill="#0C447C"/><rect x="1" y="1" width="1" height="1" fill="#0C447C"/><rect x="2" y="1" width="1" height="1" fill="#185FA5"/><rect x="3" y="1" width="1" height="1" fill="#85B7EB"/><rect x="4" y="1" width="1" height="1" fill="#378ADD"/><rect x="5" y="1" width="1" height="1" fill="#85B7EB"/><rect x="6" y="1" width="1" height="1" fill="#185FA5"/><rect x="7" y="1" width="1" height="1" fill="#0C447C"/><rect x="1" y="2" width="1" height="1" fill="#0C447C"/><rect x="2" y="2" width="1" height="1" fill="#378ADD"/><rect x="3" y="2" width="1" height="1" fill="#378ADD"/><rect x="4" y="2" width="1" height="1" fill="#85B7EB"/><rect x="5" y="2" width="1" height="1" fill="#378ADD"/><rect x="6" y="2" width="1" height="1" fill="#378ADD"/><rect x="7" y="2" width="1" height="1" fill="#0C447C"/><rect x="1" y="3" width="1" height="1" fill="#0C447C"/><rect x="2" y="3" width="1" height="1" fill="#85B7EB"/><rect x="3" y="3" width="1" height="1" fill="#378ADD"/><rect x="4" y="3" width="1" height="1" fill="#378ADD"/><rect x="5" y="3" width="1" height="1" fill="#378ADD"/><rect x="6" y="3" width="1" height="1" fill="#85B7EB"/><rect x="7" y="3" width="1" height="1" fill="#0C447C"/><rect x="1" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="4" width="1" height="1" fill="#185FA5"/><rect x="3" y="4" width="1" height="1" fill="#85B7EB"/><rect x="4" y="4" width="1" height="1" fill="#378ADD"/><rect x="5" y="4" width="1" height="1" fill="#85B7EB"/><rect x="6" y="4" width="1" height="1" fill="#185FA5"/><rect x="7" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="5" width="1" height="1" fill="#0C447C"/><rect x="3" y="5" width="1" height="1" fill="#0C447C"/><rect x="4" y="5" width="1" height="1" fill="#0C447C"/><rect x="5" y="5" width="1" height="1" fill="#0C447C"/><rect x="6" y="5" width="1" height="1" fill="#0C447C"/></svg> <span>KRXWallet</span><span class="kw-dot"></span></a>
-  <a class="nav-item" href="/settings">⚙️ <span>Настройки</span></a>
-  {% if user.is_admin %}<div class="nav-div"></div><a class="admin-btn" href="/admin">🛡️ <span>Админ панель</span></a>{% endif %}
-  <div class="nav-spacer"></div>
-  <a href="/profile" class="sidebar-user">
-    <div class="sidebar-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
-    <div style="flex:1;min-width:0;"><div style="font-size:13px;color:#ccc;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div><div style="font-size:11px;color:#7F77DD;"><svg class="krx-coin-svg" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block;"><rect x="2" y="0" width="1" height="1" fill="#0C447C"/><rect x="3" y="0" width="1" height="1" fill="#0C447C"/><rect x="4" y="0" width="1" height="1" fill="#0C447C"/><rect x="5" y="0" width="1" height="1" fill="#0C447C"/><rect x="1" y="1" width="1" height="1" fill="#0C447C"/><rect x="2" y="1" width="1" height="1" fill="#185FA5"/><rect x="3" y="1" width="1" height="1" fill="#85B7EB"/><rect x="4" y="1" width="1" height="1" fill="#378ADD"/><rect x="5" y="1" width="1" height="1" fill="#85B7EB"/><rect x="6" y="1" width="1" height="1" fill="#185FA5"/><rect x="7" y="1" width="1" height="1" fill="#0C447C"/><rect x="1" y="2" width="1" height="1" fill="#0C447C"/><rect x="2" y="2" width="1" height="1" fill="#378ADD"/><rect x="3" y="2" width="1" height="1" fill="#378ADD"/><rect x="4" y="2" width="1" height="1" fill="#85B7EB"/><rect x="5" y="2" width="1" height="1" fill="#378ADD"/><rect x="6" y="2" width="1" height="1" fill="#378ADD"/><rect x="7" y="2" width="1" height="1" fill="#0C447C"/><rect x="1" y="3" width="1" height="1" fill="#0C447C"/><rect x="2" y="3" width="1" height="1" fill="#85B7EB"/><rect x="3" y="3" width="1" height="1" fill="#378ADD"/><rect x="4" y="3" width="1" height="1" fill="#378ADD"/><rect x="5" y="3" width="1" height="1" fill="#378ADD"/><rect x="6" y="3" width="1" height="1" fill="#85B7EB"/><rect x="7" y="3" width="1" height="1" fill="#0C447C"/><rect x="1" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="4" width="1" height="1" fill="#185FA5"/><rect x="3" y="4" width="1" height="1" fill="#85B7EB"/><rect x="4" y="4" width="1" height="1" fill="#378ADD"/><rect x="5" y="4" width="1" height="1" fill="#85B7EB"/><rect x="6" y="4" width="1" height="1" fill="#185FA5"/><rect x="7" y="4" width="1" height="1" fill="#0C447C"/><rect x="2" y="5" width="1" height="1" fill="#0C447C"/><rect x="3" y="5" width="1" height="1" fill="#0C447C"/><rect x="4" y="5" width="1" height="1" fill="#0C447C"/><rect x="5" y="5" width="1" height="1" fill="#0C447C"/><rect x="6" y="5" width="1" height="1" fill="#0C447C"/></svg> {{ user.kp }}</div></div>
-  </a>
-  <a class="nav-item" href="/logout" style="margin-top:2px;">🚪 <span>Выйти</span></a>
-</div>
-
-<div class="room-layout">
-  <div class="members-col">
-    <div class="members-header">👥 Участники ({{ members|length }})</div>
-    <div class="members-list">
-      {% for m in members %}
-      <a href="/user/{{ m.user_id }}" class="member-item">
-        <div class="m-av">
-          <img src="{{ get_avatar_url(m.user) }}" onerror="this.src='/static/default_avatar.jpg'">
-          {% if is_online(m.user) %}<div class="online-dot"></div>{% else %}<div class="offline-dot"></div>{% endif %}
-        </div>
-        <div style="min-width:0;">
-          <div class="m-name">{{ m.user.username }}{% if m.user.is_verified %} <span style="color:#60aaff;font-size:10px;">✓</span>{% endif %}</div>
-          <div class="m-status">{% if is_online(m.user) %}● Онлайн{% else %}● Офлайн{% endif %}</div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="chat-col">
-    <div class="chat-header">
-      <a href="/gaming" class="back-btn">← Назад</a>
-      <div class="group-icon-sm">🎮</div>
-      <div>
-        <div class="chat-group-name">{{ group.name }}</div>
-        <div class="chat-group-sub">{{ group.description or 'Игровая группа' }}</div>
-      </div>
-    </div>
-
-    {% if not is_member %}
-    <div class="join-bar">
-      <span>Вступи в группу чтобы писать сообщения</span>
-      <form method="POST" action="/gaming/{{ group.id }}/join">
-        <button class="join-btn" type="submit">Вступить</button>
-      </form>
-    </div>
-    {% endif %}
-
-    <div class="msgs-area" id="msgs">
-      {% for msg in messages %}
-      <div class="msg-row {% if msg.user_id == user.id %}mine{% endif %}" data-id="{{ msg.id }}">
-        {% if msg.user_id != user.id %}
-        <div class="msg-av-wrap">
-          <img src="{{ get_avatar_url(msg.user) }}" onerror="this.src='/static/default_avatar.jpg'">
-        </div>
-        {% else %}
-        <div class="msg-av-placeholder"></div>
-        {% endif %}
-        <div class="msg-content-wrap">
-          {% if msg.user_id != user.id %}
-          <div class="msg-sender">{{ msg.user.username }}</div>
-          {% endif %}
-          <div class="msg-bubble {% if msg.user_id == user.id %}mine{% else %}theirs{% endif %}">{{ msg.content }}</div>
-          <div class="msg-time">{{ msg.created_at.strftime('%H:%M') }}</div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    {% if is_member %}
-    <div class="chat-input-row">
-      <input class="chat-input" type="text" id="msg-input"
-             placeholder="Написать в {{ group.name }}..." autocomplete="off">
-      <button class="send-btn" onclick="sendMsg()">↑</button>
-    </div>
-    {% else %}
-    <div style="padding:12px 18px;text-align:center;color:#444;font-size:13px;border-top:1px solid #1a1a1a;">
-      Вступи в группу чтобы писать
-    </div>
-    {% endif %}
-  </div>
-</div>
-
-<script>
-const GROUP_ID = {{ group.id }};
-const MY_ID = {{ user.id }};
-
-const allMsgs = document.querySelectorAll('.msg-row[data-id]');
-let lastId = allMsgs.length > 0 ? parseInt(allMsgs[allMsgs.length-1].dataset.id) : 0;
-const renderedIds = new Set();
-allMsgs.forEach(m => renderedIds.add(parseInt(m.dataset.id)));
-
-const msgsEl = document.getElementById('msgs');
-if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
-
-function addMsg(content, username, avatar, time, mine, id, userId) {
-  if (renderedIds.has(id)) return;
-  renderedIds.add(id);
-
-  const row = document.createElement('div');
-  row.className = 'msg-row' + (mine ? ' mine' : '');
-  row.dataset.id = id;
-
-  if (!mine) {
-    const avWrap = document.createElement('div');
-    avWrap.className = 'msg-av-wrap';
-    const img = document.createElement('img');
-    img.src = avatar;
-    img.onerror = function() { this.src = '/static/default_avatar.jpg'; };
-    avWrap.appendChild(img);
-    row.appendChild(avWrap);
-  } else {
-    const ph = document.createElement('div');
-    ph.className = 'msg-av-placeholder';
-    row.appendChild(ph);
-  }
-
-  const wrap = document.createElement('div');
-  wrap.className = 'msg-content-wrap';
-
-  if (!mine) {
-    const sender = document.createElement('div');
-    sender.className = 'msg-sender';
-    sender.innerHTML = `<a href="/user/${userId}" style="color:#555;text-decoration:none;">${username}</a>`;
-    wrap.appendChild(sender);
-  }
-
-  const bubble = document.createElement('div');
-  bubble.className = 'msg-bubble ' + (mine ? 'mine' : 'theirs');
-  bubble.textContent = content;
-
-  const timeEl = document.createElement('div');
-  timeEl.className = 'msg-time';
-  timeEl.textContent = time;
-
-  wrap.appendChild(bubble);
-  wrap.appendChild(timeEl);
-  row.appendChild(wrap);
-  msgsEl.appendChild(row);
-  msgsEl.scrollTop = msgsEl.scrollHeight;
-  if (id > lastId) lastId = id;
+    .kw-dot { width: 7px; height: 7px; background: #7F77DD; border-radius: 50%; margin-left: auto; flex-shrink: 0; box-shadow: 0 0 8px #7F77DD; animation: kwPulse 2s infinite; display: inline-block; }
+    @keyframes kwPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    a[href="/wallet"]:hover { background: #0d0d1f !important; color: #a09fff !important; }
 }
-
-function sendMsg() {
-  const input = document.getElementById('msg-input');
-  const content = input.value.trim();
-  if (!content) return;
-  input.value = '';
-  const fd = new FormData();
-  fd.append('content', content);
-  fetch('/gaming/' + GROUP_ID + '/send', {method: 'POST', body: fd})
-    .then(r => r.json())
-    .then(d => {
-      if (d.ok) addMsg(d.content, d.username, d.avatar, d.time, true, d.id, MY_ID);
-    });
-}
-
-document.getElementById('msg-input')?.addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendMsg();
-});
-
-function pollMsgs() {
-  fetch('/gaming/' + GROUP_ID + '/poll?after=' + lastId)
-    .then(r => r.json())
-    .then(data => {
-      if (!Array.isArray(data)) return;
-      data.forEach(m => {
-        if (!m.mine) addMsg(m.content, m.username, m.avatar, m.time, false, m.id, m.user_id || 0);
-        if (m.id > lastId) lastId = m.id;
-      });
-    });
-}
-setInterval(pollMsgs, 2000);
-</script>
-</body>
-</html>
