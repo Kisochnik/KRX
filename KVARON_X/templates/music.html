@@ -496,3 +496,448 @@
     .kw-dot{width:7px;height:7px;background:#7F77DD;border-radius:50%;margin-left:auto;flex-shrink:0;box-shadow:0 0 8px #7F77DD;animation:kwPulse 2s infinite;display:inline-block}
     @keyframes kwPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
     a[href="/wallet"]:hover{background:#0d0d1f!important;color:#a09fff!important}
+
+    /* Track row (list view) */
+    .track-row { display:flex; align-items:center; gap:14px; background:var(--card2); border-radius:12px; padding:10px 14px; cursor:pointer; transition:background 0.15s; border:1px solid transparent; }
+    .track-row:hover { background:#1f1f1f; border-color:var(--border2); }
+    .tr-cover { width:48px; height:48px; border-radius:8px; overflow:hidden; flex-shrink:0; background:var(--bg3); display:flex; align-items:center; justify-content:center; }
+    .tr-cover img { width:100%; height:100%; object-fit:cover; }
+    .tr-info { flex:1; min-width:0; }
+    .tr-title { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tr-artist { font-size:12px; color:var(--text3); margin-top:2px; }
+    .tr-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .tc-action-btn { background:none; border:none; cursor:pointer; font-size:16px; color:var(--text3); padding:4px; border-radius:6px; transition:color 0.15s; }
+    .tc-action-btn:hover { color:var(--red); }
+    .tc-action-btn.liked { color:var(--red); }
+    .tc-action-btn.saved { color:var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="logo">KR<span>X</span></div>
+
+  <div class="nav-section-label">Основное</div>
+  <a class="nav-item" href="/feed">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11.5L12 4l8 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11.5z"/><path d="M9 21V12h6v9"/></svg></span><span>Главная</span>
+  </a>
+  <a class="nav-item" href="/news">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg></span><span>Новости</span>
+  </a>
+  <a class="nav-item active" href="/music">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18V5l10-2v13"/><circle cx="7" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span><span>Музыка</span>
+  </a>
+  <a class="nav-item" href="/gaming">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="3"/><path d="M8 13h4"/><path d="M10 11v4"/><circle cx="17" cy="11" r="1"/><circle cx="15" cy="14" r="1"/></svg></span><span>Игровой</span>
+  </a>
+
+  <div class="nav-section-label" style="margin-top:6px;">Социальное</div>
+  <a class="nav-item" href="/messages">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span>Сообщения</span>
+  </a>
+  <a class="nav-item" href="/friends">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 0 0 7.75"/></svg></span><span>Друзья</span>
+  </a>
+  <a class="nav-item" href="/notifications">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span>Уведомления</span>
+    {% if notifs_unread %}<span class="nav-badge">{{ notifs_unread }}</span>{% endif %}
+  </a>
+
+  <div class="nav-section-label" style="margin-top:6px;">Личное</div>
+  <a class="nav-item" href="/profile">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Профиль</span>
+  </a>
+  <a class="nav-item" href="/shop">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Магазин</span>
+  </a>
+  <a class="nav-item" href="/wallet" style="color:#7F77DD;position:relative;">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 9h20"/><circle cx="17" cy="12" r="1.5" fill="#378ADD"/></svg></span><span>KRXWallet</span>
+    <span class="kw-dot"></span>
+  </a>
+  <a class="nav-item" href="/settings">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9"/></svg></span><span>Настройки</span>
+  </a>
+
+  {% if user.is_admin %}
+  <div class="nav-div"></div>
+  <a class="nav-item" href="/admin" style="color:#e0245e;">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Админ</span>
+  </a>
+  {% endif %}
+
+  <div class="nav-spacer"></div>
+
+  <a href="/profile" class="sidebar-user">
+    <div class="s-av"><img src="{{ get_avatar_url(user) }}" onerror="this.src='/static/default_avatar.jpg'"></div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;color:#ccc;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+      <div style="font-size:11px;color:var(--accent);margin-top:1px;">Ур.{{ user.level }} · {{ user.kp }} KP</div>
+    </div>
+  </a>
+  <a class="nav-item" href="/logout" style="margin-top:4px;">
+    <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-2"/><path d="M14 12H6"/><path d="M10 9l-3 3 3 3"/></svg></span><span>Выйти</span>
+  </a>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-title">🎵 KRX Music</div>
+    <div class="hero-sub">Слушай, делись, открывай новое</div>
+    <form method="GET" action="/music" style="display:flex;gap:10px;margin-top:20px;max-width:500px;">
+      <input class="search-input" name="q" placeholder="Искать треки, исполнителей..." value="{{ search_q }}">
+      <button type="submit" class="btn-primary" style="padding:10px 20px;white-space:nowrap;">Найти</button>
+    </form>
+    <!-- Genre pills -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
+      <a href="/music" class="genre-pill {% if not active_genre %}active{% endif %}">Все</a>
+      {% for g in genres %}
+      <a href="/music?genre={{ g }}" class="genre-pill {% if active_genre == g %}active{% endif %}">{{ g }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Upload form (for own tracks) -->
+  <div style="padding:0 32px 24px;">
+    <details style="background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:16px;">
+      <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--text2);list-style:none;">➕ Загрузить трек</summary>
+      <form method="POST" action="/music/upload" enctype="multipart/form-data" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+        <input type="text" name="title" placeholder="Название" required style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+        <input type="text" name="artist" placeholder="Исполнитель (необязательно)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+        <select name="genre" style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;">
+          {% for g in genres %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+        </select>
+        <div style="display:flex;gap:10px;">
+          <label style="flex:1;background:var(--bg3);border:1px dashed var(--border2);border-radius:10px;padding:12px;text-align:center;cursor:pointer;font-size:13px;color:var(--text3);">
+            🎵 Аудио файл
+            <input type="file" name="audio" accept="audio/*" required style="display:none;">
+          </label>
+          <label style="flex:1;background:var(--bg3);border:1px dashed var(--border2);border-radius:10px;padding:12px;text-align:center;cursor:pointer;font-size:13px;color:var(--text3);">
+            🖼 Обложка
+            <input type="file" name="cover" accept="image/*" style="display:none;">
+          </label>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" name="is_public" checked> Публичный трек
+        </label>
+        <button type="submit" class="btn-primary" style="align-self:flex-start;padding:10px 24px;">Загрузить</button>
+      </form>
+    </details>
+  </div>
+
+  <!-- Tabs -->
+  <div class="music-tabs">
+    <div class="m-tab {% if active_tab == 'discover' %}active{% endif %}" onclick="switchTab('discover')">🔍 Открытия</div>
+    <div class="m-tab {% if active_tab == 'trending' %}active{% endif %}" onclick="switchTab('trending')">🔥 Популярное</div>
+    <div class="m-tab {% if active_tab == 'library' %}active{% endif %}" onclick="switchTab('library')">📚 Библиотека</div>
+    <div class="m-tab {% if active_tab == 'my' %}active{% endif %}" onclick="switchTab('my')">🎤 Мои треки</div>
+    <div class="m-tab {% if active_tab == 'playlists' %}active{% endif %}" onclick="switchTab('playlists')">📀 Плейлисты</div>
+  </div>
+
+  <!-- Discover tab -->
+  <div class="tab-pane {% if active_tab == 'discover' %}active{% endif %}" id="tab-discover">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Все треки</div>
+      </div>
+      {% if tracks %}
+      <div class="tracks-grid">
+        {% for t in tracks %}
+        <div class="track-card {% if current_track and current_track.id == t.id %}is-playing{% endif %}" onclick="playTrack({{ t.id }}, '{{ t.title|e }}', '{{ (t.artist or t.user.username)|e }}', '{{ t.cover or '' }}')">
+          <div class="tc-cover">
+            {% if t.cover %}
+            <img src="{{ t.cover }}" alt="{{ t.title }}" loading="lazy">
+            {% else %}
+            <div class="tc-cover-placeholder">🎵</div>
+            {% endif %}
+            <div class="tc-play-overlay">
+              <div class="tc-play-btn">{% if current_track and current_track.id == t.id %}⏸{% else %}▶{% endif %}</div>
+            </div>
+          </div>
+          <div class="tc-info">
+            <div class="tc-title">{{ t.title }}</div>
+            <div class="tc-artist">{{ t.artist or t.user.username }}</div>
+            <div class="tc-meta">
+              <span>{{ t.plays }} прослушиваний</span>
+              <div style="display:flex;gap:8px;">
+                <button class="tc-action-btn {% if t.id in liked_tracks %}liked{% endif %}" onclick="event.stopPropagation();likeTrack({{ t.id }}, this)" title="Лайк">♥</button>
+                <button class="tc-action-btn {% if t.id in saved_tracks %}saved{% endif %}" onclick="event.stopPropagation();saveTrack({{ t.id }}, this)" title="В библиотеку">＋</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🎵</div>
+        <div class="empty-title">Треков пока нет</div>
+        <div class="empty-sub">Загрузи первый трек выше!</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Trending tab -->
+  <div class="tab-pane {% if active_tab == 'trending' %}active{% endif %}" id="tab-trending">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">🔥 Топ треки</div>
+      </div>
+      {% if trending_tracks %}
+      <div class="tracks-grid">
+        {% for t in trending_tracks %}
+        <div class="track-card" onclick="playTrack({{ t.id }}, '{{ t.title|e }}', '{{ (t.artist or t.user.username)|e }}', '{{ t.cover or '' }}')">
+          <div class="tc-cover">
+            {% if t.cover %}<img src="{{ t.cover }}" alt="{{ t.title }}" loading="lazy">
+            {% else %}<div class="tc-cover-placeholder">🎵</div>{% endif %}
+            <div class="tc-play-overlay"><div class="tc-play-btn">▶</div></div>
+          </div>
+          <div class="tc-info">
+            <div class="tc-title">{{ t.title }}</div>
+            <div class="tc-artist">{{ t.artist or t.user.username }}</div>
+            <div class="tc-meta"><span>{{ t.plays }} прослушиваний</span></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">Пока нет популярных треков</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Library tab -->
+  <div class="tab-pane {% if active_tab == 'library' %}active{% endif %}" id="tab-library">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📚 Сохранённые треки</div>
+      </div>
+      {% if library_tracks %}
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        {% for lt in library_tracks %}
+        {% set t = lt.track %}
+        <div class="track-row" onclick="playTrack({{ t.id }}, '{{ t.title|e }}', '{{ (t.artist or t.user.username)|e }}', '{{ t.cover or '' }}')">
+          <div class="tr-cover">
+            {% if t.cover %}<img src="{{ t.cover }}" alt="">
+            {% else %}<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>{% endif %}
+          </div>
+          <div class="tr-info">
+            <div class="tr-title">{{ t.title }}</div>
+            <div class="tr-artist">{{ t.artist or t.user.username }}</div>
+          </div>
+          <div class="tr-actions">
+            <span style="font-size:12px;color:var(--text3);">{{ t.plays }} ▶</span>
+            <button class="tc-action-btn saved" onclick="event.stopPropagation();saveTrack({{ t.id }}, this)" title="Убрать">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Библиотека пуста</div><div class="empty-sub">Сохраняй понравившиеся треки</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- My tracks tab -->
+  <div class="tab-pane {% if active_tab == 'my' %}active{% endif %}" id="tab-my">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">🎤 Мои треки</div>
+      </div>
+      {% if my_tracks %}
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        {% for t in my_tracks %}
+        <div class="track-row" onclick="playTrack({{ t.id }}, '{{ t.title|e }}', '{{ (t.artist or t.user.username)|e }}', '{{ t.cover or '' }}')">
+          <div class="tr-cover">
+            {% if t.cover %}<img src="{{ t.cover }}" alt="">
+            {% else %}<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>{% endif %}
+          </div>
+          <div class="tr-info">
+            <div class="tr-title">{{ t.title }}</div>
+            <div class="tr-artist">{{ t.artist or t.user.username }}</div>
+          </div>
+          <div class="tr-actions">
+            <span style="font-size:12px;color:var(--text3);">{{ t.plays }} ▶</span>
+            <form method="POST" action="/music/delete/{{ t.id }}" style="display:inline;" onclick="event.stopPropagation()">
+              <button type="submit" class="tc-action-btn" style="color:var(--red);" onclick="return confirm('Удалить трек?')">🗑</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">🎤</div><div class="empty-title">Вы ещё не загружали треки</div><div class="empty-sub">Загрузи свой первый трек!</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Playlists tab -->
+  <div class="tab-pane {% if active_tab == 'playlists' %}active{% endif %}" id="tab-playlists">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📀 Плейлисты</div>
+        <button class="btn-primary" style="font-size:13px;padding:8px 16px;" onclick="document.getElementById('create-pl-form').style.display='block'">+ Создать</button>
+      </div>
+      <div id="create-pl-form" style="display:none;background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:16px;margin-bottom:20px;">
+        <form method="POST" action="/music/playlist/create">
+          <input type="text" name="name" placeholder="Название плейлиста" required style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:12px;">
+            <input type="checkbox" name="is_public" checked> Публичный
+          </label>
+          <button type="submit" class="btn-primary" style="padding:8px 20px;font-size:13px;">Создать</button>
+        </form>
+      </div>
+      {% if playlists %}
+      <div class="tracks-grid">
+        {% for pl in playlists %}
+        <a href="/music/playlist/{{ pl.id }}" class="track-card" style="text-decoration:none;">
+          <div class="tc-cover">
+            <div class="tc-cover-placeholder">📀</div>
+          </div>
+          <div class="tc-info">
+            <div class="tc-title">{{ pl.name }}</div>
+            <div class="tc-artist">{{ pl.tracks|length }} треков · {% if pl.is_public %}Публичный{% else %}Приватный{% endif %}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><div class="empty-icon">📀</div><div class="empty-title">Нет плейлистов</div><div class="empty-sub">Создай свой первый плейлист</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="height:120px;"></div>
+</div><!-- /main -->
+
+<!-- ===== BOTTOM PLAYER ===== -->
+<div class="player" id="player">
+  <div class="p-left">
+    <div class="p-cover" id="p-cover">🎵</div>
+    <div class="p-meta">
+      <div class="p-title" id="p-title">{% if current_track %}{{ current_track.title }}{% else %}Не воспроизводится{% endif %}</div>
+      <div class="p-artist" id="p-artist">{% if current_track %}{{ current_track.artist or current_track.user.username }}{% else %}—{% endif %}</div>
+    </div>
+  </div>
+  <div class="p-center">
+    <button class="p-btn" id="p-play" onclick="togglePlay()">▶</button>
+    <div class="p-progress" onclick="seekTo(event)">
+      <div class="p-progress-fill" id="p-progress-fill" style="width:0%"></div>
+    </div>
+    <span class="p-time" id="p-time">0:00</span>
+  </div>
+  <div class="p-right">
+    <input type="range" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)" style="width:80px;accent-color:var(--red);">
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<audio id="audio-player" style="display:none;"></audio>
+
+<script>
+  // Tab switching
+  function switchTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    history.replaceState(null, '', '/music?tab=' + name);
+  }
+
+  // Audio player
+  const audio = document.getElementById('audio-player');
+  let currentTrackId = null;
+
+  function playTrack(id, title, artist, cover) {
+    currentTrackId = id;
+    document.getElementById('p-title').textContent = title;
+    document.getElementById('p-artist').textContent = artist;
+    const coverEl = document.getElementById('p-cover');
+    if (cover) {
+      coverEl.innerHTML = `<img src="${cover}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+    } else {
+      coverEl.textContent = '🎵';
+    }
+    audio.src = '/music/stream/' + id;
+    audio.play().then(() => {
+      document.getElementById('p-play').textContent = '⏸';
+      fetch('/music/play/' + id, {method:'POST'});
+    }).catch(console.error);
+    document.querySelectorAll('.track-card').forEach(c => c.classList.remove('is-playing'));
+  }
+
+  function togglePlay() {
+    if (audio.paused) {
+      audio.play();
+      document.getElementById('p-play').textContent = '⏸';
+    } else {
+      audio.pause();
+      document.getElementById('p-play').textContent = '▶';
+    }
+  }
+
+  function setVolume(v) { audio.volume = v; }
+
+  function seekTo(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = pct * audio.duration;
+  }
+
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    document.getElementById('p-progress-fill').style.width = pct + '%';
+    const m = Math.floor(audio.currentTime / 60);
+    const s = Math.floor(audio.currentTime % 60).toString().padStart(2,'0');
+    document.getElementById('p-time').textContent = m + ':' + s;
+  });
+
+  audio.addEventListener('ended', () => {
+    document.getElementById('p-play').textContent = '▶';
+    document.getElementById('p-progress-fill').style.width = '0%';
+  });
+
+  // Like track
+  function likeTrack(id, btn) {
+    fetch('/music/like/' + id, {method:'POST'})
+      .then(r => r.json())
+      .then(d => {
+        btn.classList.toggle('liked', d.liked);
+        showToast(d.liked ? '❤️ Лайк!' : '💔 Убран лайк');
+      });
+  }
+
+  // Save to library
+  function saveTrack(id, btn) {
+    fetch('/music/save/' + id, {method:'POST'})
+      .then(r => r.json())
+      .then(d => {
+        btn.classList.toggle('saved', d.saved);
+        showToast(d.saved ? '📚 Сохранено!' : '🗑 Удалено из библиотеки');
+      });
+  }
+
+  // Toast
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Auto-play
+  {% if auto_play_id %}
+  window.addEventListener('load', () => {
+    playTrack({{ auto_play_id }}, '{{ auto_play_title|e }}', '{{ auto_play_artist|e }}', '{{ auto_play_cover }}');
+  });
+  {% endif %}
+</script>
+</body>
+</html>
