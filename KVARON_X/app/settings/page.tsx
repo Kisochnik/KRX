@@ -115,6 +115,32 @@ export default function SettingsPage() {
                           className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary resize-none"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">
+                          Пол <span className="text-destructive">*</span>
+                        </label>
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="gender"
+                              value="male"
+                              defaultChecked
+                              className="w-4 h-4 accent-primary"
+                            />
+                            <span className="text-foreground text-sm">Мужской</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="gender"
+                              value="female"
+                              className="w-4 h-4 accent-primary"
+                            />
+                            <span className="text-foreground text-sm">Женский</span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                     <button className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
                       Сохранить изменения

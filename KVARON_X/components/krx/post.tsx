@@ -8,6 +8,7 @@ import {
   Bookmark,
   MoreHorizontal,
   BadgeCheck,
+  CircleDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ interface PostProps {
   shares: number;
   time: string;
   isVerified?: boolean;
+  isRich?: boolean;
   level?: number;
 }
 
@@ -32,6 +34,7 @@ export function Post({
   shares,
   time,
   isVerified,
+  isRich,
   level,
 }: PostProps) {
   const [liked, setLiked] = useState(false);
@@ -60,6 +63,9 @@ export function Post({
               <span className="font-semibold text-foreground">{author}</span>
               {isVerified && (
                 <BadgeCheck className="w-4 h-4 text-primary fill-primary/20" />
+              )}
+              {isRich && (
+                <CircleDollarSign className="w-4 h-4 text-yellow-500 fill-yellow-500/20" title="Богатый" />
               )}
               {level && (
                 <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">

@@ -16,6 +16,7 @@ import {
   LogOut,
   Search,
   Shield,
+  CircleDollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -37,6 +38,7 @@ const navItems = [
 
 export function Sidebar() {
   const [activeItem, setActiveItem] = useState("Главная");
+  const isRich = true; // Mock — заменить на реальный статус пользователя
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
@@ -121,9 +123,14 @@ export function Sidebar() {
             <User className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              Kvarden
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-medium text-foreground truncate">
+                Kvarden
+              </p>
+              {isRich && (
+                <CircleDollarSign className="w-4 h-4 text-yellow-500 fill-yellow-500/20 flex-shrink-0" title="Богатый" />
+              )}
+            </div>
             <p className="text-xs text-primary">VIP • Lvl 42</p>
           </div>
           <button className="p-2 rounded-lg hover:bg-destructive/20 transition-all duration-200 hover:scale-110 active:scale-95 group">

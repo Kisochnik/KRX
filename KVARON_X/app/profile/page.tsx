@@ -2,7 +2,7 @@
 
 import { Sidebar } from "@/components/krx/sidebar";
 import { MusicPlayer } from "@/components/krx/music-player";
-import { User, Settings, Camera, MapPin, Calendar, Link as LinkIcon, Trophy, Gamepad2, Music, Heart, MessageCircle, Share2, MoreHorizontal, CheckCircle2 } from "lucide-react";
+import { User, Settings, Camera, MapPin, Calendar, Link as LinkIcon, Trophy, Gamepad2, Music, Heart, MessageCircle, Share2, MoreHorizontal, CheckCircle2, CircleDollarSign } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +59,7 @@ const achievements = [
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "tagged">("posts");
+  const isRich = true; // Mock — заменить на реальный статус пользователя
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -89,6 +90,9 @@ export default function ProfilePage() {
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-foreground">KRX_Player</h1>
                 <CheckCircle2 className="w-6 h-6 text-primary fill-primary/20" />
+                {isRich && (
+                  <CircleDollarSign className="w-6 h-6 text-yellow-500 fill-yellow-500/20" title="Богатый" />
+                )}
               </div>
               <p className="text-muted-foreground mb-3">@krx_player</p>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
