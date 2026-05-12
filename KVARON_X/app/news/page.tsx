@@ -1,4 +1,7 @@
 "use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useApp } from "@/context/app-context";
 
 import { Sidebar } from "@/components/krx/sidebar";
 import { RightSidebar } from "@/components/krx/right-sidebar";
@@ -49,6 +52,10 @@ const newsItems = [
 ];
 
 export default function NewsPage() {
+  const { isAuthenticated } = useApp();
+  const router = useRouter();
+  useEffect(() => { if (!isAuthenticated) router.replace("/auth"); }, [isAuthenticated]);
+  if (!isAuthenticated) return null;
   return (
     <div className="min-h-screen bg-background flex">
       <Sidebar />

@@ -1,4 +1,7 @@
 "use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useApp } from "@/context/app-context";
 
 import { Sidebar } from "@/components/krx/sidebar";
 import { MusicPlayer } from "@/components/krx/music-player";
@@ -74,6 +77,11 @@ const adminTabs = [
 ];
 
 export default function AdminPage() {
+  const { isAuthenticated, user } = useApp();
+  const router = useRouter();
+  useEffect(() => { if (!isAuthenticated || !user?.isAdmin) router.replace("/"); }, [isAuthenticated]);
+  if (!isAuthenticated) return null;
+
   const [activeTab, setActiveTab] = useState("overview");
 
   return (

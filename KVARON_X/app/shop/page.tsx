@@ -1,9 +1,12 @@
 "use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useApp } from "@/context/app-context";
 
 import { Sidebar } from "@/components/krx/sidebar";
 import { RightSidebar } from "@/components/krx/right-sidebar";
 import { MusicPlayer } from "@/components/krx/music-player";
-import { ShoppingBag, Coins, Star, ShoppingCart, Sparkles, Crown, Palette, Frame, User, Image, Play, Type, Lock } from "lucide-react";
+import { ShoppingBag, Coins, Star, Sparkles, Frame, User, Image, Play, Type, Lock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -26,224 +29,12 @@ const categories = [
   { id: "effects", label: "Эффекты профиля", icon: Sparkles },
 ];
 
-const products = [
-  // Аватарки (ава)
-  {
-    id: 3,
-    name: "Аватар Cyber Samurai",
-    description: "Эксклюзивный киберпанк аватар (статичный)",
-    price: 1500,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&h=300&fit=crop",
-    category: "avatars",
-    popular: true,
-    subtype: "static", // static | gif
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  {
-    id: 4,
-    name: "Аватар Neon Wolf GIF",
-    description: "Анимированный неоновый волк — доступно с 50 уровня",
-    price: 2000,
-    oldPrice: 2500,
-    image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&h=300&fit=crop",
-    category: "avatars",
-    popular: false,
-    subtype: "gif",
-    requiredLevel: 50,
-    adminOnly: false,
-  },
-  {
-    id: 5,
-    name: "Аватар Dark Phoenix GIF",
-    description: "Огненный феникс с анимацией — доступно с 50 уровня",
-    price: 3000,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=300&h=300&fit=crop",
-    category: "avatars",
-    popular: true,
-    subtype: "gif",
-    requiredLevel: 50,
-    adminOnly: false,
-  },
-  // Баннеры
-  {
-    id: 6,
-    name: "Баннер Neon City",
-    description: "Статичный неоновый баннер — доступно с 90 уровня",
-    price: 1000,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=300&h=150&fit=crop",
-    category: "banners",
-    popular: false,
-    subtype: "static",
-    requiredLevel: 90,
-    adminOnly: false,
-  },
-  {
-    id: 7,
-    name: "Баннер Fire Storm GIF",
-    description: "Анимированный огненный баннер — доступно с 95 уровня",
-    price: 2500,
-    oldPrice: 3000,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=150&fit=crop",
-    category: "banners",
-    popular: true,
-    subtype: "gif",
-    requiredLevel: 95,
-    adminOnly: false,
-  },
-  {
-    id: 8,
-    name: "Баннер Space Galaxy",
-    description: "Статичная космическая тематика — доступно с 90 уровня",
-    price: 1800,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=300&h=150&fit=crop",
-    category: "banners",
-    popular: false,
-    subtype: "static",
-    requiredLevel: 90,
-    adminOnly: false,
-  },
-  // Обои
-  {
-    id: 9,
-    name: "Живые обои Cyber Wave",
-    description: "Анимированные киберпанк волны — только для Администрации",
-    price: 3500,
-    oldPrice: 4500,
-    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300&h=300&fit=crop",
-    category: "wallpapers",
-    popular: true,
-    subtype: "live",
-    requiredLevel: null,
-    adminOnly: true,
-  },
-  {
-    id: 10,
-    name: "Обои Abstract Red",
-    description: "Статичные обои профиля — доступно с 80 уровня",
-    price: 800,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=300&h=300&fit=crop",
-    category: "wallpapers",
-    popular: false,
-    subtype: "static",
-    requiredLevel: 80,
-    adminOnly: false,
-  },
-  {
-    id: 11,
-    name: "Живые обои Matrix",
-    description: "Падающий код в стиле Matrix — только для Администрации",
-    price: 3000,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=300&h=300&fit=crop",
-    category: "wallpapers",
-    popular: true,
-    subtype: "live",
-    requiredLevel: null,
-    adminOnly: true,
-  },
-  // Рамки
-  {
-    id: 12,
-    name: "Рамка Fire Ring",
-    description: "Огненная анимация для аватара",
-    price: 3500,
-    oldPrice: 4000,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop",
-    category: "frames",
-    popular: true,
-    subtype: "animated",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  {
-    id: 13,
-    name: "Рамка Neon Glow",
-    description: "Неоновое свечение вокруг аватара",
-    price: 2000,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300&h=300&fit=crop",
-    category: "frames",
-    popular: false,
-    subtype: "animated",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  // Цвет ника
-  {
-    id: 20,
-    name: "Ник — Золотой",
-    description: "Золотой цвет имени в профиле, ленте и чате",
-    price: 2500,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1610375461369-d613b564f4c4?w=300&h=300&fit=crop",
-    category: "nickcolor",
-    popular: true,
-    subtype: "color",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  {
-    id: 21,
-    name: "Ник — Неоновый розовый",
-    description: "Яркий розовый цвет имени",
-    price: 1800,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=300&h=300&fit=crop",
-    category: "nickcolor",
-    popular: false,
-    subtype: "color",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  {
-    id: 22,
-    name: "Ник — Радужный градиент",
-    description: "Анимированный радужный эффект на нике",
-    price: 4000,
-    oldPrice: 5000,
-    image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=300&h=300&fit=crop",
-    category: "nickcolor",
-    popular: true,
-    subtype: "animated",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  // Эффекты профиля
-  {
-    id: 14,
-    name: "Эффект конфетти",
-    description: "Праздничный эффект для постов",
-    price: 1500,
-    oldPrice: null,
-    image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=300&h=300&fit=crop",
-    category: "effects",
-    popular: false,
-    subtype: "animated",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-  {
-    id: 15,
-    name: "Эффект Sparkles",
-    description: "Искры и блёстки на профиле",
-    price: 1200,
-    oldPrice: 1500,
-    image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=300&h=300&fit=crop",
-    category: "effects",
-    popular: true,
-    subtype: "animated",
-    requiredLevel: null,
-    adminOnly: false,
-  },
-];
+const products: typeof [] = [];
 
 export default function ShopPage() {
+  const { isAuthenticated, user: shopUser } = useApp();
+  const shopRouter = useRouter();
+  useEffect(() => { if (!isAuthenticated) shopRouter.replace("/auth"); }, [isAuthenticated]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [cart, setCart] = useState<number[]>([]);
 
