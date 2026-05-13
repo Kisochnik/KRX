@@ -29,7 +29,7 @@ const categories = [
   { id: "effects", label: "Эффекты профиля", icon: Sparkles },
 ];
 
-const products: typeof [] = [];
+const products: { id: number; name: string; description: string; price: number; oldPrice: number | null; image: string; category: string; popular: boolean; subtype: string; requiredLevel: number | null; adminOnly: boolean; }[] = [];
 
 export default function ShopPage() {
   const { isAuthenticated, user: shopUser } = useApp();
