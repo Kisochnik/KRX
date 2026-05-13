@@ -6,7 +6,7 @@ import { useApp } from "@/context/app-context";
 import { Sidebar } from "@/components/krx/sidebar";
 import { RightSidebar } from "@/components/krx/right-sidebar";
 import { MusicPlayer } from "@/components/krx/music-player";
-import { ShoppingBag, Coins, Star, Sparkles, Frame, User, Image, Play, Type, Lock } from "lucide-react";
+import { ShoppingBag, ShoppingCart, Coins, Star, Sparkles, Frame, User, Image, Play, Type, Lock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
