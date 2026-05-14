@@ -11,6 +11,7 @@ export interface User {
   birthDate: string; level: number; balance: number; friends: number;
   posts: number; isAdmin: boolean; isRich: boolean;
   avatar: string | null; banner: string | null; bio: string;
+  blockedUsers?: string[]; // IDs of blocked users
 }
 
 export interface Transaction {
@@ -23,25 +24,35 @@ export interface Track {
 
 export interface PollOption { id: number; text: string; votes: number; }
 
+export interface Comment {
+  id: number; authorId: string; authorName: string; authorAvatar: string | null;
+  text: string; createdAt: number;
+}
+
 export interface Post {
   id: number; authorId: string; authorName: string; authorAvatar: string | null;
   text: string; media: { type: "image" | "video" | "gif"; url: string }[];
   poll: { question: string; options: PollOption[] } | null;
   hashtags: string[]; likes: number; likedBy: string[];
-  comments: number; shares: number;
-  createdAt: number; // timestamp ms
+  comments: number; commentList: Comment[];
+  shares: number; sharedBy: string[];
+  createdAt: number;
 }
 
 export interface Story {
   id: number; authorId: string; authorName: string; authorAvatar: string | null;
   media: { type: "image" | "video"; url: string };
-  createdAt: number; // expires 24h
+  likes: number; likedBy: string[];
+  createdAt: number;
 }
 
 export interface AppSettings {
   emailNotifications: boolean; pushNotifications: boolean; soundEnabled: boolean;
   privateProfile: boolean; showOnlineStatus: boolean; twoFactorAuth: boolean;
 }
+
+export type FeedFilter = "all" | "popular" | "following" | "new";
+export type PulseCategory = "funny" | "gaming" | "memes" | "anime" | "news" | "clips";
 
 interface RegisterData {
   name: string; email: string; password: string; birthDate: string; gender: "male" | "female";
@@ -53,18 +64,37 @@ interface AppContextType {
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => void; updateUser: (data: Partial<User>) => void;
   forgotPassword: (email: string) => Promise<boolean>;
+  blockUser: (targetId: string) => void;
+  isBlocked: (targetId: string) => boolean;
+
   theme: Theme; setTheme: (t: Theme) => void;
   language: Language; setLanguage: (l: Language) => void; t: (key: string) => string;
+
   playerVisible: boolean; showPlayer: () => void;
   currentTrack: Track | null; setCurrentTrack: (track: Track | null) => void;
   tracks: Track[]; addTrack: (track: Omit<Track, "id">) => void;
   transactions: Transaction[]; sendMoney: (toUser: string, amount: number) => boolean;
   settings: AppSettings; updateSettings: (key: keyof AppSettings, value: boolean) => void;
+
   // Feed
-  posts: Post[]; addPost: (data: Omit<Post, "id" | "createdAt" | "likes" | "likedBy" | "comments" | "shares">) => void;
+  posts: Post[];
+  addPost: (data: Omit<Post, "id" | "createdAt" | "likes" | "likedBy" | "comments" | "commentList" | "shares" | "sharedBy">) => void;
   toggleLike: (postId: number) => void;
-  stories: Story[]; addStory: (media: Story["media"]) => void;
+  addComment: (postId: number, text: string) => void;
+  sharePost: (postId: number) => void;
+
+  // Stories
+  stories: Story[];
+  addStory: (media: Story["media"]) => void;
+  likeStory: (storyId: number) => void;
+
+  // Trends
   trends: { tag: string; count: number }[];
+
+  // Feed filter
+  feedFilter: FeedFilter;
+  setFeedFilter: (f: FeedFilter) => void;
+  filteredPosts: Post[];
 }
 
 // ─── i18n ──────────────────────────────────────────────────────────────────
@@ -106,11 +136,6 @@ const translations: Record<Language, Record<string, string>> = {
 };
 
 // ─── Storage helpers ────────────────────────────────────────────────────────
-const USERS_KEY = "krx_users";
-const SESSION_KEY = "krx_session";
-const POSTS_KEY = "krx_posts";
-const STORIES_KEY = "krx_stories";
-
 function ls<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
@@ -119,24 +144,47 @@ function lsSet(key: string, value: unknown) {
   if (typeof window !== "undefined") localStorage.setItem(key, JSON.stringify(value));
 }
 
+const USERS_KEY   = "krx_users";
+const SESSION_KEY = "krx_session";
+const POSTS_KEY   = "krx_posts";
+const STORIES_KEY = "krx_stories";
+
 function getUsers(): (User & { password: string })[] { return ls(USERS_KEY, []); }
 function saveUsers(u: (User & { password: string })[]) { lsSet(USERS_KEY, u); }
 
-// ─── Trend helpers ──────────────────────────────────────────────────────────
+// ─── Trend compute ──────────────────────────────────────────────────────────
 function computeTrends(posts: Post[]): { tag: string; count: number }[] {
-  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
   const now = Date.now();
   const counts: Record<string, number> = {};
   for (const p of posts) {
-    if (now - p.createdAt > ONE_DAY * 3) continue; // last 3 days window
+    const age = now - p.createdAt;
+    // Recency weight: newer posts count more
+    const weight = age < 3600000 ? 3 : age < 86400000 ? 2 : 1;
+    if (age > THREE_DAYS) continue;
     for (const tag of p.hashtags) {
-      counts[tag] = (counts[tag] || 0) + 1;
+      counts[tag] = (counts[tag] || 0) + weight;
     }
   }
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([tag, count]) => ({ tag, count }));
+}
+
+// ─── Feed filter ────────────────────────────────────────────────────────────
+function applyFilter(posts: Post[], filter: FeedFilter, userId: string | undefined): Post[] {
+  switch (filter) {
+    case "popular":
+      return [...posts].sort((a, b) => (b.likes + b.comments * 2 + b.shares * 3) - (a.likes + a.comments * 2 + a.shares * 3));
+    case "new":
+      return [...posts].sort((a, b) => b.createdAt - a.createdAt);
+    case "following":
+      // For now returns current user's posts since we don't have a follow graph
+      return posts.filter(p => p.authorId === userId);
+    default:
+      return posts;
+  }
 }
 
 // ─── Context ────────────────────────────────────────────────────────────────
@@ -157,30 +205,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [trends, setTrends] = useState<{ tag: string; count: number }[]>([]);
+  const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
 
-  // Load on mount
+  const filteredPosts = applyFilter(posts, feedFilter, user?.id);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const session = ls<User | null>(SESSION_KEY, null);
     if (session) setUser(session);
-    const savedTheme = ls<Theme | null>("krx_theme", null);
-    if (savedTheme) setThemeState(savedTheme);
-    const savedLang = ls<Language | null>("krx_lang", null);
-    if (savedLang) setLanguageState(savedLang);
-    const savedTracks = ls<Track[]>("krx_tracks", []);
-    setTracks(savedTracks);
-    const savedPosts = ls<Post[]>(POSTS_KEY, []);
-    setPosts(savedPosts);
-    setTrends(computeTrends(savedPosts));
+    const savedTheme = ls<Theme>("krx_theme", "dark");
+    setThemeState(savedTheme);
+    const savedLang = ls<Language>("krx_lang", "ru");
+    setLanguageState(savedLang);
+    setTracks(ls("krx_tracks", []));
 
-    // Stories — filter out expired (>24h)
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const savedStories = ls<Story[]>(STORIES_KEY, []).filter(s => Date.now() - s.createdAt < ONE_DAY);
+    const savedPosts = ls<Post[]>(POSTS_KEY, []);
+    // Migrate old posts that lack commentList/sharedBy
+    const migratedPosts = savedPosts.map(p => ({
+      ...p,
+      commentList: p.commentList || [],
+      sharedBy: p.sharedBy || [],
+    }));
+    setPosts(migratedPosts);
+    setTrends(computeTrends(migratedPosts));
+
+    const ONE_DAY = 86400000;
+    const savedStories = ls<Story[]>(STORIES_KEY, [])
+      .filter(s => Date.now() - s.createdAt < ONE_DAY)
+      .map(s => ({ ...s, likes: s.likes || 0, likedBy: s.likedBy || [] }));
     setStories(savedStories);
     lsSet(STORIES_KEY, savedStories);
   }, []);
 
-  // Apply theme
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (theme === "dark") document.documentElement.classList.add("dark");
@@ -205,6 +261,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const nu: User & { password: string } = {
       id: Date.now().toString(), ...data, level: 0, balance: 0, friends: 0,
       posts: 0, isAdmin: false, isRich: false, avatar: null, banner: null, bio: "",
+      blockedUsers: [],
     };
     users.push(nu); saveUsers(users);
     const { password: _, ...ud } = nu;
@@ -222,7 +279,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (idx !== -1) { users[idx] = { ...users[idx], ...data }; saveUsers(users); }
   };
 
-  const forgotPassword = async (email: string): Promise<boolean> => !!getUsers().find(u => u.email === email);
+  const blockUser = (targetId: string) => {
+    const blocked = user?.blockedUsers || [];
+    if (blocked.includes(targetId)) return;
+    updateUser({ blockedUsers: [...blocked, targetId] });
+  };
+
+  const isBlocked = (targetId: string): boolean =>
+    (user?.blockedUsers || []).includes(targetId);
+
+  const forgotPassword = async (email: string): Promise<boolean> =>
+    !!getUsers().find(u => u.email === email);
 
   const showPlayer = () => setPlayerVisible(true);
 
@@ -249,15 +316,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateSettings = (key: keyof AppSettings, value: boolean) =>
     setSettings(prev => ({ ...prev, [key]: value }));
 
-  // ─── Feed ────────────────────────────────────────────────────────────────
-  const addPost = (data: Omit<Post, "id" | "createdAt" | "likes" | "likedBy" | "comments" | "shares">) => {
+  // ─── Feed ─────────────────────────────────────────────────────────────────
+  const addPost = (data: Omit<Post, "id" | "createdAt" | "likes" | "likedBy" | "comments" | "commentList" | "shares" | "sharedBy">) => {
     const newPost: Post = {
-      ...data, id: Date.now(), createdAt: Date.now(), likes: 0, likedBy: [], comments: 0, shares: 0,
+      ...data, id: Date.now(), createdAt: Date.now(),
+      likes: 0, likedBy: [], comments: 0, commentList: [], shares: 0, sharedBy: [],
     };
     const updated = [newPost, ...posts];
     setPosts(updated); lsSet(POSTS_KEY, updated);
-    const newTrends = computeTrends(updated);
-    setTrends(newTrends);
+    setTrends(computeTrends(updated));
     if (user) updateUser({ posts: (user.posts || 0) + 1 });
   };
 
@@ -266,32 +333,63 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updated = posts.map(p => {
       if (p.id !== postId) return p;
       const liked = p.likedBy.includes(user.id);
-      return {
-        ...p,
-        likes: liked ? p.likes - 1 : p.likes + 1,
-        likedBy: liked ? p.likedBy.filter(id => id !== user.id) : [...p.likedBy, user.id],
-      };
+      return { ...p, likes: liked ? p.likes - 1 : p.likes + 1, likedBy: liked ? p.likedBy.filter(id => id !== user.id) : [...p.likedBy, user.id] };
     });
     setPosts(updated); lsSet(POSTS_KEY, updated);
   };
 
+  const addComment = (postId: number, text: string) => {
+    if (!user || !text.trim()) return;
+    const comment: Comment = {
+      id: Date.now(), authorId: user.id, authorName: user.name, authorAvatar: user.avatar, text: text.trim(), createdAt: Date.now(),
+    };
+    const updated = posts.map(p => p.id === postId
+      ? { ...p, comments: p.comments + 1, commentList: [...(p.commentList || []), comment] }
+      : p
+    );
+    setPosts(updated); lsSet(POSTS_KEY, updated);
+  };
+
+  const sharePost = (postId: number) => {
+    if (!user) return;
+    const updated = posts.map(p => {
+      if (p.id !== postId) return p;
+      if ((p.sharedBy || []).includes(user.id)) return p; // already shared
+      return { ...p, shares: p.shares + 1, sharedBy: [...(p.sharedBy || []), user.id] };
+    });
+    setPosts(updated); lsSet(POSTS_KEY, updated);
+  };
+
+  // ─── Stories ──────────────────────────────────────────────────────────────
   const addStory = (media: Story["media"]) => {
     if (!user) return;
     const newStory: Story = {
-      id: Date.now(), authorId: user.id, authorName: user.name, authorAvatar: user.avatar,
-      media, createdAt: Date.now(),
+      id: Date.now(), authorId: user.id, authorName: user.name,
+      authorAvatar: user.avatar, media, createdAt: Date.now(), likes: 0, likedBy: [],
     };
     const updated = [...stories, newStory];
     setStories(updated); lsSet(STORIES_KEY, updated);
   };
 
+  const likeStory = (storyId: number) => {
+    if (!user) return;
+    const updated = stories.map(s => {
+      if (s.id !== storyId) return s;
+      const liked = (s.likedBy || []).includes(user.id);
+      return { ...s, likes: liked ? s.likes - 1 : s.likes + 1, likedBy: liked ? s.likedBy.filter(id => id !== user.id) : [...(s.likedBy || []), user.id] };
+    });
+    setStories(updated); lsSet(STORIES_KEY, updated);
+  };
+
   return (
     <AppContext.Provider value={{
-      user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword,
+      user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword, blockUser, isBlocked,
       theme, setTheme, language, setLanguage, t,
       playerVisible, showPlayer, currentTrack, setCurrentTrack, tracks, addTrack,
       transactions, sendMoney, settings, updateSettings,
-      posts, addPost, toggleLike, stories, addStory, trends,
+      posts, addPost, toggleLike, addComment, sharePost,
+      stories, addStory, likeStory,
+      trends, feedFilter, setFeedFilter, filteredPosts,
     }}>
       {children}
     </AppContext.Provider>
