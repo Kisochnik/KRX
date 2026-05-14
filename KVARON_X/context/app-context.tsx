@@ -42,6 +42,7 @@ export interface Post {
 export interface Story {
   id: number; authorId: string; authorName: string; authorAvatar: string | null;
   media: { type: "image" | "video"; url: string };
+  music?: { title: string; artist: string } | null;
   likes: number; likedBy: string[];
   createdAt: number;
 }
@@ -85,7 +86,8 @@ interface AppContextType {
 
   // Stories
   stories: Story[];
-  addStory: (media: Story["media"]) => void;
+  addStory: (media: Story["media"], music?: { title: string; artist: string } | null) => void;
+  deleteStory: (storyId: number) => void;
   likeStory: (storyId: number) => void;
 
   // Trends
@@ -361,13 +363,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // ─── Stories ──────────────────────────────────────────────────────────────
-  const addStory = (media: Story["media"]) => {
+  const addStory = (media: Story["media"], music?: { title: string; artist: string } | null) => {
     if (!user) return;
     const newStory: Story = {
       id: Date.now(), authorId: user.id, authorName: user.name,
-      authorAvatar: user.avatar, media, createdAt: Date.now(), likes: 0, likedBy: [],
+      authorAvatar: user.avatar, media, music: music || null, createdAt: Date.now(), likes: 0, likedBy: [],
     };
     const updated = [...stories, newStory];
+    setStories(updated); lsSet(STORIES_KEY, updated);
+  };
+
+  const deleteStory = (storyId: number) => {
+    if (!user) return;
+    const updated = stories.filter(s => !(s.id === storyId && s.authorId === user.id));
     setStories(updated); lsSet(STORIES_KEY, updated);
   };
 
@@ -388,7 +396,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       playerVisible, showPlayer, currentTrack, setCurrentTrack, tracks, addTrack,
       transactions, sendMoney, settings, updateSettings,
       posts, addPost, toggleLike, addComment, sharePost,
-      stories, addStory, likeStory,
+      stories, addStory, deleteStory, likeStory,
       trends, feedFilter, setFeedFilter, filteredPosts,
     }}>
       {children}
