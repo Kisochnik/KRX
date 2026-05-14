@@ -47,6 +47,35 @@ export interface Story {
   createdAt: number;
 }
 
+export interface NewsReaction {
+  emoji: string; count: number; userIds: string[];
+}
+
+export interface NewsPost {
+  id: number;
+  authorName: string;
+  category: string;
+  categoryColor: string;
+  title: string;
+  body: string;
+  image?: string | null;
+  views: number; viewedBy: string[];
+  reactions: NewsReaction[];
+  createdAt: number;
+}
+
+export const NEWS_AUTHORS = ["Kvarden", "Baron_Kosyaka", "KVARON_X"];
+export const NEWS_CATEGORIES = [
+  { label: "Обновления",   color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+  { label: "Турниры",      color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
+  { label: "Музыка",       color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  { label: "Безопасность", color: "bg-red-500/20 text-red-400 border-red-500/30" },
+  { label: "Магазин",      color: "bg-green-500/20 text-green-400 border-green-500/30" },
+  { label: "Платформа",    color: "bg-primary/20 text-primary border-primary/30" },
+  { label: "Игры",         color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
+];
+export const NEWS_EMOJIS = ["🔥","👍","❤️","😮","😂","💯"];
+
 export interface AppSettings {
   emailNotifications: boolean; pushNotifications: boolean; soundEnabled: boolean;
   privateProfile: boolean; showOnlineStatus: boolean; twoFactorAuth: boolean;
@@ -92,6 +121,12 @@ interface AppContextType {
 
   // Trends
   trends: { tag: string; count: number }[];
+
+  // News
+  newsPosts: NewsPost[];
+  addNewsPost: (data: Omit<NewsPost, "id" | "createdAt" | "views" | "viewedBy" | "reactions">) => void;
+  viewNewsPost: (newsId: number) => void;
+  reactToNews: (newsId: number, emoji: string) => void;
 
   // Feed filter
   feedFilter: FeedFilter;
@@ -208,6 +243,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [stories, setStories] = useState<Story[]>([]);
   const [trends, setTrends] = useState<{ tag: string; count: number }[]>([]);
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
+  const [newsPosts, setNewsPosts] = useState<NewsPost[]>([]);
 
   const filteredPosts = applyFilter(posts, feedFilter, user?.id);
 
@@ -220,6 +256,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const savedLang = ls<Language>("krx_lang", "ru");
     setLanguageState(savedLang);
     setTracks(ls("krx_tracks", []));
+
+    const savedNews = ls<NewsPost[]>("krx_news", []);
+    setNewsPosts(savedNews);
 
     const savedPosts = ls<Post[]>(POSTS_KEY, []);
     // Migrate old posts that lack commentList/sharedBy
@@ -389,6 +428,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setStories(updated); lsSet(STORIES_KEY, updated);
   };
 
+  const addNewsPost = (data: Omit<NewsPost, "id" | "createdAt" | "views" | "viewedBy" | "reactions">) => {
+    const post: NewsPost = {
+      ...data, id: Date.now(), createdAt: Date.now(),
+      views: 0, viewedBy: [],
+      reactions: NEWS_EMOJIS.map(emoji => ({ emoji, count: 0, userIds: [] })),
+    };
+    const updated = [post, ...newsPosts];
+    setNewsPosts(updated); lsSet("krx_news", updated);
+  };
+
+  const viewNewsPost = (newsId: number) => {
+    if (!user) return;
+    const updated = newsPosts.map(n => {
+      if (n.id !== newsId || n.viewedBy.includes(user.id)) return n;
+      return { ...n, views: n.views + 1, viewedBy: [...n.viewedBy, user.id] };
+    });
+    setNewsPosts(updated); lsSet("krx_news", updated);
+  };
+
+  const reactToNews = (newsId: number, emoji: string) => {
+    if (!user) return;
+    const updated = newsPosts.map(n => {
+      if (n.id !== newsId) return n;
+      const reactions = n.reactions.map(r => {
+        if (r.emoji !== emoji) return r;
+        const hasReacted = r.userIds.includes(user.id);
+        return {
+          ...r,
+          count: hasReacted ? r.count - 1 : r.count + 1,
+          userIds: hasReacted ? r.userIds.filter(id => id !== user.id) : [...r.userIds, user.id],
+        };
+      });
+      return { ...n, reactions };
+    });
+    setNewsPosts(updated); lsSet("krx_news", updated);
+  };
+
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword, blockUser, isBlocked,
@@ -398,6 +474,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       posts, addPost, toggleLike, addComment, sharePost,
       stories, addStory, deleteStory, likeStory,
       trends, feedFilter, setFeedFilter, filteredPosts,
+      newsPosts, addNewsPost, viewNewsPost, reactToNews,
     }}>
       {children}
     </AppContext.Provider>
