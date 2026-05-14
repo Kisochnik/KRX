@@ -1,34 +1,48 @@
 "use client";
 
-import { TrendingUp, Users, Trophy, Gamepad2 } from "lucide-react";
+import { TrendingUp, Users, Trophy, Hash } from "lucide-react";
 import { useApp } from "@/context/app-context";
 
-const trends = [
-  { tag: "#KRX_Gaming", posts: "0 постов" },
-  { tag: "#TournamentKRX", posts: "0 постов" },
-];
-
 export function RightSidebar() {
-  const { user } = useApp();
+  const { trends } = useApp();
+
   return (
     <aside className="fixed right-0 top-0 h-screen w-80 bg-sidebar border-l border-sidebar-border p-4 overflow-y-auto hidden xl:block">
-      {/* Trending */}
+
+      {/* Trending Hashtags */}
       <div className="bg-card rounded-xl border border-border p-4 mb-4">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-foreground">Тренды</h3>
         </div>
-        <div className="space-y-3">
-          {trends.map(trend => (
-            <button key={trend.tag} className="w-full text-left p-2 rounded-lg hover:bg-muted transition-all group">
-              <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{trend.tag}</p>
-              <p className="text-xs text-muted-foreground">{trend.posts}</p>
-            </button>
-          ))}
-        </div>
+
+        {trends.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-3">
+            Публикуй посты с #хештегами — они появятся здесь
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {trends.map((trend, i) => (
+              <button
+                key={trend.tag}
+                className="w-full text-left p-2.5 rounded-lg hover:bg-muted transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4">#{i + 1}</span>
+                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      {trend.tag}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{trend.count} постов</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Top Players — empty */}
+      {/* Top Players */}
       <div className="bg-card rounded-xl border border-border p-4 mb-4">
         <div className="flex items-center gap-2 mb-4">
           <Trophy className="w-5 h-5 text-primary" />
@@ -39,7 +53,7 @@ export function RightSidebar() {
         </div>
       </div>
 
-      {/* Online Friends — empty by default */}
+      {/* Online Friends */}
       <div className="bg-card rounded-xl border border-border p-4">
         <div className="flex items-center gap-2 mb-4">
           <Users className="w-5 h-5 text-primary" />
