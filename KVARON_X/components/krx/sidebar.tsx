@@ -27,7 +27,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, t } = useApp();
+  const { user, logout, t, unreadCount } = useApp();
 
   const handleLogout = () => {
     logout();
@@ -94,6 +94,11 @@ export function Sidebar() {
                     item.isAdmin && "text-primary"
                   )} />
                   <span className={cn(item.isAdmin && "text-primary")}>{item.label}</span>
+                  {item.href === "/notifications" && unreadCount > 0 && (
+                    <span className="ml-auto min-w-[18px] h-[18px] bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                   {item.isAdmin && (
                     <span className="ml-auto text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">ADMIN</span>
                   )}

@@ -32,7 +32,7 @@ const categories = [
 const products: { id: number; name: string; description: string; price: number; oldPrice: number | null; image: string; category: string; popular: boolean; subtype: string; requiredLevel: number | null; adminOnly: boolean; }[] = [];
 
 export default function ShopPage() {
-  const { isAuthenticated, user: shopUser } = useApp();
+  const { isAuthenticated, user: shopUser, pushNotif } = useApp();
   const shopRouter = useRouter();
   useEffect(() => { if (!isAuthenticated) shopRouter.replace("/auth"); }, [isAuthenticated]);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -182,7 +182,7 @@ export default function ShopPage() {
                       )}
                     </div>
                     <button 
-                      onClick={() => !locked && addToCart(product.id)}
+                      onClick={() => { if (!locked) { addToCart(product.id); pushNotif({ type: "shop_purchase", icon: "🛍️", title: "Добавлено в корзину", body: `«${product.name}» — ${product.price.toLocaleString()} KRX`, link: "/shop" }); } }}
                       disabled={locked || cart.includes(product.id)}
                       className={cn(
                         "px-4 py-2 rounded-lg text-sm font-medium transition-all",

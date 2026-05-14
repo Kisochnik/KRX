@@ -76,6 +76,22 @@ export const NEWS_CATEGORIES = [
 ];
 export const NEWS_EMOJIS = ["🔥","👍","❤️","😮","😂","💯"];
 
+export type NotifType =
+  | "like" | "reaction" | "comment" | "mention" | "friend_request"
+  | "message" | "news" | "game_event" | "shop_purchase" | "wallet";
+
+export interface KRXNotification {
+  id: number;
+  type: NotifType;
+  title: string;
+  body: string;
+  icon?: string;       // emoji icon
+  fromUser?: string;   // who triggered it
+  link?: string;       // where to navigate
+  read: boolean;
+  createdAt: number;
+}
+
 export interface AppSettings {
   emailNotifications: boolean; pushNotifications: boolean; soundEnabled: boolean;
   privateProfile: boolean; showOnlineStatus: boolean; twoFactorAuth: boolean;
@@ -121,6 +137,14 @@ interface AppContextType {
 
   // Trends
   trends: { tag: string; count: number }[];
+
+  // Notifications
+  notifications: KRXNotification[];
+  unreadCount: number;
+  pushNotif: (n: Omit<KRXNotification, "id" | "createdAt" | "read">) => void;
+  markRead: (id: number) => void;
+  markAllRead: () => void;
+  clearNotification: (id: number) => void;
 
   // News
   newsPosts: NewsPost[];
@@ -244,6 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [trends, setTrends] = useState<{ tag: string; count: number }[]>([]);
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [newsPosts, setNewsPosts] = useState<NewsPost[]>([]);
+  const [notifications, setNotifications] = useState<KRXNotification[]>([]);
 
   const filteredPosts = applyFilter(posts, feedFilter, user?.id);
 
@@ -256,6 +281,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const savedLang = ls<Language>("krx_lang", "ru");
     setLanguageState(savedLang);
     setTracks(ls("krx_tracks", []));
+
+    const savedNotifs = ls<KRXNotification[]>("krx_notifs", []);
+    setNotifications(savedNotifs);
 
     const savedNews = ls<NewsPost[]>("krx_news", []);
     setNewsPosts(savedNews);
@@ -351,7 +379,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       description: `Перевод → @${toUserName}`,
       amount: -amount, date: new Date().toLocaleString("ru"),
     };
-    setTransactions(prev => [tx, ...prev]); return true;
+    setTransactions(prev => [tx, ...prev]);
+    pushNotif({ type: "wallet", icon: "💸", title: "Перевод отправлен", body: `Вы отправили ${amount} KRX → @${toUserName}`, link: "/wallet" });
+    return true;
   };
 
   const updateSettings = (key: keyof AppSettings, value: boolean) =>
@@ -371,16 +401,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleLike = (postId: number) => {
     if (!user) return;
+    const post = posts.find(p => p.id === postId);
+    const wasLiked = post?.likedBy.includes(user.id);
     const updated = posts.map(p => {
       if (p.id !== postId) return p;
       const liked = p.likedBy.includes(user.id);
       return { ...p, likes: liked ? p.likes - 1 : p.likes + 1, likedBy: liked ? p.likedBy.filter(id => id !== user.id) : [...p.likedBy, user.id] };
     });
     setPosts(updated); lsSet(POSTS_KEY, updated);
+    // Notify if liking (not unliking) and not own post
+    if (!wasLiked && post && post.authorId !== user.id) {
+      pushNotif({ type: "like", icon: "❤️", title: "Новый лайк", body: `@${user.name} лайкнул ваш пост`, fromUser: user.name, link: "/" });
+    }
   };
 
   const addComment = (postId: number, text: string) => {
     if (!user || !text.trim()) return;
+    const post = posts.find(p => p.id === postId);
     const comment: Comment = {
       id: Date.now(), authorId: user.id, authorName: user.name, authorAvatar: user.avatar, text: text.trim(), createdAt: Date.now(),
     };
@@ -389,6 +426,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       : p
     );
     setPosts(updated); lsSet(POSTS_KEY, updated);
+    if (post && post.authorId !== user.id) {
+      pushNotif({ type: "comment", icon: "💬", title: "Новый комментарий", body: `@${user.name}: «${text.trim().slice(0,60)}»`, fromUser: user.name, link: "/" });
+    }
+    // Mention detection
+    const mentions = text.match(/@[\w]+/g) || [];
+    mentions.forEach(m => {
+      if (m.slice(1) !== user.name) {
+        pushNotif({ type: "mention", icon: "📣", title: "Вас упомянули", body: `@${user.name} упомянул вас в комментарии`, fromUser: user.name, link: "/" });
+      }
+    });
   };
 
   const sharePost = (postId: number) => {
@@ -428,6 +475,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setStories(updated); lsSet(STORIES_KEY, updated);
   };
 
+  const pushNotif = (n: Omit<KRXNotification, "id" | "createdAt" | "read">) => {
+    const notif: KRXNotification = { ...n, id: Date.now() + Math.random(), createdAt: Date.now(), read: false };
+    setNotifications(prev => {
+      const updated = [notif, ...prev].slice(0, 100); // keep last 100
+      lsSet("krx_notifs", updated);
+      return updated;
+    });
+  };
+
+  const markRead = (id: number) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      lsSet("krx_notifs", updated);
+      return updated;
+    });
+  };
+
+  const markAllRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      lsSet("krx_notifs", updated);
+      return updated;
+    });
+  };
+
+  const clearNotification = (id: number) => {
+    setNotifications(prev => {
+      const updated = prev.filter(n => n.id !== id);
+      lsSet("krx_notifs", updated);
+      return updated;
+    });
+  };
+
   const addNewsPost = (data: Omit<NewsPost, "id" | "createdAt" | "views" | "viewedBy" | "reactions">) => {
     const post: NewsPost = {
       ...data, id: Date.now(), createdAt: Date.now(),
@@ -436,6 +516,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     const updated = [post, ...newsPosts];
     setNewsPosts(updated); lsSet("krx_news", updated);
+    pushNotif({ type: "news", icon: "📰", title: `${data.category}:`, body: data.title, fromUser: data.authorName, link: "/news" });
   };
 
   const viewNewsPost = (newsId: number) => {
@@ -463,6 +544,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ...n, reactions };
     });
     setNewsPosts(updated); lsSet("krx_news", updated);
+    const news = newsPosts.find(n => n.id === newsId);
+    if (news && user) {
+      pushNotif({ type: "reaction", icon: emoji, title: "Реакция на новость", body: `@${user.name} отреагировал на «${news.title.slice(0,40)}»`, fromUser: user.name, link: "/news" });
+    }
   };
 
   return (
@@ -470,6 +555,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword, blockUser, isBlocked,
       theme, setTheme, language, setLanguage, t,
       playerVisible, showPlayer, currentTrack, setCurrentTrack, tracks, addTrack,
+      notifications, unreadCount: notifications.filter(n => !n.read).length,
+      pushNotif, markRead, markAllRead, clearNotification,
       transactions, sendMoney, settings, updateSettings,
       posts, addPost, toggleLike, addComment, sharePost,
       stories, addStory, deleteStory, likeStory,
