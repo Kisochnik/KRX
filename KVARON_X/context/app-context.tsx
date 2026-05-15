@@ -14,12 +14,39 @@ export interface User {
   blockedUsers?: string[]; // IDs of blocked users
 }
 
+export type OnlineStatus = "online" | "dnd" | "offline";
+
+export interface FriendRequest {
+  id: number;
+  fromId: string; fromName: string; fromAvatar: string | null;
+  toId: string;
+  status: "pending" | "accepted" | "rejected";
+  createdAt: number;
+}
+
+export interface FriendEntry {
+  userId: string; name: string; avatar: string | null; level: number;
+  status: OnlineStatus;
+  activity?: string | null; // "playing CS2" | "listening to X"
+  pinned: boolean;
+  addedAt: number;
+}
+
 export interface Transaction {
   id: number; type: "income" | "expense"; description: string; amount: number; date: string;
 }
 
+export type MusicCategory = "all" | "popular" | "new" | "phonk" | "trap" | "rock" | "electronic" | "gaming" | "chill" | "memes";
+
 export interface Track {
   id: number; title: string; artist: string; duration: string; addedBy: string;
+  cover?: string | null;       // base64 or url
+  audioUrl?: string | null;    // base64 audio
+  category: MusicCategory;
+  plays: number;
+  likedBy: string[];
+  savedBy: string[];
+  createdAt: number;
 }
 
 export interface PollOption { id: number; text: string; votes: number; }
@@ -92,6 +119,36 @@ export interface KRXNotification {
   createdAt: number;
 }
 
+// ─── Games Hub Types ────────────────────────────────────────────────────────
+export const GAME_ADMINS = ["Kvarden", "Baron_Kosyaka", "KVARON_X"];
+
+export interface Tournament {
+  id: number; title: string; game: string; date: string;
+  prizePool: string; maxPlayers: number; participants: string[];
+  banner?: string | null; createdBy: string; createdAt: number;
+}
+
+export interface Clan {
+  id: number; name: string; tag: string; avatar?: string | null;
+  description: string; ownerId: string; ownerName: string;
+  members: string[]; bannedUsers: string[];
+  level: number; xp: number; isPaid: boolean;
+  createdAt: number;
+}
+
+export interface Room {
+  id: number; name: string; game: string;
+  ownerId: string; ownerName: string;
+  members: string[]; bannedUsers: string[];
+  maxPlayers: number;
+  privacy: "open" | "invite" | "password";
+  password?: string;
+  isPaid: boolean; entryFee: number; // 0 = free
+  bgColor?: string; nickColor?: string;
+  chat: { id: number; authorName: string; text: string; createdAt: number }[];
+  createdAt: number;
+}
+
 export interface AppSettings {
   emailNotifications: boolean; pushNotifications: boolean; soundEnabled: boolean;
   privateProfile: boolean; showOnlineStatus: boolean; twoFactorAuth: boolean;
@@ -111,14 +168,51 @@ interface AppContextType {
   logout: () => void; updateUser: (data: Partial<User>) => void;
   forgotPassword: (email: string) => Promise<boolean>;
   blockUser: (targetId: string) => void;
+  unblockUser: (targetId: string) => void;
   isBlocked: (targetId: string) => boolean;
+  // Friends
+  friendList: FriendEntry[];
+  friendRequests: FriendRequest[];
+  sentRequests: FriendRequest[];
+  sendFriendRequest: (toId: string, toName: string, toAvatar: string | null) => void;
+  acceptFriendRequest: (reqId: number) => void;
+  rejectFriendRequest: (reqId: number) => void;
+  removeFriend: (userId: string) => void;
+  pinFriend: (userId: string) => void;
+  allUsers: { id: string; name: string; avatar: string | null; level: number }[];
 
   theme: Theme; setTheme: (t: Theme) => void;
   language: Language; setLanguage: (l: Language) => void; t: (key: string) => string;
 
-  playerVisible: boolean; showPlayer: () => void;
-  currentTrack: Track | null; setCurrentTrack: (track: Track | null) => void;
-  tracks: Track[]; addTrack: (track: Omit<Track, "id">) => void;
+  // Music player
+  playerVisible: boolean;
+  isPlaying: boolean;
+  currentTrack: Track | null;
+  currentTrackIdx: number;
+  progress: number;       // 0-100
+  volume: number;         // 0-100
+  shuffle: boolean; repeat: boolean;
+  showPlayer: () => void;
+  hidePlayer: () => void;
+  setCurrentTrack: (track: Track | null) => void;
+  playTrack: (track: Track, queue?: Track[]) => void;
+  togglePlay: () => void;
+  nextTrack: () => void;
+  prevTrack: () => void;
+  setProgress: (v: number) => void;
+  setVolume: (v: number) => void;
+  setShuffle: (v: boolean) => void;
+  setRepeat: (v: boolean) => void;
+  tracks: Track[];
+  addTrack: (track: Omit<Track, "id" | "plays" | "likedBy" | "savedBy" | "createdAt">) => void;
+  deleteTrack: (id: number) => void;
+  likeTrack: (id: number) => void;
+  saveTrack: (id: number) => void;
+  incrementPlay: (id: number) => void;
+  likedTracks: Track[];
+  savedTracks: Track[];
+  recentTracks: Track[];
+  queue: Track[];
   transactions: Transaction[]; sendMoney: (toUser: string, amount: number) => boolean;
   settings: AppSettings; updateSettings: (key: keyof AppSettings, value: boolean) => void;
 
@@ -137,6 +231,22 @@ interface AppContextType {
 
   // Trends
   trends: { tag: string; count: number }[];
+
+  // Games Hub
+  tournaments: Tournament[];
+  clans: Clan[];
+  rooms: Room[];
+  createTournament: (data: Omit<Tournament, "id" | "createdAt" | "participants">) => boolean;
+  joinTournament: (id: number) => boolean;
+  createClan: (data: { name: string; tag: string; avatar?: string | null; description: string; isPaid: boolean }) => boolean;
+  joinClan: (id: number) => boolean;
+  leaveClan: (id: number) => void;
+  banFromClan: (clanId: number, userId: string) => void;
+  createRoom: (data: { name: string; game: string; privacy: Room["privacy"]; password?: string; isPaid: boolean; entryFee: number; bgColor?: string; nickColor?: string }) => boolean;
+  joinRoom: (id: number, password?: string) => boolean;
+  leaveRoom: (id: number) => void;
+  banFromRoom: (roomId: number, userId: string) => void;
+  sendRoomMessage: (roomId: number, text: string) => void;
 
   // Notifications
   notifications: KRXNotification[];
@@ -256,7 +366,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [language, setLanguageState] = useState<Language>("ru");
   const [playerVisible, setPlayerVisible] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrack, setCurrentTrackState] = useState<Track | null>(null);
+  const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
+  const [queue, setQueue] = useState<Track[]>([]);
+  const [progress, setProgressState] = useState(0);
+  const [volume, setVolumeState] = useState(70);
+  const [shuffle, setShuffleState] = useState(false);
+  const [repeat, setRepeatState] = useState(false);
+  const [recentTracks, setRecentTracks] = useState<Track[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [settings, setSettings] = useState<AppSettings>({
@@ -269,6 +387,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [newsPosts, setNewsPosts] = useState<NewsPost[]>([]);
   const [notifications, setNotifications] = useState<KRXNotification[]>([]);
+  const [friendList, setFriendList] = useState<FriendEntry[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [clans, setClans] = useState<Clan[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   const filteredPosts = applyFilter(posts, feedFilter, user?.id);
 
@@ -280,9 +404,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setThemeState(savedTheme);
     const savedLang = ls<Language>("krx_lang", "ru");
     setLanguageState(savedLang);
-    setTracks(ls("krx_tracks", []));
+    const savedTracks = ls<Track[]>("krx_tracks", []).map((t: Track) => ({
+      ...t,
+      category: t.category || "all" as MusicCategory,
+      plays: t.plays || 0,
+      likedBy: t.likedBy || [],
+      savedBy: t.savedBy || [],
+      createdAt: t.createdAt || Date.now(),
+    }));
+    setTracks(savedTracks);
+    setRecentTracks(ls("krx_recent", []));
 
     const savedNotifs = ls<KRXNotification[]>("krx_notifs", []);
+    setFriendList(ls("krx_friends", []));
+    setFriendRequests(ls("krx_freq", []));
+    setSentRequests(ls("krx_fsent", []));
+    setTournaments(ls("krx_tournaments", []));
+    setClans(ls("krx_clans", []));
+    setRooms(ls("krx_rooms", []));
     setNotifications(savedNotifs);
 
     const savedNews = ls<NewsPost[]>("krx_news", []);
@@ -348,6 +487,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (idx !== -1) { users[idx] = { ...users[idx], ...data }; saveUsers(users); }
   };
 
+  const allUsers = (() => {
+    const users = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("krx_users") || "[]") : [];
+    return users.map((u: {id: string; name: string; avatar: string | null; level: number}) => ({ id: u.id, name: u.name, avatar: u.avatar, level: u.level }));
+  })();
+
+  const sendFriendRequest = (toId: string, toName: string, toAvatar: string | null) => {
+    if (!user) return;
+    if (sentRequests.find(r => r.toId === toId && r.status === "pending")) return;
+    const req: FriendRequest = { id: Date.now(), fromId: user.id, fromName: user.name, fromAvatar: user.avatar, toId, status: "pending", createdAt: Date.now() };
+    const updated = [...sentRequests, req];
+    setSentRequests(updated); lsSet("krx_fsent", updated);
+    // also store in global requests so recipient can see it
+    const global = ls<FriendRequest[]>("krx_freq_global", []);
+    lsSet("krx_freq_global", [...global, req]);
+    pushNotif({ type: "friend_request", icon: "👤", title: "Заявка отправлена", body: `Вы отправили заявку @${toName}`, link: "/friends" });
+  };
+
+  const acceptFriendRequest = (reqId: number) => {
+    if (!user) return;
+    const req = friendRequests.find(r => r.id === reqId); if (!req) return;
+    const newFriend: FriendEntry = { userId: req.fromId, name: req.fromName, avatar: req.fromAvatar, level: 0, status: "online" as OnlineStatus, activity: null, pinned: false, addedAt: Date.now() };
+    const updFriends = [...friendList, newFriend];
+    setFriendList(updFriends); lsSet("krx_friends", updFriends);
+    const updReqs = friendRequests.map(r => r.id === reqId ? { ...r, status: "accepted" as const } : r);
+    setFriendRequests(updReqs); lsSet("krx_freq", updReqs);
+    updateUser({ friends: (user.friends || 0) + 1 });
+    pushNotif({ type: "friend_request", icon: "✅", title: "Заявка принята", body: `@${req.fromName} теперь ваш друг!`, link: "/friends" });
+  };
+
+  const rejectFriendRequest = (reqId: number) => {
+    const updReqs = friendRequests.map(r => r.id === reqId ? { ...r, status: "rejected" as const } : r);
+    setFriendRequests(updReqs); lsSet("krx_freq", updReqs);
+  };
+
+  const removeFriend = (userId: string) => {
+    if (!user) return;
+    const updated = friendList.filter(f => f.userId !== userId);
+    setFriendList(updated); lsSet("krx_friends", updated);
+    updateUser({ friends: Math.max(0, (user.friends || 0) - 1) });
+  };
+
+  const pinFriend = (userId: string) => {
+    const updated = friendList.map(f => f.userId === userId ? { ...f, pinned: !f.pinned } : f);
+    setFriendList(updated); lsSet("krx_friends", updated);
+  };
+
+  const unblockUser = (targetId: string) => {
+    updateUser({ blockedUsers: (user?.blockedUsers || []).filter(id => id !== targetId) });
+  };
+
   const blockUser = (targetId: string) => {
     const blocked = user?.blockedUsers || [];
     if (blocked.includes(targetId)) return;
@@ -361,11 +550,104 @@ export function AppProvider({ children }: { children: ReactNode }) {
     !!getUsers().find(u => u.email === email);
 
   const showPlayer = () => setPlayerVisible(true);
+  const hidePlayer = () => { setPlayerVisible(false); setIsPlaying(false); };
 
-  const addTrack = (track: Omit<Track, "id">) => {
-    const updated = [...tracks, { ...track, id: Date.now() }];
+  const playTrack = (track: Track, newQueue?: Track[]) => {
+    setCurrentTrackState(track);
+    setIsPlaying(true);
+    setPlayerVisible(true);
+    setProgressState(0);
+    if (newQueue) { setQueue(newQueue); setCurrentTrackIdx(newQueue.findIndex(t => t.id === track.id)); }
+    // Add to recent
+    setRecentTracks(prev => {
+      const filtered = prev.filter(t => t.id !== track.id);
+      const updated = [track, ...filtered].slice(0, 20);
+      lsSet("krx_recent", updated);
+      return updated;
+    });
+    // Increment plays
+    setTracks(prev => {
+      const updated = prev.map(t => t.id === track.id ? { ...t, plays: (t.plays || 0) + 1 } : t);
+      lsSet("krx_tracks", updated);
+      return updated;
+    });
+  };
+
+  const togglePlay = () => setIsPlaying(prev => !prev);
+
+  const nextTrack = () => {
+    if (!queue.length) return;
+    const nextIdx = shuffle
+      ? Math.floor(Math.random() * queue.length)
+      : (currentTrackIdx + 1) % queue.length;
+    setCurrentTrackIdx(nextIdx);
+    setCurrentTrackState(queue[nextIdx]);
+    setProgressState(0);
+  };
+
+  const prevTrack = () => {
+    if (!queue.length) return;
+    const prevIdx = (currentTrackIdx - 1 + queue.length) % queue.length;
+    setCurrentTrackIdx(prevIdx);
+    setCurrentTrackState(queue[prevIdx]);
+    setProgressState(0);
+  };
+
+  const setProgress = (v: number) => setProgressState(v);
+  const setVolume = (v: number) => setVolumeState(v);
+  const setShuffle = (v: boolean) => setShuffleState(v);
+  const setRepeat = (v: boolean) => setRepeatState(v);
+
+  // Keep legacy setCurrentTrack for stories compatibility
+  const setCurrentTrack = (track: Track | null) => {
+    setCurrentTrackState(track);
+    if (track) { setPlayerVisible(true); setIsPlaying(true); }
+    else { setIsPlaying(false); }
+  };
+
+  const addTrack = (track: Omit<Track, "id" | "plays" | "likedBy" | "savedBy" | "createdAt">) => {
+    const newT: Track = { ...track, id: Date.now(), plays: 0, likedBy: [], savedBy: [], createdAt: Date.now() };
+    const updated = [...tracks, newT];
     setTracks(updated); lsSet("krx_tracks", updated);
   };
+
+  const deleteTrack = (id: number) => {
+    if (!user || !['Kvarden','Baron_Kosyaka','KVARON_X'].includes(user.name)) return;
+    const updated = tracks.filter(t => t.id !== id);
+    setTracks(updated); lsSet("krx_tracks", updated);
+    if (currentTrack?.id === id) { setCurrentTrackState(null); setIsPlaying(false); }
+  };
+
+  const likeTrack = (id: number) => {
+    if (!user) return;
+    const updated = tracks.map(t => {
+      if (t.id !== id) return t;
+      const liked = (t.likedBy || []).includes(user.id);
+      return { ...t, likedBy: liked ? t.likedBy.filter(x => x !== user.id) : [...(t.likedBy || []), user.id] };
+    });
+    setTracks(updated); lsSet("krx_tracks", updated);
+  };
+
+  const saveTrack = (id: number) => {
+    if (!user) return;
+    const updated = tracks.map(t => {
+      if (t.id !== id) return t;
+      const saved = (t.savedBy || []).includes(user.id);
+      return { ...t, savedBy: saved ? t.savedBy.filter(x => x !== user.id) : [...(t.savedBy || []), user.id] };
+    });
+    setTracks(updated); lsSet("krx_tracks", updated);
+  };
+
+  const incrementPlay = (id: number) => {
+    setTracks(prev => {
+      const updated = prev.map(t => t.id === id ? { ...t, plays: (t.plays || 0) + 1 } : t);
+      lsSet("krx_tracks", updated);
+      return updated;
+    });
+  };
+
+  const likedTracks = tracks.filter(t => user && (t.likedBy || []).includes(user.id));
+  const savedTracks = tracks.filter(t => user && (t.savedBy || []).includes(user.id));
 
   const sendMoney = (toUserName: string, amount: number): boolean => {
     if (!user || user.balance < amount || amount <= 0) return false;
@@ -508,7 +790,134 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addNewsPost = (data: Omit<NewsPost, "id" | "createdAt" | "views" | "viewedBy" | "reactions">) => {
+  // ─── Games Hub ───────────────────────────────────────────────────────────
+  const CLAN_COST = 500;
+  const ROOM_COST = 200;
+
+  const createTournament = (data: Omit<Tournament, "id" | "createdAt" | "participants">): boolean => {
+    if (!user || !GAME_ADMINS.includes(user.name)) return false;
+    const t: Tournament = { ...data, id: Date.now(), createdAt: Date.now(), participants: [] };
+    const updated = [t, ...tournaments];
+    setTournaments(updated); lsSet("krx_tournaments", updated);
+    pushNotif({ type: "game_event", icon: "🏆", title: "Турнир создан", body: `«${data.title}» — ${data.date}`, link: "/games" });
+    return true;
+  };
+
+  const joinTournament = (id: number): boolean => {
+    if (!user) return false;
+    const updated = tournaments.map(t => {
+      if (t.id !== id || t.participants.includes(user.id)) return t;
+      return { ...t, participants: [...t.participants, user.id] };
+    });
+    setTournaments(updated); lsSet("krx_tournaments", updated);
+    pushNotif({ type: "game_event", icon: "🎮", title: "Вы в турнире!", body: `Вы зарегистрировались`, link: "/games" });
+    return true;
+  };
+
+  const createClan = (data: { name: string; tag: string; avatar?: string | null; description: string; isPaid: boolean }): boolean => {
+    if (!user) return false;
+    const isAdmin = GAME_ADMINS.includes(user.name);
+    const cost = data.isPaid ? CLAN_COST : 0;
+    if (!isAdmin && cost > 0 && user.balance < cost) return false;
+    if (!isAdmin && cost > 0) updateUser({ balance: user.balance - cost });
+    const clan: Clan = {
+      id: Date.now(), ...data, ownerId: user.id, ownerName: user.name,
+      members: [user.id], bannedUsers: [], level: 1, xp: 0, createdAt: Date.now(),
+    };
+    const updated = [clan, ...clans];
+    setClans(updated); lsSet("krx_clans", updated);
+    return true;
+  };
+
+  const joinClan = (id: number): boolean => {
+    if (!user) return false;
+    const updated = clans.map(c => {
+      if (c.id !== id || c.members.includes(user.id) || c.bannedUsers.includes(user.id)) return c;
+      if (c.members.length >= 200) return c;
+      return { ...c, members: [...c.members, user.id] };
+    });
+    setClans(updated); lsSet("krx_clans", updated);
+    return true;
+  };
+
+  const leaveClan = (id: number) => {
+    if (!user) return;
+    const updated = clans.map(c =>
+      c.id === id ? { ...c, members: c.members.filter(m => m !== user.id) } : c
+    );
+    setClans(updated); lsSet("krx_clans", updated);
+  };
+
+  const banFromClan = (clanId: number, targetUserId: string) => {
+    if (!user) return;
+    const updated = clans.map(c => {
+      if (c.id !== clanId || c.ownerId !== user.id) return c;
+      return { ...c, members: c.members.filter(m => m !== targetUserId), bannedUsers: [...c.bannedUsers, targetUserId] };
+    });
+    setClans(updated); lsSet("krx_clans", updated);
+  };
+
+  const createRoom = (data: { name: string; game: string; privacy: Room["privacy"]; password?: string; isPaid: boolean; entryFee: number; bgColor?: string; nickColor?: string }): boolean => {
+    if (!user) return false;
+    const isAdmin = GAME_ADMINS.includes(user.name);
+    const cost = data.isPaid ? ROOM_COST : 0;
+    if (!isAdmin && cost > 0 && user.balance < cost) return false;
+    if (!isAdmin && cost > 0) updateUser({ balance: user.balance - cost });
+    const room: Room = {
+      id: Date.now(), ...data, ownerId: user.id, ownerName: user.name,
+      members: [user.id], bannedUsers: [], maxPlayers: 200, chat: [], createdAt: Date.now(),
+    };
+    const updated = [room, ...rooms];
+    setRooms(updated); lsSet("krx_rooms", updated);
+    return true;
+  };
+
+  const joinRoom = (id: number, password?: string): boolean => {
+    if (!user) return false;
+    const room = rooms.find(r => r.id === id);
+    if (!room) return false;
+    if (room.bannedUsers.includes(user.id)) return false;
+    if (room.members.length >= room.maxPlayers) return false;
+    if (room.privacy === "password" && room.password !== password) return false;
+    // Paid entry
+    if (room.entryFee > 0 && !GAME_ADMINS.includes(user.name)) {
+      if (user.balance < room.entryFee) return false;
+      updateUser({ balance: user.balance - room.entryFee });
+    }
+    const updated = rooms.map(r =>
+      r.id === id && !r.members.includes(user.id) ? { ...r, members: [...r.members, user.id] } : r
+    );
+    setRooms(updated); lsSet("krx_rooms", updated);
+    return true;
+  };
+
+  const leaveRoom = (id: number) => {
+    if (!user) return;
+    const updated = rooms.map(r =>
+      r.id === id ? { ...r, members: r.members.filter(m => m !== user.id) } : r
+    );
+    setRooms(updated); lsSet("krx_rooms", updated);
+  };
+
+  const banFromRoom = (roomId: number, targetUserId: string) => {
+    if (!user) return;
+    const updated = rooms.map(r => {
+      if (r.id !== roomId || r.ownerId !== user.id) return r;
+      return { ...r, members: r.members.filter(m => m !== targetUserId), bannedUsers: [...r.bannedUsers, targetUserId] };
+    });
+    setRooms(updated); lsSet("krx_rooms", updated);
+  };
+
+  const sendRoomMessage = (roomId: number, text: string) => {
+    if (!user || !text.trim()) return;
+    const msg = { id: Date.now(), authorName: user.name, text: text.trim(), createdAt: Date.now() };
+    const updated = rooms.map(r =>
+      r.id === roomId ? { ...r, chat: [...r.chat.slice(-199), msg] } : r
+    );
+    setRooms(updated); lsSet("krx_rooms", updated);
+  };
+
+    const addNewsPost = (data: Omit<NewsPost, "id" | "createdAt" | "views" | "viewedBy" | "reactions">) => {
     const post: NewsPost = {
       ...data, id: Date.now(), createdAt: Date.now(),
       views: 0, viewedBy: [],
@@ -552,15 +961,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword, blockUser, isBlocked,
+      user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword,
+      blockUser, unblockUser, isBlocked,
+      friendList, friendRequests, sentRequests, allUsers,
+      sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend, pinFriend,
       theme, setTheme, language, setLanguage, t,
-      playerVisible, showPlayer, currentTrack, setCurrentTrack, tracks, addTrack,
+      playerVisible, isPlaying, currentTrack, currentTrackIdx, queue, progress, volume, shuffle, repeat,
+      showPlayer, hidePlayer, setCurrentTrack, playTrack, togglePlay, nextTrack, prevTrack,
+      setProgress, setVolume, setShuffle, setRepeat,
+      tracks, addTrack, deleteTrack, likeTrack, saveTrack, incrementPlay,
+      likedTracks, savedTracks, recentTracks,
       notifications, unreadCount: notifications.filter(n => !n.read).length,
       pushNotif, markRead, markAllRead, clearNotification,
       transactions, sendMoney, settings, updateSettings,
       posts, addPost, toggleLike, addComment, sharePost,
       stories, addStory, deleteStory, likeStory,
       trends, feedFilter, setFeedFilter, filteredPosts,
+      tournaments, clans, rooms, createTournament, joinTournament,
+      createClan, joinClan, leaveClan, banFromClan,
+      createRoom, joinRoom, leaveRoom, banFromRoom, sendRoomMessage,
       newsPosts, addNewsPost, viewNewsPost, reactToNews,
     }}>
       {children}
