@@ -119,6 +119,35 @@ export interface KRXNotification {
   createdAt: number;
 }
 
+// ─── Chat Types ──────────────────────────────────────────────────────────────
+export interface ChatMessage {
+  id: number;
+  authorId: string; authorName: string; authorAvatar: string | null;
+  text: string;
+  mediaUrl?: string | null; mediaType?: "image" | "video" | "audio" | null;
+  audioDuration?: string;
+  replyTo?: { id: number; authorName: string; text: string } | null;
+  reactions: { emoji: string; userIds: string[] }[];
+  edited: boolean;
+  deletedFor: string[]; // userIds who deleted
+  createdAt: number;
+}
+
+export interface ChatConversation {
+  id: number;
+  type: "personal" | "group";
+  name: string;
+  avatar: string | null;
+  memberIds: string[];
+  memberNames: string[];
+  adminIds: string[];
+  mutedBy: string[];
+  pinnedBy: string[];
+  messages: ChatMessage[];
+  createdAt: number;
+  createdBy: string;
+}
+
 // ─── Games Hub Types ────────────────────────────────────────────────────────
 export const GAME_ADMINS = ["Kvarden", "Baron_Kosyaka", "KVARON_X"];
 
@@ -231,6 +260,22 @@ interface AppContextType {
 
   // Trends
   trends: { tag: string; count: number }[];
+
+  // Chat
+  conversations: ChatConversation[];
+  createPersonalChat: (friendId: string, friendName: string, friendAvatar: string | null) => ChatConversation;
+  createGroupChat: (name: string, avatar: string | null, memberIds: string[], memberNames: string[]) => ChatConversation;
+  sendMessage: (convId: number, text: string, mediaUrl?: string | null, mediaType?: ChatMessage["mediaType"], replyTo?: ChatMessage["replyTo"], audioDuration?: string) => void;
+  editMessage: (convId: number, msgId: number, newText: string) => void;
+  deleteMessage: (convId: number, msgId: number) => void;
+  reactToMessage: (convId: number, msgId: number, emoji: string) => void;
+  pinConversation: (convId: number) => void;
+  muteConversation: (convId: number) => void;
+  deleteConversation: (convId: number) => void;
+  removeMember: (convId: number, userId: string) => void;
+  renameGroup: (convId: number, name: string) => void;
+  updateGroupAvatar: (convId: number, avatar: string) => void;
+  getOrCreatePersonalChat: (friendId: string, friendName: string, friendAvatar: string | null) => ChatConversation;
 
   // Games Hub
   tournaments: Tournament[];
@@ -387,6 +432,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [newsPosts, setNewsPosts] = useState<NewsPost[]>([]);
   const [notifications, setNotifications] = useState<KRXNotification[]>([]);
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [friendList, setFriendList] = useState<FriendEntry[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
@@ -416,6 +462,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRecentTracks(ls("krx_recent", []));
 
     const savedNotifs = ls<KRXNotification[]>("krx_notifs", []);
+    setConversations(ls<ChatConversation[]>("krx_convs", []));
     setFriendList(ls("krx_friends", []));
     setFriendRequests(ls("krx_freq", []));
     setSentRequests(ls("krx_fsent", []));
@@ -487,7 +534,114 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (idx !== -1) { users[idx] = { ...users[idx], ...data }; saveUsers(users); }
   };
 
-  const allUsers = (() => {
+  // ─── Chat ────────────────────────────────────────────────────────────────
+  const saveConvs = (convs: ChatConversation[]) => { setConversations(convs); lsSet("krx_convs", convs); };
+
+  const createPersonalChat = (friendId: string, friendName: string, friendAvatar: string | null): ChatConversation => {
+    const existing = conversations.find(c => c.type === "personal" && c.memberIds.includes(friendId) && c.memberIds.includes(user!.id));
+    if (existing) return existing;
+    const conv: ChatConversation = {
+      id: Date.now(), type: "personal", name: friendName, avatar: friendAvatar,
+      memberIds: [user!.id, friendId], memberNames: [user!.name, friendName],
+      adminIds: [], mutedBy: [], pinnedBy: [], messages: [], createdAt: Date.now(), createdBy: user!.id,
+    };
+    saveConvs([conv, ...conversations]); return conv;
+  };
+
+  const getOrCreatePersonalChat = (friendId: string, friendName: string, friendAvatar: string | null): ChatConversation => {
+    return createPersonalChat(friendId, friendName, friendAvatar);
+  };
+
+  const createGroupChat = (name: string, avatar: string | null, memberIds: string[], memberNames: string[]): ChatConversation => {
+    const conv: ChatConversation = {
+      id: Date.now(), type: "group", name, avatar,
+      memberIds: [user!.id, ...memberIds], memberNames: [user!.name, ...memberNames],
+      adminIds: [user!.id], mutedBy: [], pinnedBy: [], messages: [], createdAt: Date.now(), createdBy: user!.id,
+    };
+    saveConvs([conv, ...conversations]); return conv;
+  };
+
+  const sendMessage = (convId: number, text: string, mediaUrl?: string | null, mediaType?: ChatMessage["mediaType"], replyTo?: ChatMessage["replyTo"], audioDuration?: string) => {
+    if (!user) return;
+    const msg: ChatMessage = {
+      id: Date.now(), authorId: user.id, authorName: user.name, authorAvatar: user.avatar,
+      text: text.trim(), mediaUrl: mediaUrl || null, mediaType: mediaType || null,
+      audioDuration, replyTo: replyTo || null, reactions: [], edited: false, deletedFor: [], createdAt: Date.now(),
+    };
+    const updated = conversations.map(c => c.id === convId ? { ...c, messages: [...c.messages, msg] } : c);
+    saveConvs(updated);
+  };
+
+  const editMessage = (convId: number, msgId: number, newText: string) => {
+    const updated = conversations.map(c => c.id !== convId ? c : {
+      ...c, messages: c.messages.map(m => m.id === msgId ? { ...m, text: newText, edited: true } : m)
+    });
+    saveConvs(updated);
+  };
+
+  const deleteMessage = (convId: number, msgId: number) => {
+    if (!user) return;
+    const updated = conversations.map(c => c.id !== convId ? c : {
+      ...c, messages: c.messages.map(m => m.id === msgId ? { ...m, deletedFor: [...m.deletedFor, user.id] } : m)
+    });
+    saveConvs(updated);
+  };
+
+  const reactToMessage = (convId: number, msgId: number, emoji: string) => {
+    if (!user) return;
+    const updated = conversations.map(c => {
+      if (c.id !== convId) return c;
+      return {
+        ...c, messages: c.messages.map(m => {
+          if (m.id !== msgId) return m;
+          const existing = m.reactions.find(r => r.emoji === emoji);
+          if (existing) {
+            const hasReacted = existing.userIds.includes(user.id);
+            return { ...m, reactions: m.reactions.map(r => r.emoji !== emoji ? r : { ...r, userIds: hasReacted ? r.userIds.filter(id => id !== user.id) : [...r.userIds, user.id] }).filter(r => r.userIds.length > 0) };
+          }
+          return { ...m, reactions: [...m.reactions, { emoji, userIds: [user.id] }] };
+        })
+      };
+    });
+    saveConvs(updated);
+  };
+
+  const pinConversation = (convId: number) => {
+    if (!user) return;
+    const updated = conversations.map(c => {
+      if (c.id !== convId) return c;
+      const pinned = c.pinnedBy.includes(user.id);
+      return { ...c, pinnedBy: pinned ? c.pinnedBy.filter(id => id !== user.id) : [...c.pinnedBy, user.id] };
+    });
+    saveConvs(updated);
+  };
+
+  const muteConversation = (convId: number) => {
+    if (!user) return;
+    const updated = conversations.map(c => {
+      if (c.id !== convId) return c;
+      const muted = c.mutedBy.includes(user.id);
+      return { ...c, mutedBy: muted ? c.mutedBy.filter(id => id !== user.id) : [...c.mutedBy, user.id] };
+    });
+    saveConvs(updated);
+  };
+
+  const deleteConversation = (convId: number) => saveConvs(conversations.filter(c => c.id !== convId));
+
+  const removeMember = (convId: number, userId: string) => {
+    const updated = conversations.map(c => c.id !== convId ? c : { ...c, memberIds: c.memberIds.filter(id => id !== userId), memberNames: c.memberNames.filter((_, i) => c.memberIds[i] !== userId) });
+    saveConvs(updated);
+  };
+
+  const renameGroup = (convId: number, name: string) => {
+    saveConvs(conversations.map(c => c.id === convId ? { ...c, name } : c));
+  };
+
+  const updateGroupAvatar = (convId: number, avatar: string) => {
+    saveConvs(conversations.map(c => c.id === convId ? { ...c, avatar } : c));
+  };
+
+    const allUsers = (() => {
     const users = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("krx_users") || "[]") : [];
     return users.map((u: {id: string; name: string; avatar: string | null; level: number}) => ({ id: u.id, name: u.name, avatar: u.avatar, level: u.level }));
   })();
@@ -963,6 +1117,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword,
       blockUser, unblockUser, isBlocked,
+      conversations, createPersonalChat, createGroupChat, getOrCreatePersonalChat,
+      sendMessage, editMessage, deleteMessage, reactToMessage,
+      pinConversation, muteConversation, deleteConversation, removeMember, renameGroup, updateGroupAvatar,
       friendList, friendRequests, sentRequests, allUsers,
       sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend, pinFriend,
       theme, setTheme, language, setLanguage, t,
