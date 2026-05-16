@@ -9,10 +9,34 @@ export type Theme = "dark" | "light";
 export interface User {
   id: string; name: string; email: string; gender: "male" | "female";
   birthDate: string; level: number; balance: number; friends: number;
-  posts: number; isAdmin: boolean; isRich: boolean;
+  posts: number; isAdmin: boolean; isRich: boolean; isVerified: boolean;
   avatar: string | null; banner: string | null; bio: string;
-  blockedUsers?: string[]; // IDs of blocked users
+  blockedUsers?: string[];
+  xp: number;
+  xpToNext: number;
+  bannerColor: string;
+  seasonStart: number;      // timestamp of last season reset
+  lastSeen: number;         // timestamp
+  onlineStatus: "online" | "away" | "offline";
+  ownedItems: string[];     // IDs of permanently owned shop items
+  twoFaEnabled: boolean;
 }
+
+// XP system
+export const XP_PER_LEVEL = 1000;
+export const XP_PER_MINUTE_ONLINE = 2;
+export const SEASON_DURATION_MS = 90 * 24 * 60 * 60 * 1000; // 3 months
+export const LEVEL_REWARDS: { level: number; desc: string; krx?: number }[] = [
+  { level: 10,  desc: "GIF-аватарки разблокированы" },
+  { level: 20,  desc: "Баннеры профиля + 100 KRX", krx: 100 },
+  { level: 35,  desc: "Обои профиля + 250 KRX", krx: 250 },
+  { level: 50,  desc: "GIF-баннеры + 500 KRX", krx: 500 },
+];
+export const BANNER_COLORS = [
+  "#7c3aed","#dc2626","#0891b2","#059669","#d97706",
+  "#db2777","#4f46e5","#0d9488","#65a30d","#9333ea",
+  "#1d4ed8","#b45309","#be185d","#0e7490","#15803d",
+];
 
 export type OnlineStatus = "online" | "dnd" | "offline";
 
@@ -197,6 +221,12 @@ interface AppContextType {
   logout: () => void; updateUser: (data: Partial<User>) => void;
   forgotPassword: (email: string) => Promise<boolean>;
   blockUser: (targetId: string) => void;
+  // Profile / XP
+  addXP: (amount: number) => void;
+  setBannerColor: (color: string) => void;
+  checkSeasonReset: () => void;
+  changePassword: (oldPw: string, newPw: string) => boolean;
+  setOnlineStatus: (status: User["onlineStatus"]) => void;
   unblockUser: (targetId: string) => void;
   isBlocked: (targetId: string) => boolean;
   // Friends
@@ -445,7 +475,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const session = ls<User | null>(SESSION_KEY, null);
-    if (session) setUser(session);
+    if (session) {
+      // Migrate: ensure all new fields have defaults
+      const patched: User = {
+        isVerified: false, xp: 0, xpToNext: 1000, bannerColor: "#7c3aed",
+        seasonStart: Date.now(), lastSeen: Date.now(), onlineStatus: "online",
+        ownedItems: [], twoFaEnabled: false, blockedUsers: [],
+        ...session,
+      };
+      setUser(patched);
+      lsSet(SESSION_KEY, patched);
+    }
     const savedTheme = ls<Theme>("krx_theme", "dark");
     setThemeState(savedTheme);
     const savedLang = ls<Language>("krx_lang", "ru");
@@ -515,8 +555,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (users.find(u => u.email === data.email)) return false;
     const nu: User & { password: string } = {
       id: Date.now().toString(), ...data, level: 0, balance: 0, friends: 0,
-      posts: 0, isAdmin: false, isRich: false, avatar: null, banner: null, bio: "",
-      blockedUsers: [],
+      posts: 0, isAdmin: false, isRich: false, isVerified: false,
+      avatar: null, banner: null, bio: "",
+      blockedUsers: [], xp: 0, xpToNext: 1000, bannerColor: "#7c3aed",
+      seasonStart: Date.now(), lastSeen: Date.now(), onlineStatus: "online",
+      ownedItems: [], twoFaEnabled: false,
     };
     users.push(nu); saveUsers(users);
     const { password: _, ...ud } = nu;
@@ -690,6 +733,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const unblockUser = (targetId: string) => {
     updateUser({ blockedUsers: (user?.blockedUsers || []).filter(id => id !== targetId) });
   };
+
+  // ─── XP & Season ─────────────────────────────────────────────────────────
+  const addXP = (amount: number) => {
+    if (!user) return;
+    const newXp = (user.xp || 0) + amount;
+    const xpNeeded = XP_PER_LEVEL;
+    const levelsGained = Math.floor(newXp / xpNeeded);
+    const remainder = newXp % xpNeeded;
+    if (levelsGained > 0) {
+      const newLevel = (user.level || 0) + levelsGained;
+      let bonusKrx = 0;
+      LEVEL_REWARDS.forEach(r => { if (r.krx && user.level < r.level && newLevel >= r.level) bonusKrx += r.krx; });
+      updateUser({ xp: remainder, level: newLevel, balance: (user.balance || 0) + bonusKrx });
+      if (bonusKrx > 0) pushNotif({ type: "wallet", icon: "🎉", title: "Новый уровень!", body: `Уровень ${newLevel}! +${bonusKrx} KRX`, link: "/profile" });
+    } else {
+      updateUser({ xp: newXp });
+    }
+  };
+
+  const setBannerColor = (color: string) => updateUser({ bannerColor: color });
+
+  const checkSeasonReset = () => {
+    if (!user) return;
+    const now = Date.now();
+    const start = user.seasonStart || now;
+    if (now - start >= SEASON_DURATION_MS) {
+      updateUser({ level: 0, xp: 0, seasonStart: now });
+      pushNotif({ type: "game_event", icon: "🔄", title: "Новый сезон!", body: "Уровни сброшены. Начните прокачку заново!", link: "/profile" });
+    }
+  };
+
+  const changePassword = (oldPw: string, newPw: string): boolean => {
+    const users = getUsers();
+    const idx = users.findIndex(u => u.id === user?.id && u.password === oldPw);
+    if (idx === -1) return false;
+    users[idx].password = newPw;
+    saveUsers(users);
+    return true;
+  };
+
+  const setOnlineStatus = (status: User["onlineStatus"]) => updateUser({ onlineStatus: status, lastSeen: Date.now() });
 
   const blockUser = (targetId: string) => {
     const blocked = user?.blockedUsers || [];
@@ -1116,6 +1200,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword,
+      addXP, setBannerColor, checkSeasonReset, changePassword, setOnlineStatus,
       blockUser, unblockUser, isBlocked,
       conversations, createPersonalChat, createGroupChat, getOrCreatePersonalChat,
       sendMessage, editMessage, deleteMessage, reactToMessage,
