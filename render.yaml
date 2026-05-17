@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: KRX
+    runtime: node
+    rootDir: .
+    buildCommand: yarn && yarn build
+    startCommand: yarn start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: NODE_ENV
+        value: production
