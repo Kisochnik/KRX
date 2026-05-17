@@ -328,7 +328,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Avatar + Info row */}
-          <div className="flex items-end gap-5 -mt-20 px-4">
+          <div className="flex items-end gap-5 -mt-14 px-4">
             {/* Avatar */}
             <div className="relative group flex-shrink-0">
               <div className="w-32 h-32 rounded-full border-4 border-background bg-primary/20 overflow-hidden shadow-xl">
@@ -347,9 +347,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Name block */}
-            <div className="flex-1 pb-2 min-w-0">
+            <div className="flex-1 pb-2 min-w-0" style={{paddingTop: "4.5rem"}}>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h1 className="text-2xl font-black text-foreground">{user.name}</h1>
+                <h1 className="text-2xl font-black text-foreground">{user.name || "Пользователь"}</h1>
                 {/* Verification / Admin badge — Bug fix */}
                 {(isAdmin || user.isVerified) && (
                   <ShieldCheck className="w-6 h-6 text-primary fill-primary/20" title={isAdmin ? "Администратор" : "Верифицирован"} />

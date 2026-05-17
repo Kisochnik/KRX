@@ -143,6 +143,29 @@ export interface KRXNotification {
   createdAt: number;
 }
 
+// ─── Shop Types ──────────────────────────────────────────────────────────────
+export interface ShopItem {
+  id: number;
+  name: string;
+  type: "avatar" | "banner" | "wallpaper" | "frame" | "nickcolor" | "effect";
+  price: number;
+  discountPrice?: number | null;
+  discountUntil?: number | null;
+  minLevel: number;
+  imageUrl: string | null;
+  isAnimated: boolean;
+  adminOnly: boolean;
+  stock: number | null; // null = unlimited
+  soldCount: number;
+  createdAt: number;
+}
+
+export interface InventoryItem {
+  itemId: number;
+  purchasedAt: number;
+  equipped: boolean;
+}
+
 // ─── Chat Types ──────────────────────────────────────────────────────────────
 export interface ChatMessage {
   id: number;
@@ -290,6 +313,15 @@ interface AppContextType {
 
   // Trends
   trends: { tag: string; count: number }[];
+
+  // Shop
+  shopItems: ShopItem[];
+  inventory: InventoryItem[];
+  addShopItem: (item: Omit<ShopItem, "id" | "createdAt" | "soldCount">) => void;
+  deleteShopItem: (id: number) => void;
+  purchaseItem: (itemId: number, giftToUser?: string) => { ok: boolean; msg: string };
+  equipItem: (itemId: number) => void;
+  canUseItem: (item: ShopItem) => { allowed: boolean; reason?: string };
 
   // Chat
   conversations: ChatConversation[];
@@ -462,6 +494,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [newsPosts, setNewsPosts] = useState<NewsPost[]>([]);
   const [notifications, setNotifications] = useState<KRXNotification[]>([]);
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [friendList, setFriendList] = useState<FriendEntry[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
@@ -502,6 +536,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRecentTracks(ls("krx_recent", []));
 
     const savedNotifs = ls<KRXNotification[]>("krx_notifs", []);
+    setShopItems(ls<ShopItem[]>("krx_shop_items", []));
+    setInventory(ls<InventoryItem[]>("krx_inventory", []));
     setConversations(ls<ChatConversation[]>("krx_convs", []));
     setFriendList(ls("krx_friends", []));
     setFriendRequests(ls("krx_freq", []));
@@ -577,7 +613,89 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (idx !== -1) { users[idx] = { ...users[idx], ...data }; saveUsers(users); }
   };
 
-  // ─── Chat ────────────────────────────────────────────────────────────────
+  // ─── Shop ────────────────────────────────────────────────────────────────
+  const addShopItem = (item: Omit<ShopItem, "id" | "createdAt" | "soldCount">) => {
+    if (!user || !GAME_ADMINS.includes(user.name)) return;
+    const newItem: ShopItem = { ...item, id: Date.now(), createdAt: Date.now(), soldCount: 0 };
+    const updated = [...shopItems, newItem];
+    setShopItems(updated); lsSet("krx_shop_items", updated);
+  };
+
+  const deleteShopItem = (id: number) => {
+    if (!user || !GAME_ADMINS.includes(user.name)) return;
+    const updated = shopItems.filter(i => i.id !== id);
+    setShopItems(updated); lsSet("krx_shop_items", updated);
+  };
+
+  const canUseItem = (item: ShopItem): { allowed: boolean; reason?: string } => {
+    if (!user) return { allowed: false, reason: "Необходима авторизация" };
+    const isAdmin = GAME_ADMINS.includes(user.name);
+    if (item.adminOnly && !isAdmin) return { allowed: false, reason: "Только для администраторов" };
+    if (item.minLevel > 0 && (user.level || 0) < item.minLevel && !isAdmin)
+      return { allowed: false, reason: `Доступно с ${item.minLevel} уровня` };
+    return { allowed: true };
+  };
+
+  const purchaseItem = (itemId: number, giftToUser?: string): { ok: boolean; msg: string } => {
+    if (!user) return { ok: false, msg: "Необходима авторизация" };
+    const item = shopItems.find(i => i.id === itemId);
+    if (!item) return { ok: false, msg: "Товар не найден" };
+
+    // Check stock
+    if (item.stock !== null && item.soldCount >= item.stock)
+      return { ok: false, msg: "Товар закончился" };
+
+    // Check already owned
+    const alreadyOwned = inventory.some(i => i.itemId === itemId);
+    if (alreadyOwned && !giftToUser) return { ok: false, msg: "Уже в инвентаре" };
+
+    const effectivePrice = (item.discountUntil && item.discountUntil > Date.now() && item.discountPrice)
+      ? item.discountPrice : item.price;
+    const isAdmin = GAME_ADMINS.includes(user.name);
+
+    if (!isAdmin && user.balance < effectivePrice)
+      return { ok: false, msg: "Недостаточно KRX" };
+
+    // Deduct balance
+    if (!isAdmin) updateUser({ balance: user.balance - effectivePrice });
+
+    // Update sold count
+    const updItems = shopItems.map(i => i.id === itemId ? { ...i, soldCount: i.soldCount + 1 } : i);
+    setShopItems(updItems); lsSet("krx_shop_items", updItems);
+
+    if (giftToUser) {
+      // Gift: add to recipient (stored globally)
+      const globalInv = ls<Record<string, InventoryItem[]>>("krx_global_inv", {});
+      globalInv[giftToUser] = [...(globalInv[giftToUser] || []), { itemId, purchasedAt: Date.now(), equipped: false }];
+      lsSet("krx_global_inv", globalInv);
+      pushNotif({ type: "shop_purchase", icon: "🎁", title: "Подарок отправлен!", body: `Вы подарили «${item.name}» → @${giftToUser}`, link: "/shop" });
+      return { ok: true, msg: `Подарок отправлен @${giftToUser}!` };
+    }
+
+    // Add to own inventory
+    const newInvItem: InventoryItem = { itemId, purchasedAt: Date.now(), equipped: false };
+    const updInv = [...inventory, newInvItem];
+    setInventory(updInv); lsSet("krx_inventory", updInv);
+    pushNotif({ type: "shop_purchase", icon: "🛍️", title: "Покупка совершена", body: `«${item.name}» добавлено в инвентарь`, link: "/shop" });
+    // XP bonus
+    addXP(20);
+    return { ok: true, msg: "Куплено!" };
+  };
+
+  const equipItem = (itemId: number) => {
+    if (!user) return;
+    const item = shopItems.find(i => i.id === itemId);
+    if (!item) return;
+    const { allowed } = canUseItem(item);
+    if (!allowed) return;
+    const updInv = inventory.map(i => ({
+      ...i,
+      equipped: i.itemId === itemId ? true : (i.equipped && shopItems.find(s => s.id === i.itemId)?.type === item.type ? false : i.equipped)
+    }));
+    setInventory(updInv); lsSet("krx_inventory", updInv);
+  };
+
+    // ─── Chat ────────────────────────────────────────────────────────────────
   const saveConvs = (convs: ChatConversation[]) => { setConversations(convs); lsSet("krx_convs", convs); };
 
   const createPersonalChat = (friendId: string, friendName: string, friendAvatar: string | null): ChatConversation => {
@@ -1202,6 +1320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword,
       addXP, setBannerColor, checkSeasonReset, changePassword, setOnlineStatus,
       blockUser, unblockUser, isBlocked,
+      shopItems, inventory, addShopItem, deleteShopItem, purchaseItem, equipItem, canUseItem,
       conversations, createPersonalChat, createGroupChat, getOrCreatePersonalChat,
       sendMessage, editMessage, deleteMessage, reactToMessage,
       pinConversation, muteConversation, deleteConversation, removeMember, renameGroup, updateGroupAvatar,
