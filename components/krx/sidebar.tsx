@@ -4,24 +4,27 @@ import { cn } from "@/lib/utils";
 import {
   Home, Newspaper, Bell, Gamepad2, Music, Users, MessageCircle,
   User, ShoppingBag, Wallet, Settings, LogOut, Search, Shield, CircleDollarSign,
+  Sword, Crown,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/context/app-context";
 
 const navItems = [
-  { icon: Home,          label: "Главная",      href: "/" },
-  { icon: Newspaper,     label: "Новости",       href: "/news" },
-  { icon: Bell,          label: "Уведомления",   href: "/notifications" },
-  { icon: Gamepad2,      label: "Игры",          href: "/games" },
-  { icon: Music,         label: "Музыка",        href: "/music" },
-  { icon: Users,         label: "Друзья",        href: "/friends" },
-  { icon: MessageCircle, label: "Чат",           href: "/chat" },
-  { icon: User,          label: "Профиль",       href: "/profile" },
-  { icon: ShoppingBag,   label: "Магазин",       href: "/shop" },
-  { icon: Wallet,        label: "Кошелёк",       href: "/wallet" },
-  { icon: Settings,      label: "Настройки",     href: "/settings" },
-  { icon: Shield,        label: "Админ панель",  href: "/admin", isAdmin: true },
+  { icon: Home,          label: "Главная",        href: "/" },
+  { icon: Newspaper,     label: "Новости",         href: "/news" },
+  { icon: Bell,          label: "Уведомления",     href: "/notifications" },
+  { icon: Gamepad2,      label: "Игры",            href: "/games" },
+  { icon: Music,         label: "Музыка",          href: "/music" },
+  { icon: Sword,         label: "Кланы",           href: "/games" },
+  { icon: Crown,         label: "Кланы-Админ",    href: "/admin", isAdmin: true, label2: "КЛАНЫ" },
+  { icon: Users,         label: "Друзья",          href: "/friends" },
+  { icon: MessageCircle, label: "Чат",             href: "/chat" },
+  { icon: User,          label: "Профиль",         href: "/profile" },
+  { icon: ShoppingBag,   label: "Магазин",         href: "/shop" },
+  { icon: Wallet,        label: "Кошелёк",         href: "/wallet" },
+  { icon: Settings,      label: "Настройки",       href: "/settings" },
+  { icon: Shield,        label: "Админ панель",    href: "/admin", isAdmin: true },
 ];
 
 export function Sidebar() {

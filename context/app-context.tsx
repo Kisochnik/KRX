@@ -250,6 +250,11 @@ interface AppContextType {
   checkSeasonReset: () => void;
   changePassword: (oldPw: string, newPw: string) => boolean;
   setOnlineStatus: (status: User["onlineStatus"]) => void;
+  deleteAvatar: () => void;
+  deleteBanner: () => void;
+  // Rate limiting
+  canPost: () => boolean;
+  lastPostTime: number;
   unblockUser: (targetId: string) => void;
   isBlocked: (targetId: string) => boolean;
   // Friends
@@ -497,6 +502,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [lastPostTime, setLastPostTime] = useState<number>(0);
   const [friendList, setFriendList] = useState<FriendEntry[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
@@ -611,6 +617,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const users = getUsers();
     const idx = users.findIndex(u => u.id === user.id);
     if (idx !== -1) { users[idx] = { ...users[idx], ...data }; saveUsers(users); }
+    // Sync avatar across all posts
+    if (data.avatar !== undefined) {
+      const updPosts = ls<Post[]>(POSTS_KEY, []).map(p =>
+        p.authorId === user.id ? { ...p, authorAvatar: data.avatar || null } : p
+      );
+      lsSet(POSTS_KEY, updPosts);
+      setPosts(updPosts);
+    }
   };
 
   // ─── Shop ────────────────────────────────────────────────────────────────
@@ -852,6 +866,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateUser({ blockedUsers: (user?.blockedUsers || []).filter(id => id !== targetId) });
   };
 
+  const deleteAvatar = () => updateUser({ avatar: null });
+  const deleteBanner = () => updateUser({ banner: null, bannerColor: "#7c3aed" });
+
+  const RATE_LIMIT_MS = 5000; // 5 seconds between posts
+  const canPost = (): boolean => Date.now() - lastPostTime >= RATE_LIMIT_MS;
+
   // ─── XP & Season ─────────────────────────────────────────────────────────
   const addXP = (amount: number) => {
     if (!user) return;
@@ -1027,6 +1047,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ─── Feed ─────────────────────────────────────────────────────────────────
   const addPost = (data: Omit<Post, "id" | "createdAt" | "likes" | "likedBy" | "comments" | "commentList" | "shares" | "sharedBy">) => {
+    if (!canPost()) return; // Rate limit
+    setLastPostTime(Date.now());
     const newPost: Post = {
       ...data, id: Date.now(), createdAt: Date.now(),
       likes: 0, likedBy: [], comments: 0, commentList: [], shares: 0, sharedBy: [],
@@ -1319,6 +1341,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, login, register, logout, updateUser, forgotPassword,
       addXP, setBannerColor, checkSeasonReset, changePassword, setOnlineStatus,
+      deleteAvatar, deleteBanner, canPost, lastPostTime,
       blockUser, unblockUser, isBlocked,
       shopItems, inventory, addShopItem, deleteShopItem, purchaseItem, equipItem, canUseItem,
       conversations, createPersonalChat, createGroupChat, getOrCreatePersonalChat,

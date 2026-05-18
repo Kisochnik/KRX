@@ -6,7 +6,7 @@ import { useApp } from "@/context/app-context";
 import { Eye, EyeOff, User, Mail, Lock, Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Mode = "login" | "register" | "forgot";
+type Mode = "login" | "register" | "forgot" | "telegram";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -27,6 +27,8 @@ export default function AuthPage() {
   const [regPw, setRegPw] = useState("");
   const [regBirth, setRegBirth] = useState("");
   const [regGender, setRegGender] = useState<"male" | "female">("male");
+  const [tgCode, setTgCode] = useState("");
+  const [tgInput, setTgInput] = useState("");
 
   // Forgot
   const [forgotEmail, setForgotEmail] = useState("");
@@ -46,7 +48,11 @@ export default function AuthPage() {
     setLoading(true); setError("");
     const ok = await register({ name: regName, email: regEmail, password: regPw, birthDate: regBirth, gender: regGender });
     setLoading(false);
-    if (ok) router.push("/");
+    if (ok) {
+      // Show Telegram verification step
+      setMode("telegram");
+      setTgCode(Math.floor(100000 + Math.random() * 900000).toString());
+    }
     else setError("Такой email уже зарегистрирован");
   };
 
@@ -75,7 +81,7 @@ export default function AuthPage() {
 
         <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
           {/* Tabs */}
-          {mode !== "forgot" && (
+          {mode !== "forgot" && mode !== "telegram" && (
             <div className="flex bg-muted rounded-xl p-1 mb-6">
               {(["login", "register"] as const).map(m => (
                 <button key={m} onClick={() => { setMode(m); setError(""); setSuccess(""); }}
@@ -162,6 +168,39 @@ export default function AuthPage() {
                 className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all disabled:opacity-50">
                 {loading ? "Создаём аккаунт..." : "Зарегистрироваться"}
               </button>
+            </div>
+          )}
+
+          {/* TELEGRAM VERIFY */}
+          {mode === "telegram" && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <span className="text-3xl">✈️</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">Подтверждение через Telegram</h2>
+                <p className="text-sm text-muted-foreground">
+                  Напишите боту <span className="text-primary font-mono font-bold">@KVARON_X_bot</span> команду:
+                </p>
+                <div className="mt-3 p-3 bg-muted rounded-xl border border-border font-mono text-lg font-bold text-primary tracking-widest">
+                  /verify {tgCode}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Затем введите код ниже</p>
+              </div>
+              <input value={tgInput} onChange={e => setTgInput(e.target.value)}
+                placeholder="Введите код из Telegram..."
+                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary text-center text-lg tracking-widest font-mono" />
+              <button onClick={() => {
+                if (tgInput === tgCode) router.push("/");
+                else setError("Неверный код. Попробуйте ещё раз");
+              }} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all">
+                Подтвердить
+              </button>
+              <button onClick={() => router.push("/")}
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Пропустить (верифицировать позже)
+              </button>
+              {error && <div className="text-sm text-destructive text-center">{error}</div>}
             </div>
           )}
 

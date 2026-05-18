@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useApp, Post as PostType, PollOption } from "@/context/app-context";
 import {
   Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
-  BadgeCheck, Play, BarChart2, X, Send, User,
+  ShieldCheck, Play, BarChart2, X, Send, User, Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +27,63 @@ function renderTextWithHashtags(text: string) {
   );
 }
 
+
+// ─── Unified verification badge ───────────────────────────────────────────────
+export function VerifiedBadge({ isAdmin }: { isAdmin: boolean }) {
+  return <ShieldCheck className="w-4 h-4 text-primary fill-primary/20" title={isAdmin ? "Администратор" : "Верифицирован"} />;
+}
+
+function PostHeader({ post, user, onDelete }: { post: PostType; user: ReturnType<typeof useApp>["user"]; onDelete: () => void }) {
+  const { GAME_ADMINS } = require("@/context/app-context");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isAuthor = user?.id === post.authorId;
+  const isAdmin = user && typeof GAME_ADMINS !== "undefined" && GAME_ADMINS.includes(user.name);
+
+  return (
+    <div className="flex items-start gap-3 p-4 pb-3">
+      <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-primary overflow-hidden flex-shrink-0">
+        {post.authorAvatar
+          ? <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full object-cover" />
+          : <div className="w-full h-full flex items-center justify-center text-primary font-bold text-sm bg-primary/10">
+              {post.authorName[0]?.toUpperCase()}
+            </div>
+        }
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-semibold text-foreground text-sm">{post.authorName}</span>
+          <ShieldCheck className="w-4 h-4 text-primary fill-primary/20" />
+        </div>
+        <p className="text-xs text-muted-foreground">{timeAgo(post.createdAt)}</p>
+      </div>
+      <div className="relative">
+        <button onClick={() => setMenuOpen(!menuOpen)}
+          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
+          <MoreHorizontal className="w-5 h-5" />
+        </button>
+        {menuOpen && (isAuthor || isAdmin) && (
+          <div className="absolute right-0 top-8 bg-card border border-border rounded-xl shadow-xl z-20 overflow-hidden min-w-[140px]">
+            <button onClick={() => { onDelete(); setMenuOpen(false); }}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
+              <Trash2 className="w-4 h-4" /> Удалить пост
+            </button>
+          </div>
+        )}
+        {menuOpen && !isAuthor && !isAdmin && (
+          <div className="absolute right-0 top-8 bg-card border border-border rounded-xl shadow-xl z-20 overflow-hidden min-w-[140px]">
+            <button onClick={() => setMenuOpen(false)}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted transition-colors">
+              Пожаловаться
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function PostCard({ post }: { post: PostType }) {
-  const { user, toggleLike, addComment, sharePost, isBlocked } = useApp();
+  const { user, toggleLike, addComment, sharePost, isBlocked, posts, addPost } = useApp();
   const [pollVotes, setPollVotes] = useState<PollOption[] | null>(null);
   const [voted, setVoted] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -38,6 +93,13 @@ export function PostCard({ post }: { post: PostType }) {
 
   // Skip posts from blocked users
   if (isBlocked(post.authorId)) return null;
+
+  const handleDeletePost = () => {
+    const stored = JSON.parse(localStorage.getItem("krx_posts") || "[]");
+    const updated = stored.filter((p: {id: number}) => p.id !== post.id);
+    localStorage.setItem("krx_posts", JSON.stringify(updated));
+    window.location.reload(); // simple refresh to update feed
+  };
 
   const isLiked = user ? post.likedBy.includes(user.id) : false;
   const isShared = user ? (post.sharedBy || []).includes(user.id) : false;
@@ -81,26 +143,11 @@ export function PostCard({ post }: { post: PostType }) {
       )}
 
       {/* Header */}
-      <div className="flex items-start gap-3 p-4 pb-3">
-        <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-primary overflow-hidden flex-shrink-0">
-          {post.authorAvatar
-            ? <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-primary font-bold text-sm bg-primary/10">
-                {post.authorName[0]?.toUpperCase()}
-              </div>
-          }
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-foreground text-sm">{post.authorName}</span>
-            <BadgeCheck className="w-4 h-4 text-primary fill-primary/20" />
-          </div>
-          <p className="text-xs text-muted-foreground">{timeAgo(post.createdAt)}</p>
-        </div>
-        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
-      </div>
+      <PostHeader
+        post={post}
+        user={user}
+        onDelete={handleDeletePost}
+      />
 
       {/* Text */}
       {post.text && (

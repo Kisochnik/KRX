@@ -12,13 +12,14 @@ type MediaItem = { type: "image" | "video" | "gif"; url: string };
 const EMOJI_LIST = ["😂", "❤️", "🔥", "👍", "😎", "💯", "🎮", "🎵", "✨", "🚀", "👀", "💪"];
 
 export function CreatePost() {
-  const { user, addPost } = useApp();
+  const { user, addPost, canPost } = useApp();
   const [text, setText] = useState("");
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [showPoll, setShowPoll] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [rateLimitMsg, setRateLimitMsg] = useState(false);
   const [error, setError] = useState("");
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -43,10 +44,25 @@ export function CreatePost() {
   const handleMedia = (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video" | "gif") => {
     const files = Array.from(e.target.files || []);
     files.forEach(file => {
+      if (type === "video") {
+        const videoEl = document.createElement("video");
+        const url = URL.createObjectURL(file);
+        videoEl.src = url;
+        videoEl.onloadedmetadata = () => {
+          URL.revokeObjectURL(url);
+          if (videoEl.duration > 300) { // 5 minutes max
+            setError("Видео не должно быть длиннее 5 минут");
+            setTimeout(() => setError(""), 3000);
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = () => setMedia(prev => [...prev, { type, url: reader.result as string }]);
+          reader.readAsDataURL(file);
+        };
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = () => {
-        setMedia(prev => [...prev, { type, url: reader.result as string }]);
-      };
+      reader.onload = () => setMedia(prev => [...prev, { type, url: reader.result as string }]);
       reader.readAsDataURL(file);
     });
     e.target.value = "";
@@ -62,6 +78,7 @@ export function CreatePost() {
   };
 
   const handleSubmit = () => {
+    if (!canPost()) { setRateLimitMsg(true); setTimeout(() => setRateLimitMsg(false), 3000); return; }
     const err = validate();
     if (err) { setError(err); setTimeout(() => setError(""), 3000); return; }
     const hashtags = extractHashtags(text);
@@ -76,8 +93,9 @@ export function CreatePost() {
       authorId: user!.id, authorName: user!.name, authorAvatar: user?.avatar || null,
       text: text.trim(), media, poll, hashtags,
     });
-    setText(""); setMedia([]); setShowPoll(false); setPollQuestion(""); setPollOptions(["", ""]);
-    setError(""); setShowEmoji(false);
+    // Clear form completely after publish
+    setText(""); setMedia([]); setShowPoll(false); setPollQuestion("");
+    setPollOptions(["", ""]); setError(""); setShowEmoji(false); setShowAttach && setShowAttach(false);
   };
 
   const hasContent = text.trim().length > 0 || media.length > 0;
@@ -189,6 +207,13 @@ export function CreatePost() {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Rate limit */}
+          {rateLimitMsg && (
+            <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mb-3 text-sm text-yellow-500">
+              ⏱ Подождите 5 секунд перед следующей публикацией
             </div>
           )}
 

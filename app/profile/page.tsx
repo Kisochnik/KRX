@@ -9,7 +9,7 @@ import { MusicPlayer } from "@/components/krx/music-player";
 import {
   Camera, Edit3, Save, X, User, CircleDollarSign,
   Users, FileText, Trophy, ShieldCheck, Clock,
-  Zap, Gift, Lock, Palette, Circle,
+  Zap, Gift, Lock, Palette, Circle, Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostCard } from "@/components/krx/post";
@@ -250,7 +250,7 @@ function XPBlock() {
 
 // ─── Main Profile Page ────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const { isAuthenticated, user, updateUser, posts, checkSeasonReset, addXP, setOnlineStatus } = useApp();
+  const { isAuthenticated, user, updateUser, posts, checkSeasonReset, addXP, setOnlineStatus, deleteAvatar, deleteBanner } = useApp();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -324,6 +324,13 @@ export default function ProfilePage() {
               className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-medium">
               <Camera className="w-5 h-5" /> Изменить баннер
             </button>
+            {user.banner && (
+              <button onClick={e => { e.stopPropagation(); deleteBanner(); }}
+                className="absolute top-3 right-3 p-2 bg-black/60 rounded-lg text-white hover:bg-destructive/80 transition-all z-10"
+                title="Удалить баннер">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             <input ref={bannerRef} type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
           </div>
 
@@ -338,8 +345,14 @@ export default function ProfilePage() {
                 }
               </div>
               <button onClick={() => avatarRef.current?.click()}
-                className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-6 h-6 text-white" />
+                className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                <Camera className="w-5 h-5 text-white" />
+                {user.avatar && (
+                  <button onClick={e => { e.stopPropagation(); deleteAvatar(); }}
+                    className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
+                    <Trash2 className="w-3 h-3" /> Удалить
+                  </button>
+                )}
               </button>
               {/* Online dot */}
               <span className={cn("absolute bottom-2 right-2 w-4 h-4 rounded-full border-2 border-background", statusInfo.dot)} />
