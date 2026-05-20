@@ -26,26 +26,14 @@ app.get('/', (req, res) => {
           flex-direction: column;
           gap: 16px;
         }
-        h1 {
-          font-size: 48px;
-          letter-spacing: 8px;
-          font-weight: 900;
-        }
-        p {
-          color: #444;
-          font-size: 14px;
-          letter-spacing: 3px;
-        }
+        h1 { font-size: 48px; letter-spacing: 8px; font-weight: 900; }
+        p { color: #444; font-size: 14px; letter-spacing: 3px; }
         .dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
+          width: 8px; height: 8px; border-radius: 50%;
           background: #fff;
           animation: pulse 2s ease-in-out infinite;
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
       </style>
     </head>
     <body>
@@ -57,6 +45,6 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.listen(PORT, () => {
-  console.log(\`KVARON_X running on port \${PORT}\`);
+app.listen(PORT, function() {
+  console.log('KVARON_X running on port ' + PORT);
 });
