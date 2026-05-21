@@ -1,0 +1,213 @@
+/* KVARON_X (KRX) — СТИЛИЗАЦИЯ БОКОВОЙ ПАНЕЛИ НАВИГАЦИИ */
+
+.sidebar {
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 30px 20px;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+/* Брендинг / Логотип */
+.sidebar-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding-left: 10px;
+}
+
+.brand-glow {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+    position: relative;
+}
+
+.brand-sub {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* Сетка меню */
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Элемент меню */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 14px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    border: 1px solid transparent;
+    transition: all var(--transition-speed) cubic-bezier(0.1, 0.8, 0.2, 1);
+    position: relative;
+}
+
+/* Иконки в меню */
+.menu-icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    transition: fill var(--transition-speed);
+}
+
+/* Эффекты наведения */
+.menu-item:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Активное состояние */
+.menu-item.active {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--border-color);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.02);
+}
+
+/* Дополнительные отметки (Заглушки и счетчики) */
+.menu-item .badge-count {
+    background: #ffffff;
+    color: #000000;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+.menu-item .badge-tag {
+    margin-left: auto;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Специальный пункт меню Администрации */
+.admin-menu-item {
+    margin-top: 20px;
+    color: var(--admin-red);
+    border: 1px dashed rgba(255, 51, 51, 0.15);
+}
+
+.admin-menu-item:hover {
+    color: #ff5555;
+    background: rgba(255, 51, 51, 0.04);
+    border-color: rgba(255, 51, 51, 0.3);
+}
+
+.admin-menu-item.active {
+    color: #ff3333;
+    background: rgba(255, 51, 51, 0.08);
+    border-color: rgba(255, 51, 51, 0.4);
+    box-shadow: 0 0 15px rgba(255, 51, 51, 0.05);
+}
+
+/* Карточка пользователя внизу сайдбара */
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: 20px;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.sidebar-user:hover {
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Оболочка аватара и рамки */
+.user-avatar-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #151515;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Рамки поверх аватарок из магазина */
+.avatar-frame {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 52px;
+    height: 52px;
+    pointer-events: none;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 2;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.user-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-rank {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

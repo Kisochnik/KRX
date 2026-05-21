@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="KVARON_X (KRX) — Премиальная, технологичная социальная сеть с продвинутой системой рангов, уровней и ролевых привилегий.">
+    <meta name="keywords" content="KRX, KVARON_X, социальная сеть, премиум, киберпанк, темный режим, система уровней">
+    <meta name="author" content="Antigravity Team">
+    <title>KVARON_X | Социальная Сеть Будущего</title>
+    
+    <!-- Подключаем шрифты Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Подключаем наши модульные стили -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/feed.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/extra.css">
+</head>
+<body>
+
+    <!-- Живой анимированный фон для Администраторов -->
+    <canvas id="live-canvas"></canvas>
+
+    <!-- Экран критической блокировки: IP / Железо Бан -->
+    <div id="ban-screen" class="hidden">
+        <div class="ban-terminal">
+            <div class="terminal-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="terminal-title">KRX SECURE SYSTEM v3.09</span>
+            </div>
+            <div class="terminal-body">
+                <p class="error-msg">>>> [СИСТЕМНАЯ КРИТИЧЕСКАЯ ОШИБКА]: ДОСТУП ОГРАНИЧЕН</p>
+                <p class="error-msg">>>> ОБНАРУЖЕНА АППАРАТНАЯ БЛОКИРОВКА (BAN BY IP / HARDWARE)</p>
+                <br>
+                <p>Ваше устройство и сетевой адрес были навсегда заблокированы Высшей Администрацией платформы KVARON_X.</p>
+                <p>Причина: Нарушение условий использования платформы и деструктивная деятельность.</p>
+                <br>
+                <p class="blink">>>> СИСТЕМА ДЕАКТИВИРОВАНА. ПОДКЛЮЧЕНИЕ НЕВОЗМОЖНО. _</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Повышения Уровня -->
+    <div id="level-up-modal" class="modal-overlay hidden">
+        <div class="level-up-card">
+            <div class="sparkles-container"></div>
+            <h2 class="level-up-title">УРОВЕНЬ ПОВЫШЕН!</h2>
+            <div class="level-badge-container">
+                <div class="old-level">0</div>
+                <div class="arrow">➜</div>
+                <div class="new-level">1</div>
+            </div>
+            <h3 class="rank-name-alert">Новичок</h3>
+            <p class="reward-amount">+0 KRX</p>
+            <div class="unlock-item-alert hidden">
+                <span class="unlock-icon">🔓</span>
+                <span class="unlock-text">Новое достижение разблокировано!</span>
+            </div>
+            <button class="btn btn-primary" onclick="closeLevelUpModal()">Забрать награду</button>
+        </div>
+    </div>
+
+    <!-- Центр уведомлений на экране -->
+    <div id="notification-center"></div>
+
+    <!-- Главная обертка приложения -->
+    <div id="app-wrapper">
+        
+        <!-- Левая боковая панель (МЕНЮ) -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-glow">KVARON_X</span>
+                <span class="brand-sub">KRX</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-tab="home">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span>Главная</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="news">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-1 9H4v-2h15v2zm0-4H4V7h15v2z"/></svg>
+                    <span>Новости</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="notifications">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                    <span>Уведомления</span>
+                    <span id="nav-notif-count" class="badge-count hidden">0</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="game">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                    <span>Игровой</span>
+                    <span class="badge-tag">Заглушка</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="clans">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 5 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    <span>Кланы</span>
+                    <span class="badge-tag">Заглушка</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="friends">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2c1.66 0 2.99-1.34 2.99-3S7.66 5 6 5 3 6.34 3 8s1.34 3 3 3zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm-9 4.16V18c0-.89.43-1.72 1.14-2.28 1.09-.85 2.86-1.52 4.86-1.83-.87-.4-2-.62-3-.62-2.33 0-7 1.17-7 3.5V19h4v-.84z"/></svg>
+                    <span>Друзья</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="chat">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+                    <span>Чат</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="shop">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v-4z"/></svg>
+                    <span>Магазин</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="wallet">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                    <span>Кошелек</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="settings">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                    <span>Настройки</span>
+                </a>
+                
+                <!-- Кнопка Админ панели (показывается только Администрации) -->
+                <a href="#" id="nav-admin-btn" class="menu-item admin-menu-item hidden" data-tab="admin">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15h2v2h-2v-2zm0-8h2v6h-2V8z"/></svg>
+                    <span>Админ</span>
+                </a>
+            </nav>
+
+            <!-- Краткое инфо активного юзера внизу сайдбара -->
+            <div class="sidebar-user" id="sidebar-user-card">
+                <div class="user-avatar-wrapper">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150" alt="Avatar" class="user-avatar" id="sidebar-user-avatar">
+                    <div class="avatar-frame" id="sidebar-user-frame"></div>
+                </div>
+                <div class="user-details">
+                    <div class="user-name-wrapper">
+                        <span class="user-name" id="sidebar-user-name">Гость</span>
+                        <span id="sidebar-user-badge" class="badge-checkmark"></span>
+                    </div>
+                    <span class="user-rank" id="sidebar-user-rank">Новичок (1 УРВ)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Основная область интерфейса -->
+        <div class="main-content">
+            
+            <!-- Шапка Приложения -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1 id="view-title">Главная</h1>
+                </div>
+                
+                <div class="header-right">
+                    <!-- HUD Уровня (Прогресс-бар опыта) -->
+                    <div class="header-xp-panel">
+                        <div class="xp-level-badge" id="hud-level">LVL 1</div>
+                        <div class="xp-progress-container">
+                            <div class="xp-progress-bar" id="hud-xp-bar" style="width: 10%;"></div>
+                            <span class="xp-text" id="hud-xp-text">10 / 150 XP</span>
+                        </div>
+                    </div>
+                    
+                    <!-- HUD Валюты -->
+                    <div class="header-wallet-hud" id="header-wallet-hud" onclick="switchTab('wallet')">
+                        <span class="wallet-icon">💎</span>
+                        <span class="wallet-balance" id="hud-balance">0 KRX</span>
+                    </div>
+
+                    <!-- Элемент переключения ролей (ДЛЯ ТЕСТА) -->
+                    <div class="persona-selector">
+                        <button class="btn btn-secondary persona-btn" id="active-persona-indicator">
+                            Тест-Аккаунт: 👤 Гость
+                        </button>
+                        <div class="persona-dropdown" id="persona-dropdown">
+                            <div class="persona-option" data-persona="kvarden">
+                                <span class="p-role badge-supreme">👑 Высший Админ</span>
+                                <span class="p-name">Kvarden (5x XP)</span>
+                            </div>
+                            <div class="persona-option" data-persona="baron">
+                                <span class="p-role badge-supreme">👑 Высший Админ</span>
+                                <span class="p-name">Baron_Kosyaka (5x XP)</span>
+                            </div>
+                            <div class="persona-option" data-persona="kvaron">
+                                <span class="p-role badge-admin">⚡ Админ</span>
+                                <span class="p-name">KVARON_X (3x XP)</span>
+                            </div>
+                            <div class="persona-option" data-persona="neo">
+                                <span class="p-role badge-vip">💎 VIP</span>
+                                <span class="p-name">Neo (2x XP)</span>
+                            </div>
+                            <div class="persona-option" data-persona="guest">
+                                <span class="p-role badge-user">👤 Обычный</span>
+                                <span class="p-name">Trinity (1x XP)</span>
+                            </div>
+                            <div class="persona-option" data-persona="novice">
+                                <span class="p-role badge-user">👤 Новичок</span>
+                                <span class="p-name">GuestUser (1x XP)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Основной рабочий контейнер с вкладками -->
+            <main class="app-body">
+                
+                <!-- ВКЛАДКА: ГЛАВНАЯ (HOME) -->
+                <section id="view-home" class="tab-view active">
+                    <div class="feed-layout">
+                        
+                        <!-- Левая колонка ленты -->
+                        <div class="feed-main-col">
+                            <!-- Блок Историй (Stories) -->
+                            <div class="stories-wrapper">
+                                <div class="stories-track" id="stories-track">
+                                    <!-- Кнопка "Добавить Историю" -->
+                                    <div class="story-card add-story-card" id="add-story-btn">
+                                        <div class="story-avatar-holder">
+                                            <span class="plus-icon">+</span>
+                                        </div>
+                                        <span class="story-name">Создать</span>
+                                    </div>
+                                    <!-- Сюда вставляются истории динамически -->
+                                </div>
+                            </div>
+                            
+                            <!-- Создание нового поста -->
+                            <div class="post-creator card">
+                                <div class="creator-header">
+                                    <img src="" class="avatar-small" id="post-creator-avatar">
+                                    <textarea id="post-input" placeholder="Что у вас нового? (Принимаются теги и смайлы...)"></textarea>
+                                </div>
+                                
+                                <!-- Опросы в публикациях -->
+                                <div id="post-poll-builder" class="poll-builder hidden">
+                                    <div class="poll-builder-header">
+                                        <h4>Конструктор опроса</h4>
+                                        <button class="btn-text" onclick="togglePollBuilder(false)">✖</button>
+                                    </div>
+                                    <input type="text" id="poll-question-input" placeholder="Вопрос опроса">
+                                    <div class="poll-options-inputs" id="poll-options-container">
+                                        <input type="text" class="poll-option-input" placeholder="Вариант 1">
+                                        <input type="text" class="poll-option-input" placeholder="Вариант 2">
+                                    </div>
+                                    <button class="btn btn-text" onclick="addPollOptionField()">+ Добавить вариант</button>
+                                </div>
+
+                                <div class="creator-actions">
+                                    <div class="creator-tools">
+                                        <button class="tool-btn" id="btn-attach-image" title="Изображение">🖼️</button>
+                                        <button class="tool-btn" id="btn-add-poll" title="Опрос" onclick="togglePollBuilder(true)">📊</button>
+                                        <button class="tool-btn" id="btn-emoji" title="Смайлики" id="post-emoji-btn">😀</button>
+                                    </div>
+                                    <div class="creator-submit">
+                                        <button class="btn btn-primary" onclick="createPost()">Опубликовать</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Фильтр постов -->
+                            <div class="feed-filters">
+                                <button class="filter-tab active" id="feed-filter-popular" onclick="setFeedFilter('popular')">Популярное</button>
+                                <button class="filter-tab" id="feed-filter-subs" onclick="setFeedFilter('subs')">Подписки</button>
+                            </div>
+                            
+                            <!-- Лента постов -->
+                            <div class="posts-feed" id="posts-container">
+                                <!-- Посты рендерятся динамически -->
+                            </div>
+                        </div>
+
+                        <!-- Правая колонка: KRX Reals (Короткие видео) -->
+                        <div class="feed-reals-col">
+                            <div class="reals-header">
+                                <h3>⚡ KRX Reals</h3>
+                                <span class="reals-subtitle">Быстрые клипы</span>
+                            </div>
+                            
+                            <!-- Контейнер Reals -->
+                            <div class="reals-container" id="reals-container">
+                                <!-- Видео-плеер рилсов -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: НОВОСТИ (NEWS) -->
+                <section id="view-news" class="tab-view">
+                    <div class="news-layout">
+                        <!-- Форма создания новости (только для Админов) -->
+                        <div id="admin-news-creator" class="post-creator card hidden">
+                            <h3>📢 Опубликовать Официальное Обновление (Только Админ)</h3>
+                            <input type="text" id="news-title-input" placeholder="Заголовок новости" style="width:100%; background: #000; border: 1px solid rgba(255,255,255,0.1); color:#fff; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                            <textarea id="news-body-input" placeholder="Текст официального обновления..."></textarea>
+                            <div class="creator-actions">
+                                <div></div>
+                                <button class="btn btn-primary" onclick="publishNews()">Опубликовать Обновление</button>
+                            </div>
+                        </div>
+                        
+                        <div class="news-feed" id="news-container">
+                            <!-- Официальные обновления рендерятся сюда -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: УДИВЛЕНИЯ (NOTIFICATIONS) -->
+                <section id="view-notifications" class="tab-view">
+                    <div class="notifications-layout">
+                        <div class="notifications-header card">
+                            <h3>Ваши Уведомления</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="clearAllNotifications()">Очистить все</button>
+                        </div>
+                        <div class="notifications-list" id="notifications-container">
+                            <!-- Уведомления рендерятся сюда -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: ИГРОВОЙ (GAME - ЗАГЛУШКА) -->
+                <section id="view-game" class="tab-view">
+                    <div class="placeholder-view">
+                        <div class="placeholder-glow-icon">🎮</div>
+                        <h2>ИГРОВОЙ ЦЕНТР KRX</h2>
+                        <p class="placeholder-desc">Собирайте команду, участвуйте в еженедельных турнирах по киберспорту и зарабатывайте монеты KRX.</p>
+                        
+                        <!-- Красивая игровая мини-панель -->
+                        <div class="game-dashboard card">
+                            <div class="game-stat-grid">
+                                <div class="game-stat-card">
+                                    <span class="game-stat-val">3</span>
+                                    <span class="game-stat-lbl">Турнира активно</span>
+                                </div>
+                                <div class="game-stat-card">
+                                    <span class="game-stat-val">12,500 KRX</span>
+                                    <span class="game-stat-lbl">Призовой фонд</span>
+                                </div>
+                                <div class="game-stat-card">
+                                    <span class="game-stat-val">#421</span>
+                                    <span class="game-stat-lbl">Ваш ранг в KRX Gaming</span>
+                                </div>
+                            </div>
+                            
+                            <h4 style="margin: 20px 0 10px 0; text-align: left;">Ближайшие матчи:</h4>
+                            <div class="game-match-row">
+                                <span class="game-tag">Dota 2</span>
+                                <span class="game-vs">KRX Elite vs Cyber Shadows</span>
+                                <span class="game-time">Сегодня в 21:00</span>
+                                <button class="btn btn-sm btn-secondary" onclick="alert('Регистрация начнется скоро!')">Смотреть</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: КЛАНЫ (CLANS - ЗАГЛУШКА) -->
+                <section id="view-clans" class="tab-view">
+                    <div class="placeholder-view">
+                        <div class="placeholder-glow-icon">🛡️</div>
+                        <h2>КЛАНЫ И ГИЛЬДИИ</h2>
+                        <p class="placeholder-desc">Объединяйтесь под единым знаменем, повышайте уровень клана и разблокируйте общие обои, клановые чаты и уникальные аватары.</p>
+                        
+                        <div class="clans-showcase">
+                            <div class="clan-card card">
+                                <div class="clan-logo-holder">🛡️</div>
+                                <h4>KVARON TEAM</h4>
+                                <p>Высший альянс платформы KRX.</p>
+                                <div class="clan-meta">
+                                    <span>Участников: 2 / 100</span>
+                                    <span>Уровень: 99</span>
+                                </div>
+                                <button class="btn btn-sm btn-primary" onclick="alert('Вы уже состоите в клановом альянсе Администрации!')">Управлять</button>
+                            </div>
+                            <div class="clan-card card">
+                                <div class="clan-logo-holder">⚔️</div>
+                                <h4>Скитальцы Пустоши</h4>
+                                <p>Гильдия вольных охотников за уровнями.</p>
+                                <div class="clan-meta">
+                                    <span>Участников: 42 / 50</span>
+                                    <span>Уровень: 15</span>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" onclick="alert('Запрос на вступление отправлен!')">Вступить</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: ДРУЗЬЯ (FRIENDS) -->
+                <section id="view-friends" class="tab-view">
+                    <div class="friends-layout">
+                        <!-- Меню подвкладок друзей -->
+                        <div class="friends-nav card">
+                            <button class="friends-subtab active" onclick="setFriendsSubtab('my')">Мои Друзья</button>
+                            <button class="friends-subtab" onclick="setFriendsSubtab('requests')">Заявки</button>
+                            <button class="friends-subtab" onclick="setFriendsSubtab('search')">Поиск пользователей</button>
+                            <button class="friends-subtab" onclick="setFriendsSubtab('blocked')">Черный список</button>
+                        </div>
+                        
+                        <!-- Контент подвкладок -->
+                        <div class="friends-content-wrapper">
+                            <!-- Подвкладка поиска -->
+                            <div id="friends-search-bar" class="friends-search-header hidden">
+                                <input type="text" id="friends-search-input" placeholder="Введите имя пользователя для поиска..." oninput="performUserSearch()">
+                            </div>
+                            
+                            <div class="friends-list" id="friends-container">
+                                <!-- Список друзей рендерится сюда -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: ЧАТ (CHAT) -->
+                <section id="view-chat" class="tab-view">
+                    <div class="chat-layout">
+                        <!-- Список диалогов -->
+                        <div class="chat-sidebar card">
+                            <div class="chat-sidebar-header">
+                                <h3>Сообщения</h3>
+                                <button class="btn-icon" id="btn-create-group" title="Создать групповой чат" onclick="openGroupChatCreator()">➕</button>
+                            </div>
+                            
+                            <div class="chat-threads-list" id="chat-threads-container">
+                                <!-- Диалоги рендерится динамически -->
+                            </div>
+                        </div>
+                        
+                        <!-- Окно чата -->
+                        <div class="chat-workspace card" id="chat-workspace">
+                            <!-- Если чат не выбран -->
+                            <div class="chat-blank-state" id="chat-blank-state">
+                                <span class="chat-blank-icon">💬</span>
+                                <h4>Выберите диалог из списка</h4>
+                                <p>Или начните новый диалог во вкладке "Друзья"</p>
+                            </div>
+                            
+                            <!-- Активный чат -->
+                            <div class="chat-active-state hidden" id="chat-active-state">
+                                <!-- Хедер чата -->
+                                <div class="chat-header">
+                                    <div class="chat-header-user">
+                                        <img src="" class="avatar-small" id="chat-active-avatar">
+                                        <div class="chat-header-info">
+                                            <span class="chat-active-name" id="chat-active-name">Собеседник</span>
+                                            <span class="chat-active-status" id="chat-active-status">В сети</span>
+                                        </div>
+                                    </div>
+                                    <div class="chat-header-actions" id="chat-group-settings-btn-holder">
+                                        <!-- Кнопка настроек группы появится здесь -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Сообщения -->
+                                <div class="chat-messages-container" id="chat-messages-container">
+                                    <!-- Сообщения рендерятся сюда -->
+                                </div>
+                                
+                                <!-- Строка ввода сообщений -->
+                                <div class="chat-input-bar">
+                                    <div class="chat-inputs-wrapper">
+                                        <button class="chat-input-btn" onclick="toggleChatAttachMenu()">📎</button>
+                                        <div class="chat-attach-menu hidden" id="chat-attach-menu">
+                                            <button onclick="triggerChatImageUpload()">🖼️ Фото</button>
+                                            <button onclick="triggerChatVideoUpload()">🎥 Видео</button>
+                                            <button onclick="triggerChatPollCreator()">📊 Опрос</button>
+                                        </div>
+                                        
+                                        <!-- Скрытые инпуты для загрузки -->
+                                        <input type="file" id="chat-image-loader" accept="image/*" class="hidden" onchange="sendChatImage(this)">
+                                        <input type="file" id="chat-video-loader" accept="video/*" class="hidden" onchange="sendChatVideo(this)">
+
+                                        <input type="text" id="chat-message-input" placeholder="Введите сообщение..." onkeydown="handleChatInputKey(event)">
+                                        
+                                        <!-- Кнопка Эмодзи -->
+                                        <button class="chat-input-btn" id="chat-emoji-btn" onclick="toggleChatEmojiPicker()">😀</button>
+                                        
+                                        <!-- Кнопка голосового сообщения -->
+                                        <button class="chat-input-btn mic-btn" id="chat-voice-btn" title="Зажать для записи ГС">🎙️</button>
+                                    </div>
+                                    <button class="btn btn-primary send-msg-btn" onclick="sendTextMessage()">Отправить</button>
+                                </div>
+                                
+                                <!-- Визуализация записи ГС -->
+                                <div id="voice-recording-overlay" class="voice-recording-overlay hidden">
+                                    <span class="pulse-red-dot">●</span>
+                                    <span class="voice-timer">Запись: <span id="voice-timer-sec">0.00</span>s</span>
+                                    <div class="voice-wave-animation">
+                                        <span></span><span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <button class="btn btn-xs btn-secondary" onclick="cancelVoiceRecord()">Отмена</button>
+                                    <button class="btn btn-xs btn-primary" onclick="stopAndSendVoiceRecord()">Отправить ГС</button>
+                                </div>
+
+                                <!-- Всплывающая панель конструктора опросов для чата -->
+                                <div id="chat-poll-builder-overlay" class="chat-poll-builder-overlay hidden card">
+                                    <h4>Создать опрос в чате</h4>
+                                    <input type="text" id="chat-poll-question" placeholder="Задайте вопрос">
+                                    <div id="chat-poll-options">
+                                        <input type="text" class="chat-poll-option-input" placeholder="Вариант 1">
+                                        <input type="text" class="chat-poll-option-input" placeholder="Вариант 2">
+                                    </div>
+                                    <button class="btn btn-text btn-sm" onclick="addChatPollOptionField()">+ Вариант</button>
+                                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                                        <button class="btn btn-secondary btn-sm" onclick="toggleChatPollCreator(false)">Отмена</button>
+                                        <button class="btn btn-primary btn-sm" onclick="sendChatPoll()">Отправить опрос</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: МАГАЗИН (SHOP) -->
+                <section id="view-shop" class="tab-view">
+                    <div class="shop-layout">
+                        <!-- Фильтры поиска и категорий -->
+                        <div class="shop-filter-bar card">
+                            <div class="shop-cats">
+                                <button class="shop-cat-btn active" data-cat="all">Все товары</button>
+                                <button class="shop-cat-btn" data-cat="avatars">Аватарки</button>
+                                <button class="shop-cat-btn" data-cat="frames">Рамки профиля</button>
+                                <button class="shop-cat-btn" data-cat="banners">Баннеры</button>
+                                <button class="shop-cat-btn" data-cat="wallpapers">Обои</button>
+                            </div>
+                            <div class="shop-search-inputs">
+                                <input type="text" id="shop-search-name" placeholder="Поиск по названию..." oninput="filterShopItems()">
+                                <input type="text" id="shop-search-id" placeholder="По ID/IP товара..." style="width: 120px;" oninput="filterShopItems()">
+                                <input type="number" id="shop-search-price" placeholder="Макс. цена..." style="width: 100px;" oninput="filterShopItems()">
+                            </div>
+                        </div>
+
+                        <!-- Сетка товаров -->
+                        <div class="shop-items-grid" id="shop-items-container">
+                            <!-- Карточки товаров рендерятся динамически -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: КОШЕЛЕК (WALLET) -->
+                <section id="view-wallet" class="tab-view">
+                    <div class="wallet-layout">
+                        <div class="wallet-dashboard">
+                            <!-- Балансовая карточка -->
+                            <div class="wallet-card card">
+                                <span class="wallet-lbl">Текущий баланс KRX</span>
+                                <h2 class="wallet-val" id="wallet-balance-big">0 KRX</h2>
+                                <span class="wallet-sub" id="wallet-role-boost">Множитель роли: 1.0x</span>
+                            </div>
+                            
+                            <!-- Кнопка ежедневного бонуса -->
+                            <div class="wallet-daily-card card">
+                                <h3>🎁 Ежедневный Бонус Валюты</h3>
+                                <p>Забирайте бесплатную валюту каждые 24 часа. Размер бонуса увеличивается для VIP и Администрации!</p>
+                                <div class="daily-reward-timer-holder">
+                                    <button class="btn btn-primary" id="btn-claim-daily" onclick="claimDailyReward()">Забрать Бонус</button>
+                                    <span id="daily-claim-timer" class="daily-timer hidden">Доступно через 24:00:00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- История транзакций -->
+                        <div class="wallet-history-section card">
+                            <h3>История Транзакций</h3>
+                            <div class="table-responsive">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Тип Операции</th>
+                                            <th>Сумма</th>
+                                            <th>Дата</th>
+                                            <th>Статус</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="wallet-history-container">
+                                        <!-- Транзакции -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: НАСТРОЙКИ (SETTINGS - ПРОФИЛЬ) -->
+                <section id="view-settings" class="tab-view">
+                    <div class="settings-layout">
+                        
+                        <!-- Превью Профиля -->
+                        <div class="profile-preview-card card">
+                            <div class="profile-preview-banner" id="profile-banner-view">
+                                <!-- Баннер -->
+                            </div>
+                            <div class="profile-preview-header">
+                                <div class="profile-avatar-block">
+                                    <img src="" class="profile-preview-avatar" id="profile-avatar-view">
+                                    <div class="profile-preview-frame" id="profile-frame-view"></div>
+                                </div>
+                                <div class="profile-preview-info">
+                                    <h2 id="profile-name-view">Никнейм</h2>
+                                    <span class="badge-role" id="profile-role-badge">Пользователь</span>
+                                    <div class="profile-level-stats">
+                                        <span id="profile-level-badge">LVL 0</span>
+                                        <span id="profile-rank-badge">Новичок</span>
+                                    </div>
+                                    <p class="profile-about-text" id="profile-about-view">О себе еще не написано...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Формы Редактирования -->
+                        <div class="settings-forms-grid">
+                            
+                            <!-- Редактировать инфо -->
+                            <div class="settings-form card">
+                                <h3>📝 Редактировать Профиль</h3>
+                                <div class="form-group">
+                                    <label for="settings-username">Никнейм</label>
+                                    <input type="text" id="settings-username" placeholder="Ваш никнейм">
+                                </div>
+                                <div class="form-group">
+                                    <label for="settings-about">О себе (<span id="settings-about-count">0</span>/<span id="settings-about-max">500</span> знаков)</label>
+                                    <textarea id="settings-about" placeholder="Расскажите о себе..." oninput="updateBioLength()"></textarea>
+                                </div>
+                                
+                                <!-- Настройки ника (только для VIP и Админов) -->
+                                <div class="form-group hidden" id="vip-color-setting-holder">
+                                    <label for="settings-nick-color">Цвет никнейма в чате (VIP Privilege)</label>
+                                    <select id="settings-nick-color">
+                                        <option value="default">Обычный (Белый)</option>
+                                        <option value="neon-green">Неоновый зеленый</option>
+                                        <option value="neon-purple">Неоновый фиолетовый</option>
+                                    </select>
+                                </div>
+                                
+                                <button class="btn btn-primary" onclick="saveProfileSettings()">Сохранить изменения</button>
+                            </div>
+
+                            <!-- Смена Обоев и Оформления (ЗАКРЫТО ДО 400 УРВ ДЛЯ ОБЫЧНЫХ) -->
+                            <div class="settings-form card">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h3>🖼️ Кастомизация Обоев</h3>
+                                    <span id="wallpaper-lock-badge" class="badge-lock">🔒 Заблокировано</span>
+                                </div>
+                                <p class="settings-subtext">Функция «Изменить Обои» открывается на 400 УРВ. Администраторам доступна с 1 УРВ.</p>
+                                
+                                <div class="wallpaper-selector-container disabled" id="wallpaper-selector-container">
+                                    <div class="wallpaper-options-grid" id="wallpaper-options-grid">
+                                        <!-- Купленные обои из инвентаря -->
+                                    </div>
+                                    <button class="btn btn-secondary btn-block" style="margin-top:15px;" onclick="resetWallpaper()">Сбросить Обои по умолчанию</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Личный Инвентарь Пользователя -->
+                        <div class="inventory-section card">
+                            <h3>🎒 Ваш Инвентарь товаров</h3>
+                            <p class="settings-subtext">Здесь отображаются все купленные вами в Магазине рамки, баннеры и аватарки. Нажмите, чтобы применить.</p>
+                            <div class="inventory-grid" id="inventory-container">
+                                <!-- Вещи рендерятся динамически -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ВКЛАДКА: АДМИН-ПАНЕЛЬ (ADMIN PANEL - ТОЛЬКО Kvarden, Baron_Kosyaka, KVARON_X) -->
+                <section id="view-admin" class="tab-view">
+                    <div class="admin-layout">
+                        
+                        <!-- Дашборд Статистики -->
+                        <div class="admin-dashboard-stats">
+                            <div class="admin-stat-card card">
+                                <span class="stat-lbl">Всего регистраций</span>
+                                <h3 class="stat-val" id="admin-total-users">0</h3>
+                            </div>
+                            <div class="admin-stat-card card">
+                                <span class="stat-lbl">Активно в сети</span>
+                                <h3 class="stat-val" id="admin-online-users">0</h3>
+                            </div>
+                            <div class="admin-stat-card card">
+                                <span class="stat-lbl">Забанено пользователей</span>
+                                <h3 class="stat-val" id="admin-banned-users">0</h3>
+                            </div>
+                            <div class="admin-stat-card card">
+                                <span class="stat-lbl">Общая эмиссия KRX</span>
+                                <h3 class="stat-val" id="admin-total-currency">0</h3>
+                            </div>
+                        </div>
+
+                        <div class="admin-main-grid">
+                            <!-- Левая часть: Управление пользователями -->
+                            <div class="admin-users-panel card">
+                                <h3>👥 Управление Пользователями</h3>
+                                <div class="admin-search-bar">
+                                    <input type="text" id="admin-user-search" placeholder="Поиск по имени или IP..." oninput="renderAdminUsers()">
+                                </div>
+                                <div class="admin-users-list-wrapper">
+                                    <div class="admin-users-table-container">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Юзер</th>
+                                                    <th>IP Адрес</th>
+                                                    <th>Роль</th>
+                                                    <th>Уровень / XP</th>
+                                                    <th>Монеты</th>
+                                                    <th>Действия</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="admin-users-rows">
+                                                <!-- Строки пользователей -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Правая часть: Добавление товара и Жалобы -->
+                            <div class="admin-side-panels">
+                                <!-- Добавление товаров в Магазин -->
+                                <div class="admin-panel-widget card">
+                                    <h3>🛍️ Добавить Товар в Магазин</h3>
+                                    <div class="form-group">
+                                        <label>Категория</label>
+                                        <select id="admin-item-cat">
+                                            <option value="avatars">Аватарка (GIF / Статика)</option>
+                                            <option value="frames">Рамка профиля</option>
+                                            <option value="banners">Баннер (GIF / Статика)</option>
+                                            <option value="wallpapers">Обои (Живые / Обычные)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Название товара</label>
+                                        <input type="text" id="admin-item-name" placeholder="Название">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ссылка на Изображение / GIF</label>
+                                        <input type="text" id="admin-item-url" placeholder="URL картинки">
+                                    </div>
+                                    <div class="form-group-row">
+                                        <div class="form-group">
+                                            <label>Цена (KRX)</label>
+                                            <input type="number" id="admin-item-price" placeholder="Цена">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Акционная цена (скидка в %)</label>
+                                            <input type="number" id="admin-item-discount" placeholder="Скидка %" min="0" max="100">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Таймер акции (минут, 0 если нет)</label>
+                                        <input type="number" id="admin-item-timer" placeholder="Минуты" min="0">
+                                    </div>
+                                    <button class="btn btn-primary btn-block" onclick="createNewShopItem()">Создать Товар</button>
+                                </div>
+
+                                <!-- Чтение жалоб (Репортов) -->
+                                <div class="admin-panel-widget card">
+                                    <h3>⚠️ Рассмотрение Жалоб (Репорты)</h3>
+                                    <div class="reports-queue" id="admin-reports-queue">
+                                        <!-- Жалобы рендерятся сюда -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <!-- Модальное окно для создания Группового Чата -->
+    <div id="group-creator-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h3>Создать Групповой Чат</h3>
+            <div class="form-group">
+                <label>Название Группы</label>
+                <input type="text" id="group-name-input" placeholder="Название группы...">
+            </div>
+            <div class="form-group">
+                <label>Ссылка на Аватар Группы</label>
+                <input type="text" id="group-avatar-input" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Пригласить Друзей</label>
+                <div class="group-friends-select-list" id="group-friends-invite-list">
+                    <!-- Будут выведены друзья с чекбоксами -->
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap: 10px; margin-top:20px;">
+                <button class="btn btn-secondary" onclick="closeGroupChatCreator()">Отмена</button>
+                <button class="btn btn-primary" onclick="createGroupChat()">Создать Группу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек группового чата (Участники, Управление) -->
+    <div id="group-settings-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h3 id="group-settings-title">Управление Группой</h3>
+            <div class="form-group">
+                <label>Изменить название</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="group-rename-input">
+                    <button class="btn btn-secondary btn-sm" onclick="renameActiveGroup()">Ок</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Добавить участников</label>
+                <div class="group-friends-select-list" id="group-add-members-list">
+                    <!-- Друзья которых еще нет в группе -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Текущие участники</label>
+                <div class="group-members-manage-list" id="group-members-manage-list">
+                    <!-- Список участников с кнопками "Удалить" -->
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap: 10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="closeGroupSettingsModal()">Готово</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем JavaScript логику -->
+    <script src="js/state.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/feed.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
