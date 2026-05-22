@@ -2,6 +2,18 @@
 
 let activeShopCategory = 'all';
 
+function getRoleShopDiscount(user) {
+    if (isAdminUser(user)) return 100;
+    if (user.role === 'vip') return 15;
+    return 0;
+}
+
+function calculateItemPriceForUser(item, user) {
+    const salePrice = item.discount > 0 ? Math.round(item.price * (1 - item.discount / 100)) : item.price;
+    const roleDiscount = getRoleShopDiscount(user);
+    return Math.max(0, Math.round(salePrice * (1 - roleDiscount / 100)));
+}
+
 // Инициализация истории транзакций кошелька
 function getTransactions() {
     if (!localStorage.getItem('krx_transactions')) {
@@ -64,7 +76,7 @@ function renderShop() {
         if (searchId !== '' && !item.id.toLowerCase().includes(searchId)) return false;
         
         // 4. Фильтр по цене
-        const price = item.discount > 0 ? Math.round(item.price * (1 - item.discount / 100)) : item.price;
+        const price = calculateItemPriceForUser(item, currentUser);
         if (price > searchPrice) return false;
         
         return true;
@@ -85,14 +97,16 @@ function renderShop() {
         
         // Расчет цены со скидкой
         const hasDiscount = item.discount > 0;
-        const discountPrice = hasDiscount ? Math.round(item.price * (1 - item.discount / 100)) : item.price;
+        const discountPrice = calculateItemPriceForUser(item, currentUser);
+        const roleDiscount = getRoleShopDiscount(currentUser);
         
         // Проверка куплен ли товар
         const isOwned = currentUser.inventory.includes(item.id);
         
         // Проверка уровней доступа (Администраторам доступно всё без ограничений с 1 уровня)
-        const isAdmin = currentUser.role === 'supreme_admin' || currentUser.role === 'admin';
+        const isAdmin = isAdminUser(currentUser);
         const levelLocked = !isAdmin && (item.minLvl && currentUser.level < item.minLvl);
+        const liveLocked = item.isLive && !isAdmin;
         
         // Генерация таймера скидки
         let timerHtml = '';
@@ -108,7 +122,13 @@ function renderShop() {
         
         // Картинка превью товара
         let previewHtml = '';
-        if (item.category === 'wallpapers' && item.isLive) {
+        if (item.mediaType === 'video' || (item.url || '').startsWith('data:video')) {
+            previewHtml = `
+                <div class="shop-item-preview" style="height:120px; border-bottom:1px solid var(--border-color); overflow:hidden;">
+                    <video src="${item.url}" muted loop playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                </div>
+            `;
+        } else if (item.category === 'wallpapers' && item.isLive) {
             previewHtml = `
                 <div class="shop-item-preview flex-center" style="background:#050505; color:var(--vip-green); font-family:var(--font-mono); font-size:11px; text-align:center; border-bottom:1px solid var(--border-color); height:120px;">
                     <div>
@@ -119,7 +139,7 @@ function renderShop() {
             `;
         } else {
             previewHtml = `
-                <div class="shop-item-preview" style="background-image: url('${item.url || 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=150'}')"></div>
+                <div class="shop-item-preview" style="background-image: url('${item.url || KRX_ASSETS.wallpaperDark}')"></div>
             `;
         }
         
@@ -127,8 +147,9 @@ function renderShop() {
         let actionBtn = '';
         if (isOwned) {
             actionBtn = `<button class="btn btn-secondary btn-block disabled" disabled>Уже Куплено</button>`;
-        } else if (levelLocked) {
-            actionBtn = `<button class="btn btn-secondary btn-block disabled" disabled>🔒 Недостаточный УРВ</button>`;
+        } else if (levelLocked || liveLocked) {
+            const lockText = liveLocked ? '🔒 Только Администрации' : '🔒 Недостаточный УРВ';
+            actionBtn = `<button class="btn btn-secondary btn-block disabled" disabled>${lockText}</button>`;
         } else {
             actionBtn = `<button class="btn btn-primary btn-block" onclick="buyShopItem('${item.id}')">Купить</button>`;
         }
@@ -145,7 +166,8 @@ function renderShop() {
                 
                 <div class="shop-price-block" style="display:flex; align-items:baseline; gap:8px;">
                     ${hasDiscount ? `<span style="font-size:11px; color:var(--text-secondary); text-decoration:line-through;">${item.price} KRX</span>` : ''}
-                    <span style="font-size:15px; font-weight:800; color:#fff;">${discountPrice} KRX</span>
+                    <span style="font-size:15px; font-weight:800; color:#fff;">${discountPrice === 0 ? 'Бесплатно' : `${discountPrice} KRX`}</span>
+                    ${roleDiscount > 0 && !isOwned ? `<span class="badge-tag sale-tag">${roleDiscount === 100 ? 'ADMIN FREE' : `VIP -${roleDiscount}%`}</span>` : ''}
                 </div>
                 ${actionBtn}
             </div>
@@ -203,14 +225,19 @@ function buyShopItem(itemId) {
     }
     
     // Проверка уровней (Админы обходят ограничения)
-    const isAdmin = dbUser.role === 'supreme_admin' || dbUser.role === 'admin';
+    const isAdmin = isAdminUser(dbUser);
     if (!isAdmin && item.minLvl && dbUser.level < item.minLvl) {
         showNotification('Уровень', `Для покупки нужен уровень ${item.minLvl}!`, '🔒');
         return;
     }
+
+    if (!isAdmin && item.isLive) {
+        showNotification('Обои', 'Живые видео-обои доступны только Администрации.', '🔒');
+        return;
+    }
     
     // Расчет цены
-    const price = item.discount > 0 ? Math.round(item.price * (1 - item.discount / 100)) : item.price;
+    const price = calculateItemPriceForUser(item, dbUser);
     
     if (dbUser.coins < price) {
         showNotification('Баланс', 'Недостаточно KRX монет на балансе!', '🪙');
@@ -238,7 +265,7 @@ function buyShopItem(itemId) {
     // Опыт за покупку
     addXP(30);
     
-    showNotification('Успешная покупка!', `Вы приобрели товар "${item.name}" за ${price} KRX!`, '🛍️');
+    showNotification('Успешная покупка!', `Вы приобрели товар "${item.name}" ${price === 0 ? 'бесплатно' : `за ${price} KRX`}!`, '🛍️');
     
     // Полное обновление
     updateUserHUD();
@@ -313,6 +340,14 @@ function updateDailyBonusHUD() {
     const timerText = document.getElementById('daily-claim-timer');
     
     if (!btn || !timerText) return;
+
+    if (user.role === 'user') {
+        btn.classList.add('hidden');
+        btn.disabled = true;
+        timerText.classList.remove('hidden');
+        timerText.textContent = 'Ежедневный бонус доступен для VIP и Администрации';
+        return;
+    }
     
     const now = Date.now();
     const cooldown = 24 * 3600 * 1000; // 24 часа
@@ -345,6 +380,11 @@ function claimDailyReward() {
     
     if (now < user.lastDailyClaim + cooldown) {
         showNotification('Бонус', 'Время еще не пришло!', '🎁');
+        return;
+    }
+
+    if (user.role === 'user') {
+        showNotification('VIP бонус', 'Ежедневная валюта доступна VIP и Администрации.', '🔒');
         return;
     }
     
@@ -400,6 +440,9 @@ function renderSettings() {
     const lvlView = document.getElementById('profile-level-badge');
     const rankView = document.getElementById('profile-rank-badge');
     const aboutView = document.getElementById('profile-about-view');
+    const followersView = document.getElementById('profile-followers-count');
+    const friendsView = document.getElementById('profile-friends-count');
+    const photosView = document.getElementById('profile-photos-count');
     
     if (bannerView) {
         bannerView.style.backgroundImage = user.banner ? `url(${user.banner})` : 'none';
@@ -408,7 +451,7 @@ function renderSettings() {
     }
     
     if (avatarView) {
-        avatarView.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+        avatarView.src = user.avatar || KRX_ASSETS.avatarGuest;
         
         // Огненный ореол на 500 УРВ
         const avatarWrapper = avatarView.parentElement;
@@ -437,32 +480,26 @@ function renderSettings() {
     }
     
     if (nameView) {
-        nameView.textContent = user.username;
+        nameView.innerHTML = `${user.username}${getUserBadgeMarkup(user)}`;
         nameView.className = ''; // сброс
         
-        // Никнейм стили свечения
-        if (user.role === 'supreme_admin') {
-            nameView.classList.add('nick-admin-fire');
-        } else if (user.role === 'vip' && user.nickColor === 'neon-green') {
-            nameView.classList.add('nick-neon-green');
-        } else if (user.role === 'vip' && user.nickColor === 'neon-purple') {
-            nameView.classList.add('nick-neon-purple');
-        }
+        const nickClass = getUserNickClass(user);
+        if (nickClass) nameView.classList.add(nickClass);
     }
     
     if (roleView) {
-        let roleName = 'Пользователь';
-        if (user.role === 'supreme_admin') roleName = '👑 Высшая Администрация';
-        else if (user.role === 'admin') roleName = '⚡ Администратор';
-        else if (user.role === 'vip') roleName = '💎 VIP Игрок';
-        
-        roleView.textContent = roleName;
+        roleView.textContent = getUserRoleLabel(user);
         roleView.className = `badge-role ${user.role}`;
     }
     
     if (lvlView) lvlView.textContent = `LVL ${user.level}`;
     if (rankView) rankView.textContent = getRankName(user.level);
     if (aboutView) aboutView.textContent = user.bio || 'О себе еще не написано...';
+    if (followersView) followersView.textContent = getUserFollowersCount(user.username);
+    if (friendsView) friendsView.textContent = (user.friends || []).length;
+    if (photosView) photosView.textContent = (user.photos || []).length;
+
+    renderProfilePhotoGrid(user);
     
     // 2. Заполняем поля ввода формы редактирования
     const usernameInp = document.getElementById('settings-username');
@@ -477,7 +514,7 @@ function renderSettings() {
     // 3. Цвет ника для VIP и Администрации
     const vipColorSection = document.getElementById('vip-color-setting-holder');
     if (vipColorSection) {
-        const canChangeColor = user.role === 'supreme_admin' || user.role === 'admin' || user.role === 'vip';
+            const canChangeColor = isAdminUser(user) || user.role === 'vip';
         if (canChangeColor) {
             vipColorSection.classList.remove('hidden');
             const select = document.getElementById('settings-nick-color');
@@ -489,7 +526,7 @@ function renderSettings() {
     
     // 4. Обои Профиля кастомизация lock/unlock
     // 400 УРВ -> Доступ для обычных, Админам открыто всегда.
-    const hasWpAccess = user.role === 'supreme_admin' || user.role === 'admin' || user.level >= 400;
+    const hasWpAccess = isAdminUser(user) || user.level >= 400;
     const wpLockBadge = document.getElementById('wallpaper-lock-badge');
     const wpSelectorContainer = document.getElementById('wallpaper-selector-container');
     
@@ -516,7 +553,35 @@ function renderSettings() {
 function updateBioLength() {
     const text = document.getElementById('settings-about')?.value || '';
     const count = document.getElementById('settings-about-count');
+    const max = document.getElementById('settings-about-max');
+    const user = getActiveUser();
+    const limit = user.role === 'vip' ? 1000 : 500;
+
     if (count) count.textContent = text.length;
+    if (max) max.textContent = limit;
+
+    const textarea = document.getElementById('settings-about');
+    if (textarea) textarea.maxLength = limit;
+}
+
+function renderProfilePhotoGrid(user) {
+    const grid = document.getElementById('profile-photo-grid');
+    if (!grid) return;
+
+    const photos = (user.photos || []).slice(0, 6);
+    grid.innerHTML = '';
+
+    if (photos.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; color:var(--text-secondary); font-size:12px;">Фото пока не загружены.</div>`;
+        return;
+    }
+
+    photos.forEach(photo => {
+        const cell = document.createElement('div');
+        cell.className = 'profile-photo-cell';
+        cell.style.backgroundImage = `url('${photo}')`;
+        grid.appendChild(cell);
+    });
 }
 
 // Рендерим Обои в селекторе кастомизации
@@ -529,9 +594,11 @@ function renderWallpaperSelector() {
     const items = getShopItems().filter(i => i.category === 'wallpapers');
     
     // Системные Живые обои доступны Администраторам автоматически
-    const isAdmin = user.role === 'supreme_admin' || user.role === 'admin';
+    const isAdmin = isAdminUser(user);
     
     items.forEach(wp => {
+        if (wp.isLive && !isAdmin) return;
+
         // Обычные юзеры должны сначала купить обои в магазине
         const isOwned = user.inventory.includes(wp.id) || isAdmin;
         if (!isOwned) return;
@@ -570,6 +637,12 @@ function applyProfileWallpaper(wpUrl) {
     let users = getUsers();
     const currentUser = getActiveUser();
     let dbUser = users.find(u => u.username === currentUser.username);
+    const item = getShopItems().find(i => i.url === wpUrl);
+    
+    if (item?.isLive && !isAdminUser(dbUser)) {
+        showNotification('Доступ закрыт', 'Живые обои доступны только Администрации KRX.', '🔒');
+        return;
+    }
     
     if (dbUser) {
         dbUser.wallpaper = wpUrl;
@@ -600,14 +673,20 @@ function saveProfileSettings() {
     const newName = usernameInp.value.trim();
     const newBio = aboutInp ? aboutInp.value.trim() : '';
     const newColor = colorSelect ? colorSelect.value : 'default';
+    const currentUser = getActiveUser();
+    const bioLimit = currentUser.role === 'vip' ? 1000 : 500;
     
     if (newName.length > 25) {
         alert('Слишком длинный никнейм (макс. 25 символов)!');
         return;
     }
+
+    if (newBio.length > bioLimit) {
+        alert(`Описание слишком длинное. Лимит для вашего статуса: ${bioLimit} символов.`);
+        return;
+    }
     
     let users = getUsers();
-    const currentUser = getActiveUser();
     
     // Проверка дубликатов никнейма
     const nameExists = users.some(u => u.username.toLowerCase() === newName.toLowerCase() && u.username !== currentUser.username);
@@ -622,7 +701,9 @@ function saveProfileSettings() {
         const oldName = dbUser.username;
         dbUser.username = newName;
         dbUser.bio = newBio;
-        dbUser.nickColor = newColor;
+        if (isAdminUser(dbUser) || dbUser.role === 'vip') {
+            dbUser.nickColor = newColor;
+        }
         
         // Обновляем текущего юзера в сессии
         setActiveUser(newName);

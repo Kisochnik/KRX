@@ -32,11 +32,13 @@ function renderAdmin() {
     renderAdminStats();
     renderAdminUsers();
     renderAdminReports();
+    renderAdminShopItems();
 }
 
 // 1. Отрисовка Дашборда Статистики
 function renderAdminStats() {
     const users = getUsers();
+    const accountBans = getAccountBans();
     const bans = getHardwareBans();
     
     // Подсчет метрик
@@ -45,7 +47,7 @@ function renderAdminStats() {
     // Симулируем, что все VIP и Админы сейчас онлайн
     const onlineUsers = users.filter(u => u.role !== 'user' || u.username === 'Trinity').length;
     
-    const bannedUsersCount = bans.length;
+    const bannedUsersCount = bans.length + accountBans.length;
     
     const totalEmission = users.reduce((acc, u) => acc + (u.coins || 0), 0);
     
@@ -69,6 +71,7 @@ function renderAdminUsers() {
     container.innerHTML = '';
     
     const users = getUsers();
+    const accountBans = getAccountBans();
     const bans = getHardwareBans();
     const mutes = getMutedUsers();
     const currentUser = getActiveUser();
@@ -83,24 +86,28 @@ function renderAdminUsers() {
     filteredUsers.forEach(u => {
         const tr = document.createElement('tr');
         
-        const isBanned = bans.some(b => b.username === u.username || b.ip === u.ip || b.hwid === u.hwid);
+        const isAccountBanned = accountBans.some(b => b.username === u.username);
+        const isHardwareBanned = bans.some(b => b.username === u.username || b.ip === u.ip || b.hwid === u.hwid);
+        const isBanned = isAccountBanned || isHardwareBanned;
         const isMuted = mutes.some(m => m.username === u.username);
         
         // Ролевые значки в таблице
         let roleBadge = '';
-        if (u.role === 'supreme_admin') roleBadge = '👑 <span style="color:#ff3333; font-weight:800;">Гл. Админ</span>';
+        if (isSupremeAdmin(u)) roleBadge = '👑 <span style="color:#ff3333; font-weight:800;">Гл. Админ</span>';
         else if (u.role === 'admin') roleBadge = '⚡ <span style="color:#ff5555;">Админ</span>';
         else if (u.role === 'vip') roleBadge = '💎 <span style="color:var(--vip-purple);">VIP</span>';
         else roleBadge = '👤 Юзер';
         
         // Кнопки управления (Высший админ может все, Админ не может модерировать Высшего Админа)
-        const isTargetImmune = u.role === 'supreme_admin';
+        const isTargetImmune = isSupremeAdmin(u);
         const isSelf = u.username === currentUser.username;
         
         let banBtn = '';
         let muteBtn = '';
         let spinCoinsBtn = '';
         let spinLvlBtn = '';
+        let vipBtn = '';
+        let verifyBtn = '';
         
         if (isSelf || (currentUser.role === 'admin' && isTargetImmune)) {
             banBtn = `<button class="btn btn-xs btn-secondary disabled" disabled>Иммунитет</button>`;
@@ -108,32 +115,47 @@ function renderAdminUsers() {
             spinCoinsBtn = '';
             spinLvlBtn = '';
         } else {
-            // Бан по IP и железу (HWID)
-            banBtn = isBanned 
-                ? `<button class="btn btn-xs btn-primary" onclick="unbanUser('${u.username}')">Разбанить</button>` 
-                : `<button class="btn btn-xs btn-secondary" style="border-color:#ff3333; color:#ff3333;" onclick="banUserIPHWID('${u.username}')">🔒 HWID Бан</button>`;
+            // KVARON_X выдает обычный бан аккаунта, Высшие Админы — супер-бан по IP/HWID.
+            if (isBanned) {
+                banBtn = `<button class="btn btn-xs btn-primary" onclick="unbanUser('${u.username}')">Разбанить</button>`;
+            } else if (isSupremeAdmin(currentUser)) {
+                banBtn = `<button class="btn btn-xs btn-secondary" style="border-color:#ff3333; color:#ff3333;" onclick="banUserIPHWID('${u.username}')">🔒 HWID Бан</button>`;
+            } else {
+                banBtn = `<button class="btn btn-xs btn-secondary" style="border-color:#ff3333; color:#ff3333;" onclick="banUserAccount('${u.username}')">🚫 Бан</button>`;
+            }
             
             // Мут пользователя
             muteBtn = isMuted 
                 ? `<button class="btn btn-xs btn-secondary" onclick="unmuteUser('${u.username}')">Размутить</button>` 
                 : `<button class="btn btn-xs btn-secondary" onclick="muteUser('${u.username}')">🤐 Мут</button>`;
                 
-            // Накрутка/Спин монет
-            spinCoinsBtn = `<button class="btn btn-xs btn-secondary" title="Накрутить монеты" onclick="spinUserCoins('${u.username}')">🪙 Спин</button>`;
-            
-            // Накрутка уровней
-            spinLvlBtn = `<button class="btn btn-xs btn-secondary" title="Накрутить уровень" onclick="spinUserLevel('${u.username}')">⭐ УРВ</button>`;
+            if (canManageEconomy(currentUser)) {
+                spinCoinsBtn = `<button class="btn btn-xs btn-secondary" title="Начислить или забрать монеты" onclick="spinUserCoins('${u.username}')">🪙 KRX</button>`;
+                spinLvlBtn = `<button class="btn btn-xs btn-secondary" title="Изменить уровень и XP" onclick="spinUserLevel('${u.username}')">⭐ УРВ</button>`;
+                if (!isAdminUser(u)) {
+                    vipBtn = u.role === 'vip'
+                        ? `<button class="btn btn-xs btn-secondary" onclick="toggleVIP('${u.username}')">Снять VIP</button>`
+                        : `<button class="btn btn-xs btn-secondary" onclick="toggleVIP('${u.username}')">Выдать VIP</button>`;
+                }
+            }
+
+            if (!isAdminUser(u) && u.role !== 'vip' && u.level < 500) {
+                verifyBtn = u.verified
+                    ? `<button class="btn btn-xs btn-secondary" onclick="toggleBlueVerification('${u.username}')">Снять синюю</button>`
+                    : `<button class="btn btn-xs btn-secondary" onclick="toggleBlueVerification('${u.username}')">Синяя ✓</button>`;
+            }
         }
         
         tr.innerHTML = `
             <td>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="${u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="avatar-small" style="width:24px; height:24px; border-radius:50%;">
+                    <img src="${u.avatar || KRX_ASSETS.avatarGuest}" class="avatar-small" style="width:24px; height:24px; border-radius:50%;">
                     <span style="font-weight:700; ${isBanned ? 'text-decoration:line-through; color:var(--text-secondary);' : ''}">${u.username}</span>
+                    ${getUserBadgeMarkup(u)}
                 </div>
             </td>
             <td style="font-family:var(--font-mono); font-size:11px;">${u.ip}</td>
-            <td style="font-size:11px;">${roleBadge}</td>
+            <td style="font-size:11px;">${roleBadge}${isHardwareBanned ? '<br><span style="color:#ff3333;">HWID/IP</span>' : ''}${isAccountBanned ? '<br><span style="color:#ff7777;">Акк-бан</span>' : ''}</td>
             <td style="font-family:var(--font-mono); font-size:11px;">LVL ${u.level} <span style="color:var(--text-secondary);">(${u.xp} XP)</span></td>
             <td style="font-weight:700;">${u.coins.toLocaleString()} KRX</td>
             <td>
@@ -142,6 +164,8 @@ function renderAdminUsers() {
                     ${muteBtn}
                     ${spinCoinsBtn}
                     ${spinLvlBtn}
+                    ${vipBtn}
+                    ${verifyBtn}
                 </div>
             </td>
         `;
@@ -221,8 +245,12 @@ function resolveReport(reportId, action) {
         showNotification('Пост удален', 'Нарушающий пост стерт из ленты.', '🗑️');
         if (window.renderFeed) window.renderFeed();
     } else if (action === 'ban_user') {
-        // Баним
-        banUserIPHWID(rep.targetUser);
+        // Баним по уровню прав текущего администратора
+        if (isSupremeAdmin(getActiveUser())) {
+            banUserIPHWID(rep.targetUser);
+        } else {
+            banUserAccount(rep.targetUser);
+        }
         
         // Закрываем репорт
         reports = reports.filter(r => r.id !== reportId);
@@ -237,8 +265,42 @@ function resolveReport(reportId, action) {
    3. ОПЕРАЦИИ УПРАВЛЕНИЯ И МОДЕРАЦИИ
    ========================================== */
 
+// 0. Обычный бан аккаунта для KVARON_X
+function banUserAccount(username) {
+    const currentUser = getActiveUser();
+    if (!isAdminUser(currentUser)) return;
+
+    const users = getUsers();
+    const u = users.find(usr => usr.username === username);
+    if (!u || isSupremeAdmin(u)) {
+        showNotification('Иммунитет', 'Высшая Администрация не может быть забанена обычным баном.', '👑');
+        return;
+    }
+
+    if (!confirm(`Выдать обычный бан аккаунта пользователю ${username}?`)) return;
+
+    let bans = getAccountBans();
+    if (!bans.some(b => b.username === username)) {
+        bans.push({
+            username: u.username,
+            bannedBy: currentUser.username,
+            timestamp: Date.now()
+        });
+        saveAccountBans(bans);
+    }
+
+    showNotification('Бан выдан', `Аккаунт ${username} заблокирован.`, '🚫');
+    addXP(25);
+    renderAdmin();
+}
+
 // 1. IP & Hardware (HWID) бан
 function banUserIPHWID(username) {
+    if (!isSupremeAdmin(getActiveUser())) {
+        showNotification('Недостаточно прав', 'HWID/IP супер-бан доступен только Высшей Администрации.', '🔒');
+        return;
+    }
+
     if (!confirm(`Вы действительно хотите выдать абсолютный HWID/IP бан пользователю ${username}? Его вход будет полностью заблокирован!`)) return;
     
     const users = getUsers();
@@ -267,6 +329,10 @@ function banUserIPHWID(username) {
 }
 
 function unbanUser(username) {
+    let accountBans = getAccountBans();
+    accountBans = accountBans.filter(b => b.username !== username);
+    saveAccountBans(accountBans);
+
     let bans = getHardwareBans();
     bans = bans.filter(b => b.username !== username);
     saveHardwareBans(bans);
@@ -302,6 +368,11 @@ function unmuteUser(username) {
 
 // 3. Накрутка валюты
 function spinUserCoins(username) {
+    if (!canManageEconomy(getActiveUser())) {
+        showNotification('Недостаточно прав', 'Генерация валюты доступна только Высшей Администрации.', '🔒');
+        return;
+    }
+
     const amountStr = prompt(`Введите сумму KRX для зачисления/вычитания у ${username} (например, 5000 или -2000):`);
     const amount = parseInt(amountStr);
     if (isNaN(amount) || amount === 0) return;
@@ -331,19 +402,68 @@ function spinUserCoins(username) {
 
 // 4. Накрутка уровней
 function spinUserLevel(username) {
-    const lvlStr = prompt(`Введите количество уровней для добавления/вычитания у ${username} (например, 50 или -10):`);
-    const levels = parseInt(lvlStr);
-    if (isNaN(levels) || levels === 0) return;
+    if (!canManageEconomy(getActiveUser())) {
+        showNotification('Недостаточно прав', 'Управление уровнями доступно только Высшей Администрации.', '🔒');
+        return;
+    }
+
+    const lvlStr = prompt(`Введите точный УРВ для ${username} (1-500):`);
+    const level = parseInt(lvlStr);
+    if (isNaN(level)) return;
+
+    const xpStr = prompt(`Введите XP на этом уровне (можно 0):`, '0');
+    const xp = parseInt(xpStr);
+    if (isNaN(xp) || xp < 0) return;
     
     let users = getUsers();
     let u = users.find(usr => usr.username === username);
     if (!u) return;
     
-    u.level = Math.max(1, Math.min(500, u.level + levels));
-    u.xp = 0; // Сброс XP на новом уровне
+    u.level = Math.max(1, Math.min(500, level));
+    u.xp = xp;
     saveUsers(users);
     
     showNotification('Уровень Спин', `Уровень пользователя ${username} изменен на ${u.level}!`, '⭐');
+    renderAdmin();
+}
+
+function toggleVIP(username) {
+    if (!canManageEconomy(getActiveUser())) {
+        showNotification('Недостаточно прав', 'Выдача VIP доступна только Высшей Администрации.', '🔒');
+        return;
+    }
+
+    let users = getUsers();
+    const user = users.find(u => u.username === username);
+    if (!user || isAdminUser(user)) {
+        showNotification('Роль защищена', 'Административные роли нельзя менять через VIP-переключатель.', '👑');
+        return;
+    }
+
+    user.role = user.role === 'vip' ? 'user' : 'vip';
+    if (user.role === 'vip' && user.nickColor === 'default') {
+        user.nickColor = 'neon-purple';
+    }
+
+    saveUsers(users);
+    showNotification('VIP статус', `${username}: ${user.role === 'vip' ? 'VIP выдан' : 'VIP снят'}.`, '💎');
+    renderAdmin();
+}
+
+function toggleBlueVerification(username) {
+    const currentUser = getActiveUser();
+    if (!isAdminUser(currentUser)) return;
+
+    let users = getUsers();
+    const user = users.find(u => u.username === username);
+    if (!user || isAdminUser(user) || user.role === 'vip' || user.level >= 500) {
+        showNotification('Галочка защищена', 'У этого аккаунта системная или ролевая галочка.', '◆');
+        return;
+    }
+
+    user.verified = !user.verified;
+    saveUsers(users);
+    showNotification('Верификация', `${username}: ${user.verified ? 'синяя галочка выдана' : 'синяя галочка снята'}.`, '◆');
     renderAdmin();
 }
 
@@ -352,13 +472,16 @@ function spinUserLevel(username) {
    4. ДОБАВЛЕНИЕ НОВЫХ ТОВАРОВ В МАГАЗИН
    ========================================== */
 
-function createNewShopItem() {
+async function createNewShopItem() {
+    if (!isAdminUser(getActiveUser())) return;
+
     const catSelect = document.getElementById('admin-item-cat');
     const nameInp = document.getElementById('admin-item-name');
     const urlInp = document.getElementById('admin-item-url');
     const priceInp = document.getElementById('admin-item-price');
     const discountInp = document.getElementById('admin-item-discount');
     const timerInp = document.getElementById('admin-item-timer');
+    const fileInp = document.getElementById('admin-item-file');
     
     if (!nameInp || !priceInp || nameInp.value.trim() === '' || priceInp.value.trim() === '') {
         alert('Заполните обязательные поля: Название и Цена!');
@@ -367,7 +490,11 @@ function createNewShopItem() {
     
     const name = nameInp.value.trim();
     const category = catSelect.value;
-    const url = urlInp.value.trim() || 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=150';
+    const file = fileInp?.files?.[0];
+    const uploadedUrl = file ? await readShopItemFile(file) : '';
+    const url = uploadedUrl || urlInp.value.trim() || KRX_ASSETS.wallpaperDark;
+    const mediaType = file?.type?.startsWith('video/') || url.startsWith('data:video') ? 'video' : 'image';
+    const isLive = category === 'wallpapers' && (mediaType === 'video' || url === 'matrix' || url === 'cybermesh' || name.toLowerCase().includes('жив'));
     const price = parseInt(priceInp.value);
     const discount = parseInt(discountInp.value) || 0;
     const timerMinutes = parseInt(timerInp.value) || 0;
@@ -385,10 +512,12 @@ function createNewShopItem() {
         name: name,
         category: category,
         url: url,
+        mediaType: mediaType,
         price: price,
         discount: Math.min(100, Math.max(0, discount)),
         timer: timerMinutes * 60, // переводим минуты в секунды для тикера
-        minLvl: 1
+        minLvl: category === 'wallpapers' ? 500 : 1,
+        isLive: isLive
     };
     
     items.unshift(newItem);
@@ -400,6 +529,7 @@ function createNewShopItem() {
     priceInp.value = '';
     discountInp.value = '';
     timerInp.value = '';
+    if (fileInp) fileInp.value = '';
     
     showNotification('Товар добавлен!', `Новый товар "${name}" успешно загружен в Магазин!`, '🛍️');
     
@@ -409,4 +539,116 @@ function createNewShopItem() {
     // Обновляем виды
     if (activeTab === 'shop' && window.renderShop) window.renderShop();
     renderAdmin();
+}
+
+function readShopItemFile(file) {
+    return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = event => resolve(event.target.result);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+    });
+}
+
+function renderAdminShopItems() {
+    const container = document.getElementById('admin-shop-items-list');
+    if (!container) return;
+
+    const currentUser = getActiveUser();
+    const canEdit = canManageEconomy(currentUser);
+    const items = getShopItems();
+
+    if (items.length === 0) {
+        container.innerHTML = `<div style="font-size:12px; color:var(--text-secondary);">Магазин пуст.</div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'admin-shop-row';
+        const isVideo = item.mediaType === 'video' || (item.url || '').startsWith('data:video');
+        const thumb = isVideo
+            ? `<div class="admin-shop-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-secondary);">VIDEO</div>`
+            : item.isLive
+                ? `<div class="admin-shop-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--vip-green);font-size:10px;">LIVE</div>`
+            : `<div class="admin-shop-thumb" style="background-image:url('${item.url}')"></div>`;
+
+        row.innerHTML = `
+            ${thumb}
+            <div class="admin-shop-meta">
+                <strong>${item.name}</strong>
+                <span>${item.id} / ${item.category} / ${item.price} KRX</span>
+                <span>Скидка: ${item.discount || 0}% / Таймер: ${item.timer || 0}s / УРВ: ${item.minLvl || 1}</span>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+                ${canEdit ? `<button class="btn btn-xs btn-secondary" onclick="editShopItem('${item.id}')">Править</button>` : '<span style="font-size:10px; color:var(--text-secondary);">Просмотр</span>'}
+                ${canEdit ? `<button class="btn btn-xs btn-secondary" style="border-color:#ff3333; color:#ff3333;" onclick="deleteShopItem('${item.id}')">Удалить</button>` : ''}
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function deleteShopItem(itemId) {
+    if (!canManageEconomy(getActiveUser())) {
+        showNotification('Недостаточно прав', 'Удаление товаров доступно только Высшей Администрации.', '🔒');
+        return;
+    }
+
+    if (!confirm('Удалить товар из магазина?')) return;
+
+    let items = getShopItems();
+    const item = items.find(i => i.id === itemId);
+    items = items.filter(i => i.id !== itemId);
+    saveShopItems(items);
+
+    let users = getUsers();
+    users.forEach(user => {
+        user.inventory = (user.inventory || []).filter(id => id !== itemId);
+        if (user.avatarFrame === itemId) user.avatarFrame = '';
+        if (item && (user.avatar === item.url || user.banner === item.url || user.wallpaper === item.url)) {
+            if (user.avatar === item.url) user.avatar = '';
+            if (user.banner === item.url) user.banner = '';
+            if (user.wallpaper === item.url) user.wallpaper = '';
+        }
+    });
+    saveUsers(users);
+
+    showNotification('Магазин', 'Товар удален из магазина и инвентарей.', '🛍️');
+    renderAdmin();
+    if (activeTab === 'shop' && window.renderShop) renderShop();
+}
+
+function editShopItem(itemId) {
+    if (!canManageEconomy(getActiveUser())) {
+        showNotification('Недостаточно прав', 'Редактирование товаров доступно только Высшей Администрации.', '🔒');
+        return;
+    }
+
+    let items = getShopItems();
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const name = prompt('Название товара:', item.name);
+    if (!name || !name.trim()) return;
+
+    const price = parseInt(prompt('Цена KRX:', String(item.price)));
+    if (isNaN(price) || price <= 0) return;
+
+    const discount = parseInt(prompt('Скидка %:', String(item.discount || 0)));
+    if (isNaN(discount) || discount < 0 || discount > 100) return;
+
+    const timerMinutes = parseInt(prompt('Таймер акции в минутах:', String(Math.round((item.timer || 0) / 60))));
+    if (isNaN(timerMinutes) || timerMinutes < 0) return;
+
+    item.name = name.trim();
+    item.price = price;
+    item.discount = discount;
+    item.timer = timerMinutes * 60;
+    saveShopItems(items);
+
+    showNotification('Магазин', 'Товар обновлен.', '🛍️');
+    renderAdminShopItems();
+    if (activeTab === 'shop' && window.renderShop) renderShop();
 }

@@ -8,30 +8,52 @@ const STATE_KEYS = {
     CHATS: 'krx_chats',
     NOTIFICATIONS: 'krx_notifications',
     SHOP_ITEMS: 'krx_shop_items',
+    ACCOUNT_BANS: 'krx_account_bans',
     HARDWARE_BANS: 'krx_hw_bans',
     MUTED_USERS: 'krx_muted_users'
+};
+
+const KRX_ASSETS = {
+    avatarKvarden: 'assets/avatar-kvarden.png',
+    avatarBaron: 'assets/avatar-baron.png',
+    avatarKvaron: 'assets/avatar-kvaron.png',
+    avatarNeo: 'assets/avatar-neo.png',
+    avatarTrinity: 'assets/avatar-trinity.png',
+    avatarGuest: 'assets/avatar-guest.png',
+    bannerRed: 'assets/banner-red.png',
+    bannerGold: 'assets/banner-gold.png',
+    bannerCircuit: 'assets/banner-circuit.png',
+    bannerPurple: 'assets/banner-purple.png',
+    bannerGreen: 'assets/banner-green.png',
+    wallpaperDark: 'assets/wallpaper-dark.png',
+    storyRed: 'assets/story-red.png',
+    storyPurple: 'assets/story-purple.png',
+    storyGreen: 'assets/story-green.png',
+    realAdmin: 'assets/real-admin.png',
+    realVip: 'assets/real-vip.png',
+    realCircuit: 'assets/real-circuit.png'
 };
 
 // Дефолтные товары в Магазине (Предустановленные)
 const DEFAULT_SHOP_ITEMS = [
     // Аватарки
-    { id: 'av_1', name: 'Анимированный Киберпанк (GIF)', category: 'avatars', url: 'https://media.giphy.com/media/d9T3n7Nq0061eKqJ5e/giphy.gif', price: 300, discount: 15, timer: 1440, minLvl: 100 },
-    { id: 'av_2', name: 'Золотая Маска Анонима (GIF)', category: 'avatars', url: 'https://media.giphy.com/media/Vekcn9OElJ5s3JnDQo/giphy.gif', price: 500, discount: 0, timer: 0, minLvl: 100 },
-    { id: 'av_3', name: 'Неоновый Череп', category: 'avatars', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150', price: 80, discount: 10, timer: 30, minLvl: 1 },
+    { id: 'av_1', name: 'Анимированный Киберпанк (GIF)', category: 'avatars', url: KRX_ASSETS.avatarNeo, price: 300, discount: 15, timer: 1440, minLvl: 100 },
+    { id: 'av_2', name: 'Золотая Маска Анонима (GIF)', category: 'avatars', url: KRX_ASSETS.avatarBaron, price: 500, discount: 0, timer: 0, minLvl: 100 },
+    { id: 'av_3', name: 'Неоновый Череп', category: 'avatars', url: KRX_ASSETS.avatarGuest, price: 80, discount: 10, timer: 30, minLvl: 1 },
     
     // Рамки
-    { id: 'fr_1', name: 'Неоновая Пурпурная Рамка', category: 'frames', url: 'https://i.ibb.co/3kW224H/neon-purple-frame.png', price: 150, discount: 10, timer: 60, minLvl: 1 },
-    { id: 'fr_2', name: 'Огненное Кольцо Магии', category: 'frames', url: 'https://i.ibb.co/D8d3r3G/fire-frame.png', price: 400, discount: 20, timer: 120, minLvl: 80 },
-    { id: 'fr_3', name: 'Золотая Корона Власти', category: 'frames', url: 'https://i.ibb.co/L5Qswk6/gold-frame.png', price: 800, discount: 0, timer: 0, minLvl: 150 },
+    { id: 'fr_1', name: 'Неоновая Пурпурная Рамка', category: 'frames', url: KRX_ASSETS.bannerPurple, price: 150, discount: 10, timer: 60, minLvl: 1 },
+    { id: 'fr_2', name: 'Огненное Кольцо Магии', category: 'frames', url: KRX_ASSETS.bannerRed, price: 400, discount: 20, timer: 120, minLvl: 80 },
+    { id: 'fr_3', name: 'Золотая Корона Власти', category: 'frames', url: KRX_ASSETS.bannerGold, price: 800, discount: 0, timer: 0, minLvl: 150 },
     
     // Баннеры
-    { id: 'bn_1', name: 'Матричный Поток (GIF)', category: 'banners', url: 'https://media.giphy.com/media/A2QDUI8QpPewM/giphy.gif', price: 600, discount: 25, timer: 90, minLvl: 400 },
-    { id: 'bn_2', name: 'Глубокий Космос', category: 'banners', url: 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=800', price: 200, discount: 0, timer: 0, minLvl: 300 },
+    { id: 'bn_1', name: 'Матричный Поток (GIF)', category: 'banners', url: KRX_ASSETS.bannerCircuit, price: 600, discount: 25, timer: 90, minLvl: 400 },
+    { id: 'bn_2', name: 'Глубокий Космос', category: 'banners', url: KRX_ASSETS.bannerPurple, price: 200, discount: 0, timer: 0, minLvl: 300 },
     
     // Обои
     { id: 'wp_1', name: 'Цифровой Дождь Матрицы (Живые)', category: 'wallpapers', url: 'matrix', price: 1000, discount: 15, timer: 120, minLvl: 500, isLive: true },
     { id: 'wp_2', name: 'Свечение Абстракции (Живые)', category: 'wallpapers', url: 'cybermesh', price: 1500, discount: 0, timer: 0, minLvl: 500, isLive: true },
-    { id: 'wp_3', name: 'Глубокий Мрак', category: 'wallpapers', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=1080', price: 500, discount: 10, timer: 45, minLvl: 500 }
+    { id: 'wp_3', name: 'Глубокий Мрак', category: 'wallpapers', url: KRX_ASSETS.wallpaperDark, price: 500, discount: 10, timer: 45, minLvl: 500 }
 ];
 
 // Ранговые названия до 500 уровней
@@ -101,9 +123,9 @@ function initDatabase() {
                 coins: 50000,
                 ip: '192.168.1.100',
                 hwid: 'HWID-999-KVAR',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+                avatar: KRX_ASSETS.avatarKvarden,
                 avatarFrame: '',
-                banner: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800',
+                banner: KRX_ASSETS.bannerRed,
                 wallpaper: '',
                 bio: '👑 Высший правитель платформы KRX. Создатель порядка.',
                 nickColor: 'default', // Для высших админов цвет зашит кодом (Огненно-золотой)
@@ -121,9 +143,9 @@ function initDatabase() {
                 coins: 999999,
                 ip: '192.168.1.101',
                 hwid: 'HWID-888-BARO',
-                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+                avatar: KRX_ASSETS.avatarBaron,
                 avatarFrame: '',
-                banner: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
+                banner: KRX_ASSETS.bannerGold,
                 wallpaper: '',
                 bio: '👑 Высший разработчик и архитектор баз данных KRX.',
                 nickColor: 'default',
@@ -141,9 +163,9 @@ function initDatabase() {
                 coins: 10000,
                 ip: '192.168.1.50',
                 hwid: 'HWID-777-KVAX',
-                avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+                avatar: KRX_ASSETS.avatarKvaron,
                 avatarFrame: '',
-                banner: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800',
+                banner: KRX_ASSETS.bannerCircuit,
                 wallpaper: '',
                 bio: '⚡ Главный контент-мейкер и цензор платформы. Публикую официальные патчи.',
                 nickColor: 'default', // Будет красный статичный статус
@@ -161,9 +183,9 @@ function initDatabase() {
                 coins: 2500,
                 ip: '192.168.1.10',
                 hwid: 'HWID-111-NEOO',
-                avatar: 'https://media.giphy.com/media/d9T3n7Nq0061eKqJ5e/giphy.gif', // GIF аватар
+                avatar: KRX_ASSETS.avatarNeo, // GIF аватар
                 avatarFrame: 'fr_1', // Установлена пурпурная рамка
-                banner: 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=800',
+                banner: KRX_ASSETS.bannerPurple,
                 wallpaper: '',
                 bio: '💎 Избранный VIP пользователь. В поисках истины в коде.',
                 nickColor: 'neon-purple',
@@ -181,7 +203,7 @@ function initDatabase() {
                 coins: 850,
                 ip: '192.168.1.11',
                 hwid: 'HWID-222-TRIN',
-                avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+                avatar: KRX_ASSETS.avatarTrinity,
                 avatarFrame: '',
                 banner: '',
                 wallpaper: '',
@@ -201,7 +223,7 @@ function initDatabase() {
                 coins: 0,
                 ip: '192.168.1.20',
                 hwid: 'HWID-000-GUES',
-                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+                avatar: KRX_ASSETS.avatarGuest,
                 avatarFrame: '',
                 banner: '',
                 wallpaper: '',
@@ -301,7 +323,7 @@ function initDatabase() {
                 id: 'c_2',
                 type: 'group',
                 groupName: 'Форум Администрации',
-                groupAvatar: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150',
+                groupAvatar: KRX_ASSETS.bannerCircuit,
                 participants: ['Kvarden', 'Baron_Kosyaka', 'KVARON_X'],
                 messages: [
                     { sender: 'Kvarden', text: 'Коллеги, обсудим модерацию. Все ли Hardware Ban скрипты работают нормально?', timestamp: Date.now() - 120000 },
@@ -337,12 +359,132 @@ function initDatabase() {
     if (!localStorage.getItem(STATE_KEYS.MUTED_USERS)) {
         localStorage.setItem(STATE_KEYS.MUTED_USERS, JSON.stringify([]));
     }
+
+    // 9. Обычные баны аккаунтов (без IP/HWID)
+    if (!localStorage.getItem(STATE_KEYS.ACCOUNT_BANS)) {
+        localStorage.setItem(STATE_KEYS.ACCOUNT_BANS, JSON.stringify([]));
+    }
+
+    migrateDatabaseSchema();
 }
 
 // ВЫЗОВ ИНИЦИАЛИЗАЦИИ
 initDatabase();
 
 /* --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДОСТУПА К ДАННЫМ --- */
+function migrateDatabaseSchema() {
+    const users = JSON.parse(localStorage.getItem(STATE_KEYS.USERS) || '[]');
+    const shopItems = JSON.parse(localStorage.getItem(STATE_KEYS.SHOP_ITEMS) || '[]');
+    let changed = false;
+
+    users.forEach(user => {
+        const defaultVisuals = {
+            Kvarden: { avatar: KRX_ASSETS.avatarKvarden, banner: KRX_ASSETS.bannerRed },
+            Baron_Kosyaka: { avatar: KRX_ASSETS.avatarBaron, banner: KRX_ASSETS.bannerGold },
+            KVARON_X: { avatar: KRX_ASSETS.avatarKvaron, banner: KRX_ASSETS.bannerCircuit },
+            Neo: { avatar: KRX_ASSETS.avatarNeo, banner: KRX_ASSETS.bannerPurple },
+            Trinity: { avatar: KRX_ASSETS.avatarTrinity, banner: KRX_ASSETS.bannerGreen },
+            GuestUser: { avatar: KRX_ASSETS.avatarGuest, banner: '' }
+        };
+        const visuals = defaultVisuals[user.username];
+        if (visuals && (!user.avatar || user.avatar.includes('images.unsplash.com') || user.avatar.includes('media.giphy.com'))) {
+            user.avatar = visuals.avatar;
+            changed = true;
+        }
+        if (visuals && user.banner && (user.banner.includes('images.unsplash.com') || user.banner.includes('media.giphy.com'))) {
+            user.banner = visuals.banner;
+            changed = true;
+        }
+
+        const defaults = {
+            verified: false,
+            verificationType: 'blue',
+            pinnedFriends: [],
+            photos: [],
+            blocked: [],
+            friends: [],
+            inventory: [],
+            lastDailyClaim: 0
+        };
+
+        Object.entries(defaults).forEach(([key, value]) => {
+            if (typeof user[key] === 'undefined') {
+                user[key] = Array.isArray(value) ? [...value] : value;
+                changed = true;
+            }
+        });
+
+        if ((user.role === 'supreme_admin' || user.role === 'admin') && shopItems.length > 0) {
+            const allItemIds = shopItems.map(item => item.id);
+            const fullInventory = Array.from(new Set([...(user.inventory || []), ...allItemIds]));
+            if (fullInventory.length !== user.inventory.length) {
+                user.inventory = fullInventory;
+                changed = true;
+            }
+        }
+
+        if ((user.role === 'supreme_admin' || user.role === 'admin') && !user.wallpaper) {
+            user.wallpaper = user.username === 'KVARON_X' ? 'matrix' : 'cybermesh';
+            changed = true;
+        }
+
+        if (!Array.isArray(user.photos) || user.photos.length === 0) {
+            user.photos = [
+                user.banner || KRX_ASSETS.bannerCircuit,
+                user.avatar || KRX_ASSETS.avatarGuest,
+                KRX_ASSETS.realCircuit
+            ];
+            changed = true;
+        } else if (user.photos.some(photo => photo.includes('images.unsplash.com') || photo.includes('media.giphy.com'))) {
+            user.photos = [
+                user.banner || KRX_ASSETS.bannerCircuit,
+                user.avatar || KRX_ASSETS.avatarGuest,
+                KRX_ASSETS.realCircuit
+            ];
+            changed = true;
+        }
+    });
+
+    if (changed) {
+        localStorage.setItem(STATE_KEYS.USERS, JSON.stringify(users));
+    }
+
+    let shopChanged = false;
+    const defaultShopUrls = Object.fromEntries(DEFAULT_SHOP_ITEMS.map(item => [item.id, item.url]));
+    shopItems.forEach(item => {
+        if (defaultShopUrls[item.id] && (
+            !item.url ||
+            item.url.includes('images.unsplash.com') ||
+            item.url.includes('media.giphy.com') ||
+            item.url.includes('i.ibb.co')
+        )) {
+            item.url = defaultShopUrls[item.id];
+            shopChanged = true;
+        }
+    });
+
+    if (shopChanged) {
+        localStorage.setItem(STATE_KEYS.SHOP_ITEMS, JSON.stringify(shopItems));
+    }
+
+    const chats = JSON.parse(localStorage.getItem(STATE_KEYS.CHATS) || '[]');
+    let chatsChanged = false;
+    chats.forEach(chat => {
+        if (chat.type === 'group' && !chat.owner) {
+            chat.owner = chat.participants?.[0] || 'System';
+            chatsChanged = true;
+        }
+        if (chat.type === 'group' && (!chat.groupAvatar || chat.groupAvatar.includes('images.unsplash.com'))) {
+            chat.groupAvatar = KRX_ASSETS.bannerCircuit;
+            chatsChanged = true;
+        }
+    });
+
+    if (chatsChanged) {
+        localStorage.setItem(STATE_KEYS.CHATS, JSON.stringify(chats));
+    }
+}
+
 function getUsers() {
     return JSON.parse(localStorage.getItem(STATE_KEYS.USERS));
 }
@@ -401,6 +543,14 @@ function saveShopItems(items) {
     localStorage.setItem(STATE_KEYS.SHOP_ITEMS, JSON.stringify(items));
 }
 
+function getAccountBans() {
+    return JSON.parse(localStorage.getItem(STATE_KEYS.ACCOUNT_BANS) || '[]');
+}
+
+function saveAccountBans(bans) {
+    localStorage.setItem(STATE_KEYS.ACCOUNT_BANS, JSON.stringify(bans));
+}
+
 function getHardwareBans() {
     return JSON.parse(localStorage.getItem(STATE_KEYS.HARDWARE_BANS));
 }
@@ -415,6 +565,69 @@ function getMutedUsers() {
 
 function saveMutedUsers(mutes) {
     localStorage.setItem(STATE_KEYS.MUTED_USERS, JSON.stringify(mutes));
+}
+
+function isSupremeAdmin(user) {
+    return Boolean(user && (user.role === 'supreme_admin' || user.username === 'Kvarden' || user.username === 'Baron_Kosyaka'));
+}
+
+function isAdminUser(user) {
+    return Boolean(user && (isSupremeAdmin(user) || user.role === 'admin' || user.username === 'KVARON_X'));
+}
+
+function canManageEconomy(user) {
+    return isSupremeAdmin(user);
+}
+
+function canUseLiveWallpapers(user) {
+    return isAdminUser(user);
+}
+
+function getUserFollowersCount(username) {
+    return getUsers().filter(user => (user.friends || []).includes(username)).length;
+}
+
+function getUserRoleLabel(user) {
+    if (!user) return 'Пользователь';
+    if (isSupremeAdmin(user)) return '👑 Высшая Администрация';
+    if (user.role === 'admin') return '⚡ Администратор';
+    if (user.role === 'vip') return '💎 VIP Игрок';
+    return 'Пользователь';
+}
+
+function getUserBadgeMarkup(user) {
+    if (!user) return '';
+
+    if (isSupremeAdmin(user)) {
+        return '<span class="badge-checkmark badge-supreme-check" title="Высшая Администрация">◆</span>';
+    }
+
+    if (user.role === 'admin') {
+        return '<span class="badge-checkmark badge-admin-check" title="Администратор">◆</span>';
+    }
+
+    if (user.role === 'vip') {
+        const vipClass = user.nickColor === 'neon-green' ? 'badge-vip-green-check' : 'badge-vip-purple-check';
+        return `<span class="badge-checkmark ${vipClass}" title="VIP">◆</span>`;
+    }
+
+    if (user.level >= 500) {
+        return '<span class="badge-checkmark badge-top500-check" title="Топ 500 УРВ Игрок">◆</span>';
+    }
+
+    if (user.verified) {
+        return '<span class="badge-checkmark badge-blue-check" title="Подтвержденный пользователь">◆</span>';
+    }
+
+    return '';
+}
+
+function getUserNickClass(user) {
+    if (!user) return '';
+    if (isSupremeAdmin(user)) return 'nick-admin-fire';
+    if (user.role === 'vip' && user.nickColor === 'neon-green') return 'nick-neon-green';
+    if (user.role === 'vip' && user.nickColor === 'neon-purple') return 'nick-neon-purple';
+    return '';
 }
 
 /* --- ДВИЖОК ОПЫТА И УРОВНЕЙ (XP ENGINE) --- */

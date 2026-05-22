@@ -5,6 +5,11 @@ let liveWallpaperInterval = null;
 let liveCanvas, ctx;
 
 document.addEventListener('DOMContentLoaded', () => {
+    const bootOptions = getBootOptionsFromUrl();
+    if (bootOptions.username) {
+        setActiveUser(bootOptions.username);
+    }
+
     // 1. Привязка переключателя вкладок
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -41,11 +46,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Первичный рендер UI
     updateUserHUD();
-    switchTab('home');
+    switchTab(bootOptions.tab || 'home');
 
     // 5. Запуск фоновых симуляций
     startBackgroundTimers();
 });
+
+function getBootOptionsFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const persona = params.get('persona');
+    const tab = params.get('tab');
+    const personaToUser = {
+        kvarden: 'Kvarden',
+        baron: 'Baron_Kosyaka',
+        kvaron: 'KVARON_X',
+        neo: 'Neo',
+        guest: 'Trinity',
+        novice: 'GuestUser'
+    };
+
+    return {
+        username: personaToUser[persona] || '',
+        tab: tab || ''
+    };
+}
 
 /* --- МАРШРУТИЗАЦИЯ ВКЛАДОК --- */
 function switchTab(tabId) {
@@ -78,7 +102,8 @@ function switchTab(tabId) {
             chat: 'Чат и Диалоги',
             shop: 'Цифровой Магазин',
             wallet: 'Баланс и Кошелек',
-            settings: 'Редактировать Профиль',
+            profile: 'Мой Профиль',
+            settings: 'Настройки Профиля',
             admin: 'Панель Модератора'
         };
         viewTitle.textContent = titles[tabId] || 'KVARON_X';
@@ -104,6 +129,8 @@ function triggerViewRender(tabId) {
         window.renderShop();
     } else if (tabId === 'wallet' && window.renderWallet) {
         window.renderWallet();
+    } else if (tabId === 'profile' && window.renderProfile) {
+        window.renderProfile();
     } else if (tabId === 'settings' && window.renderSettings) {
         window.renderSettings();
     } else if (tabId === 'admin' && window.renderAdmin) {
@@ -151,7 +178,7 @@ function updateUserHUD() {
     const indicator = document.getElementById('active-persona-indicator');
     if (indicator) {
         let roleText = '👤 Юзер';
-        if (user.role === 'supreme_admin') roleText = '👑 Высший Админ';
+        if (isSupremeAdmin(user)) roleText = '👑 Высший Админ';
         else if (user.role === 'admin') roleText = '⚡ Админ';
         else if (user.role === 'vip') roleText = '💎 VIP';
         indicator.textContent = `Тест-Аккаунт: ${roleText} (${user.username})`;
@@ -160,7 +187,7 @@ function updateUserHUD() {
     // 2. Скрытие/показ кнопки админа в меню
     const adminBtn = document.getElementById('nav-admin-btn');
     if (adminBtn) {
-        if (user.role === 'supreme_admin' || user.role === 'admin') {
+        if (isAdminUser(user)) {
             adminBtn.classList.remove('hidden');
         } else {
             adminBtn.classList.add('hidden');
@@ -196,13 +223,8 @@ function updateUserHUD() {
         sideName.className = 'user-name'; // Сброс
         
         // Кастомное свечение ников
-        if (user.role === 'supreme_admin') {
-            sideName.classList.add('nick-admin-fire');
-        } else if (user.role === 'vip' && user.nickColor === 'neon-green') {
-            sideName.classList.add('nick-neon-green');
-        } else if (user.role === 'vip' && user.nickColor === 'neon-purple') {
-            sideName.classList.add('nick-neon-purple');
-        }
+        const nickClass = getUserNickClass(user);
+        if (nickClass) sideName.classList.add(nickClass);
     }
 
     if (sideRank) {
@@ -211,7 +233,7 @@ function updateUserHUD() {
     }
 
     if (sideAvatar) {
-        sideAvatar.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+        sideAvatar.src = user.avatar || KRX_ASSETS.avatarGuest;
         
         // Применяем Огненный Ореол на аватарку если 500 УРВ
         const avatarWrapper = sideAvatar.parentElement;
@@ -242,20 +264,24 @@ function updateUserHUD() {
     // Системные галочки
     if (sideBadge) {
         sideBadge.className = 'badge-checkmark';
-        if (user.level >= 500) {
-            sideBadge.innerHTML = '🔥'; // Топ 500 УРВ огненная галочка
-            sideBadge.style.animation = 'redPulse 0.8s infinite alternate';
-        } else if (user.role === 'supreme_admin') {
-            sideBadge.innerHTML = '👑'; // Мигающая красная корона
-            sideBadge.style.animation = 'redPulse 1s infinite alternate';
-            sideBadge.style.color = '#ff3333';
+        sideBadge.style.animation = '';
+        sideBadge.style.color = '';
+
+        if (isSupremeAdmin(user)) {
+            sideBadge.innerHTML = '◆'; // Мигающая красная галочка
+            sideBadge.classList.add('badge-supreme-check');
         } else if (user.role === 'admin') {
-            sideBadge.innerHTML = '⚡'; // Статичная красная молния
-            sideBadge.style.animation = 'none';
-            sideBadge.style.color = '#ff3333';
+            sideBadge.innerHTML = '◆'; // Статичная красная галочка
+            sideBadge.classList.add('badge-admin-check');
         } else if (user.role === 'vip') {
-            sideBadge.innerHTML = '💎'; // Золотая/Фиолетовая галочка
-            sideBadge.style.color = user.nickColor === 'neon-green' ? '#39ff14' : '#bd00ff';
+            sideBadge.innerHTML = '◆'; // Золотая/Фиолетовая галочка
+            sideBadge.classList.add(user.nickColor === 'neon-green' ? 'badge-vip-green-check' : 'badge-vip-purple-check');
+        } else if (user.level >= 500) {
+            sideBadge.innerHTML = '◆'; // Топ 500 УРВ огненная галочка
+            sideBadge.classList.add('badge-top500-check');
+        } else if (user.verified) {
+            sideBadge.innerHTML = '◆';
+            sideBadge.classList.add('badge-blue-check');
         } else {
             sideBadge.innerHTML = '';
         }
@@ -282,12 +308,21 @@ function updateUserHUD() {
 function checkHardwareBanStatus() {
     const user = getActiveUser();
     const bans = getHardwareBans();
+    const accountBans = getAccountBans();
     const banScreen = document.getElementById('ban-screen');
     
-    // Ищем бан по IP или железу (HWID)
-    const isBanned = bans.some(b => b.username === user.username || b.ip === user.ip || b.hwid === user.hwid);
+    // Ищем обычный бан аккаунта или супер-бан по IP/железу.
+    const accountBan = accountBans.some(b => b.username === user.username);
+    const hardwareBan = bans.some(b => b.username === user.username || b.ip === user.ip || b.hwid === user.hwid);
+    const isBanned = accountBan || hardwareBan;
     
     if (isBanned) {
+        const title = document.querySelector('#ban-screen .terminal-title');
+        const reason = document.querySelector('#ban-screen .terminal-body p:nth-of-type(2)');
+        if (title) title.textContent = hardwareBan ? 'KRX SECURE SYSTEM v3.09' : 'KRX MODERATION LOCK';
+        if (reason) reason.textContent = hardwareBan
+            ? '>>> ОБНАРУЖЕНА АППАРАТНАЯ БЛОКИРОВКА (BAN BY IP / HARDWARE)'
+            : '>>> АККАУНТ ЗАБЛОКИРОВАН МОДЕРАЦИЕЙ KRX';
         if (banScreen) banScreen.classList.remove('hidden');
         return true;
     } else {
@@ -313,7 +348,7 @@ function initLiveWallpaperEngine() {
     // Проверка доступа к Живым Обоям:
     // Администраторам (Kvarden, Baron_Kosyaka, KVARON_X) доступно ВСЕГДА и везде (на Главной, в Чатах, Настройках).
     // Обычным пользователям живые обои НЕДОСТУПНЫ вообще (только на 500 УРВ обычные статические).
-    const hasAccess = user.role === 'supreme_admin' || user.role === 'admin';
+    const hasAccess = canUseLiveWallpapers(user);
     
     if (!hasAccess || !user.wallpaper) {
         ctx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);

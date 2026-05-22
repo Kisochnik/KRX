@@ -92,7 +92,7 @@
                 </a>
                 <a href="#" class="menu-item" data-tab="notifications">
                     <svg class="menu-icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-                    <span>Уведомления</span>
+                    <span>Удивления</span>
                     <span id="nav-notif-count" class="badge-count hidden">0</span>
                 </a>
                 <a href="#" class="menu-item" data-tab="game">
@@ -121,6 +121,10 @@
                     <svg class="menu-icon" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
                     <span>Кошелек</span>
                 </a>
+                <a href="#" class="menu-item" data-tab="profile">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                    <span>Профиль</span>
+                </a>
                 <a href="#" class="menu-item" data-tab="settings">
                     <svg class="menu-icon" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
                     <span>Настройки</span>
@@ -136,7 +140,7 @@
             <!-- Краткое инфо активного юзера внизу сайдбара -->
             <div class="sidebar-user" id="sidebar-user-card">
                 <div class="user-avatar-wrapper">
-                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150" alt="Avatar" class="user-avatar" id="sidebar-user-avatar">
+                    <img src="assets/avatar-guest.png" alt="Avatar" class="user-avatar" id="sidebar-user-avatar">
                     <div class="avatar-frame" id="sidebar-user-frame"></div>
                 </div>
                 <div class="user-details">
@@ -257,7 +261,7 @@
                                     <div class="creator-tools">
                                         <button class="tool-btn" id="btn-attach-image" title="Изображение">🖼️</button>
                                         <button class="tool-btn" id="btn-add-poll" title="Опрос" onclick="togglePollBuilder(true)">📊</button>
-                                        <button class="tool-btn" id="btn-emoji" title="Смайлики" id="post-emoji-btn">😀</button>
+                                        <button class="tool-btn" id="post-emoji-btn" title="Смайлики">😀</button>
                                     </div>
                                     <div class="creator-submit">
                                         <button class="btn btn-primary" onclick="createPost()">Опубликовать</button>
@@ -430,6 +434,10 @@
                             <div class="chat-threads-list" id="chat-threads-container">
                                 <!-- Диалоги рендерится динамически -->
                             </div>
+
+                            <div class="online-friends-panel" id="online-friends-container">
+                                <!-- Друзья онлайн рендерятся сюда -->
+                            </div>
                         </div>
                         
                         <!-- Окно чата -->
@@ -589,6 +597,192 @@
                     </div>
                 </section>
 
+                <!-- ВКЛАДКА: ПРОФИЛЬ (PROFILE) -->
+                <section id="view-profile" class="tab-view">
+                    <div class="profile-page-layout">
+
+                        <!-- === ШАПКА ПРОФИЛЯ: БАННЕР + АВАТАР + ИНФО === -->
+                        <div class="profile-hero card">
+                            <!-- Баннер профиля -->
+                            <div class="profile-hero-banner" id="profile-page-banner">
+                                <div class="profile-hero-banner-overlay"></div>
+                            </div>
+
+                            <!-- Аватар, имя, кнопки -->
+                            <div class="profile-hero-body">
+                                <!-- Аватар с рамкой -->
+                                <div class="profile-hero-avatar-wrap" id="profile-page-avatar-wrap">
+                                    <img src="" alt="Аватар" class="profile-hero-avatar" id="profile-page-avatar">
+                                    <div class="profile-hero-frame" id="profile-page-frame"></div>
+                                </div>
+
+                                <!-- Информация -->
+                                <div class="profile-hero-info">
+                                    <div class="profile-hero-name-row">
+                                        <h2 id="profile-page-name">Загрузка...</h2>
+                                        <span id="profile-page-badge" class="badge-checkmark"></span>
+                                        <span id="profile-page-role-badge" class="badge-role"></span>
+                                    </div>
+                                    <div class="profile-hero-level-row">
+                                        <span class="profile-lvl-chip" id="profile-page-level">LVL 1</span>
+                                        <span class="profile-rank-chip" id="profile-page-rank">Новичок</span>
+                                        <div class="profile-xp-mini-bar-wrap">
+                                            <div class="profile-xp-mini-bar" id="profile-page-xp-bar"></div>
+                                        </div>
+                                        <span class="profile-xp-mini-text" id="profile-page-xp-text">0 XP</span>
+                                    </div>
+                                    <p class="profile-hero-about" id="profile-page-about">О себе ещё не написано...</p>
+                                </div>
+
+                                <!-- Кнопки действий -->
+                                <div class="profile-hero-actions">
+                                    <button class="btn btn-primary profile-edit-btn" onclick="switchTab('settings')" id="profile-edit-btn">
+                                        ✏️ Редактировать
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="openEditAvatarModal()" id="profile-change-avatar-btn" title="Сменить аватарку">
+                                        🖼️ Аватар
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="openEditBannerModal()" id="profile-change-banner-btn" title="Сменить баннер">
+                                        🖼️ Баннер
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Статистика: подписчики, друзья, посты -->
+                            <div class="profile-hero-stats">
+                                <div class="profile-stat-item">
+                                    <strong id="profile-page-followers">0</strong>
+                                    <span>Подписчики</span>
+                                </div>
+                                <div class="profile-stat-divider"></div>
+                                <div class="profile-stat-item">
+                                    <strong id="profile-page-friends">0</strong>
+                                    <span>Друзья</span>
+                                </div>
+                                <div class="profile-stat-divider"></div>
+                                <div class="profile-stat-item">
+                                    <strong id="profile-page-posts">0</strong>
+                                    <span>Публикации</span>
+                                </div>
+                                <div class="profile-stat-divider"></div>
+                                <div class="profile-stat-item">
+                                    <strong id="profile-page-coins">0</strong>
+                                    <span>KRX монет</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- === ОСНОВНОЙ БЛОК ПРОФИЛЯ: ПОСТЫ + ФОТО + БОКОВАЯ ИНФО === -->
+                        <div class="profile-content-grid">
+
+                            <!-- Левая колонка: инфо-карточки -->
+                            <div class="profile-sidebar-col">
+
+                                <!-- Карточка "О себе" -->
+                                <div class="profile-info-card card">
+                                    <h4 class="profile-info-card-title">📋 О пользователе</h4>
+                                    <p id="profile-about-full" class="profile-about-body">О себе ещё не написано...</p>
+                                </div>
+
+                                <!-- Карточка достижений / рангов -->
+                                <div class="profile-info-card card">
+                                    <h4 class="profile-info-card-title">🏆 Достижения</h4>
+                                    <div id="profile-achievements-list" class="profile-achievements-list">
+                                        <!-- Достижения рендерятся динамически -->
+                                    </div>
+                                </div>
+
+                                <!-- Карточка инвентаря (надетые предметы) -->
+                                <div class="profile-info-card card">
+                                    <h4 class="profile-info-card-title">🎒 Инвентарь</h4>
+                                    <div id="profile-equipped-items" class="profile-equipped-items">
+                                        <!-- Активные предметы -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Правая колонка: посты и фотографии -->
+                            <div class="profile-main-col">
+
+                                <!-- Подвкладки профиля -->
+                                <div class="profile-subtabs card">
+                                    <button class="profile-subtab active" id="profile-subtab-posts" onclick="setProfileSubtab('posts')">📝 Публикации</button>
+                                    <button class="profile-subtab" id="profile-subtab-photos" onclick="setProfileSubtab('photos')">🖼️ Фото</button>
+                                    <button class="profile-subtab" id="profile-subtab-reals" onclick="setProfileSubtab('reals')">⚡ Reals</button>
+                                </div>
+
+                                <!-- Посты пользователя -->
+                                <div id="profile-posts-view" class="profile-subtab-content">
+                                    <div class="profile-user-posts" id="profile-user-posts-container">
+                                        <!-- Посты рендерятся динамически -->
+                                    </div>
+                                </div>
+
+                                <!-- Фото пользователя -->
+                                <div id="profile-photos-view" class="profile-subtab-content hidden">
+                                    <div class="profile-photos-mosaic" id="profile-photos-mosaic">
+                                        <!-- Фото рендерятся динамически -->
+                                    </div>
+                                </div>
+
+                                <!-- Reals пользователя -->
+                                <div id="profile-reals-view" class="profile-subtab-content hidden">
+                                    <div class="profile-reals-grid" id="profile-reals-grid">
+                                        <!-- Reals рендерятся динамически -->
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- === МОДАЛКА: СМЕНИТЬ АВАТАРКУ === -->
+                    <div id="edit-avatar-modal" class="modal-overlay hidden">
+                        <div class="modal-card">
+                            <h3>🖼️ Сменить Аватарку</h3>
+                            <p class="settings-subtext">Выберите картинку. GIF-аватарки доступны с 100 УРВ.</p>
+                            <div class="form-group">
+                                <label>Ссылка на URL аватарки</label>
+                                <input type="text" id="modal-avatar-url-input" placeholder="https://example.com/my-avatar.gif">
+                            </div>
+                            <div class="form-group">
+                                <label>Или загрузите файл</label>
+                                <input type="file" id="modal-avatar-file-input" accept="image/*">
+                            </div>
+                            <div class="modal-preview-row">
+                                <img src="" id="modal-avatar-preview" class="modal-avatar-preview-img" alt="Превью">
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                                <button class="btn btn-secondary" onclick="closeEditAvatarModal()">Отмена</button>
+                                <button class="btn btn-primary" onclick="applyNewAvatar()">Применить</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- === МОДАЛКА: СМЕНИТЬ БАННЕР === -->
+                    <div id="edit-banner-modal" class="modal-overlay hidden">
+                        <div class="modal-card">
+                            <h3>🏔️ Сменить Баннер</h3>
+                            <p class="settings-subtext">Баннеры доступны с 300 УРВ. GIF-баннеры — с 400 УРВ. Администраторам — с 1 УРВ.</p>
+                            <div class="form-group">
+                                <label>Ссылка на URL баннера</label>
+                                <input type="text" id="modal-banner-url-input" placeholder="https://example.com/my-banner.gif">
+                            </div>
+                            <div class="form-group">
+                                <label>Или загрузите файл</label>
+                                <input type="file" id="modal-banner-file-input" accept="image/*">
+                            </div>
+                            <div class="banner-preview-strip" id="modal-banner-preview" style="height:100px; background:#111; border-radius:8px; border:1px solid rgba(255,255,255,0.1); margin-top:10px; background-size:cover; background-position:center;"></div>
+                            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                                <button class="btn btn-secondary" onclick="closeEditBannerModal()">Отмена</button>
+                                <button class="btn btn-primary" onclick="applyNewBanner()">Применить</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
                 <!-- ВКЛАДКА: НАСТРОЙКИ (SETTINGS - ПРОФИЛЬ) -->
                 <section id="view-settings" class="tab-view">
                     <div class="settings-layout">
@@ -598,6 +792,7 @@
                             <div class="profile-preview-banner" id="profile-banner-view">
                                 <!-- Баннер -->
                             </div>
+
                             <div class="profile-preview-header">
                                 <div class="profile-avatar-block">
                                     <img src="" class="profile-preview-avatar" id="profile-avatar-view">
@@ -610,7 +805,22 @@
                                         <span id="profile-level-badge">LVL 0</span>
                                         <span id="profile-rank-badge">Новичок</span>
                                     </div>
+                                    <div class="profile-social-stats">
+                                        <div class="profile-social-stat">
+                                            <strong id="profile-followers-count">0</strong>
+                                            <span>Подписчики</span>
+                                        </div>
+                                        <div class="profile-social-stat">
+                                            <strong id="profile-friends-count">0</strong>
+                                            <span>Друзья</span>
+                                        </div>
+                                        <div class="profile-social-stat">
+                                            <strong id="profile-photos-count">0</strong>
+                                            <span>Фото</span>
+                                        </div>
+                                    </div>
                                     <p class="profile-about-text" id="profile-about-view">О себе еще не написано...</p>
+                                    <div class="profile-photo-grid" id="profile-photo-grid"></div>
                                 </div>
                             </div>
                         </div>
@@ -745,6 +955,10 @@
                                         <label>Ссылка на Изображение / GIF</label>
                                         <input type="text" id="admin-item-url" placeholder="URL картинки">
                                     </div>
+                                    <div class="form-group">
+                                        <label>Загрузка Фото / Видео</label>
+                                        <input type="file" id="admin-item-file" accept="image/*,video/*">
+                                    </div>
                                     <div class="form-group-row">
                                         <div class="form-group">
                                             <label>Цена (KRX)</label>
@@ -760,6 +974,14 @@
                                         <input type="number" id="admin-item-timer" placeholder="Минуты" min="0">
                                     </div>
                                     <button class="btn btn-primary btn-block" onclick="createNewShopItem()">Создать Товар</button>
+                                </div>
+
+                                <div class="admin-panel-widget card">
+                                    <h3>🧾 Управление Магазином</h3>
+                                    <p class="admin-power-note">Высшая Администрация может удалять и быстро править цены, скидки и таймеры акций. KVARON_X видит список товаров, но экономические действия ограничены.</p>
+                                    <div class="admin-shop-list" id="admin-shop-items-list">
+                                        <!-- Товары магазина рендерятся сюда -->
+                                    </div>
                                 </div>
 
                                 <!-- Чтение жалоб (Репортов) -->
@@ -842,6 +1064,7 @@
     <script src="js/chat.js"></script>
     <script src="js/shop.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -8,16 +8,16 @@ let storyProgressPercent = 0;
 
 // Дефолтные Истории
 const DEFAULT_STORIES = [
-    { id: 'st_1', author: 'Kvarden', text: '👑 Создаем великое обновление KVARON_X! Готовы к премиум-функциям?', bg: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400', audience: 'public', timestamp: Date.now() },
-    { id: 'st_2', author: 'Neo', text: '💎 Взламываю магазин... Нашел кучу крутых анимированных аватарок!', bg: 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=400', audience: 'vip', timestamp: Date.now() },
-    { id: 'st_3', author: 'Trinity', text: '🏍️ Скорость — это свобода. Кто со мной в кибер-заезд?', bg: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400', audience: 'close', timestamp: Date.now() }
+    { id: 'st_1', author: 'Kvarden', text: '👑 Создаем великое обновление KVARON_X! Готовы к премиум-функциям?', bg: KRX_ASSETS.storyRed, audience: 'public', timestamp: Date.now() },
+    { id: 'st_2', author: 'Neo', text: '💎 Взламываю магазин... Нашел кучу крутых анимированных аватарок!', bg: KRX_ASSETS.storyPurple, audience: 'vip', timestamp: Date.now() },
+    { id: 'st_3', author: 'Trinity', text: '🏍️ Скорость — это свобода. Кто со мной в кибер-заезд?', bg: KRX_ASSETS.storyGreen, audience: 'close', timestamp: Date.now() }
 ];
 
 // Дефолтные Рилсы (Reals)
 const DEFAULT_REALS = [
-    { id: 'rl_1', author: 'Kvarden', desc: '👑 Презентация Огненного Ореола на 500 УРВ! Это предел величия.', bg: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400', likes: 1420, comments: 24, liked: false },
-    { id: 'rl_2', author: 'Neo', desc: '💎 Загружаю Reals в Ультра HD 4K! VIP привилегии рулят.', bg: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400', likes: 890, comments: 12, liked: false },
-    { id: 'rl_3', author: 'KVARON_X', desc: '⚡ Очередной день модерирования постов. Нарушители, берегитесь!', bg: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400', likes: 2100, comments: 85, liked: false }
+    { id: 'rl_1', author: 'Kvarden', desc: '👑 Презентация Огненного Ореола на 500 УРВ! Это предел величия.', bg: KRX_ASSETS.realAdmin, likes: 1420, comments: 24, liked: false },
+    { id: 'rl_2', author: 'Neo', desc: '💎 Загружаю Reals в Ультра HD 4K! VIP привилегии рулят.', bg: KRX_ASSETS.realVip, likes: 890, comments: 12, liked: false },
+    { id: 'rl_3', author: 'KVARON_X', desc: '⚡ Очередной день модерирования постов. Нарушители, берегитесь!', bg: KRX_ASSETS.realCircuit, likes: 2100, comments: 85, liked: false }
 ];
 
 // Загрузка историй
@@ -25,7 +25,17 @@ function getStories() {
     if (!localStorage.getItem('krx_stories')) {
         localStorage.setItem('krx_stories', JSON.stringify(DEFAULT_STORIES));
     }
-    return JSON.parse(localStorage.getItem('krx_stories'));
+    const stories = JSON.parse(localStorage.getItem('krx_stories'));
+    let changed = false;
+    const fallbackByAudience = { public: KRX_ASSETS.storyRed, vip: KRX_ASSETS.storyPurple, close: KRX_ASSETS.storyGreen };
+    stories.forEach(story => {
+        if (!story.bg || story.bg.includes('images.unsplash.com')) {
+            story.bg = fallbackByAudience[story.audience] || KRX_ASSETS.storyRed;
+            changed = true;
+        }
+    });
+    if (changed) saveStories(stories);
+    return stories;
 }
 
 function saveStories(stories) {
@@ -37,7 +47,17 @@ function getReals() {
     if (!localStorage.getItem('krx_reals')) {
         localStorage.setItem('krx_reals', JSON.stringify(DEFAULT_REALS));
     }
-    return JSON.parse(localStorage.getItem('krx_reals'));
+    const reals = JSON.parse(localStorage.getItem('krx_reals'));
+    let changed = false;
+    const fallbackByAuthor = { Kvarden: KRX_ASSETS.realAdmin, Neo: KRX_ASSETS.realVip, KVARON_X: KRX_ASSETS.realCircuit };
+    reals.forEach(real => {
+        if (!real.bg || real.bg.includes('images.unsplash.com')) {
+            real.bg = fallbackByAuthor[real.author] || KRX_ASSETS.realCircuit;
+            changed = true;
+        }
+    });
+    if (changed) saveReals(reals);
+    return reals;
 }
 
 function saveReals(reals) {
@@ -66,6 +86,9 @@ function renderStories() {
         if (st.audience === 'vip' && currentUser.role !== 'supreme_admin' && currentUser.role !== 'admin' && currentUser.role !== 'vip') {
             return; // Скрываем VIP истории для обычных юзеров
         }
+        if (st.audience === 'close' && st.author !== currentUser.username && !isAdminUser(currentUser) && !(currentUser.friends || []).includes(st.author)) {
+            return;
+        }
 
         const authorUser = users.find(u => u.username === st.author) || currentUser;
         
@@ -73,7 +96,7 @@ function renderStories() {
         card.className = `story-card ${st.audience}`;
         card.innerHTML = `
             <div class="story-avatar-holder">
-                <img src="${authorUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="story-avatar">
+                <img src="${authorUser.avatar || KRX_ASSETS.avatarGuest}" class="story-avatar">
             </div>
             <span class="story-name">${st.author}</span>
         `;
@@ -105,7 +128,7 @@ function createStoryPrompt() {
         id: 'st_' + Date.now(),
         author: currentUser.username,
         text: text,
-        bg: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400', // Мрачный дефолтный фон
+        bg: KRX_ASSETS.storyRed,
         audience: audience,
         timestamp: Date.now()
     };
@@ -124,6 +147,9 @@ function openStoryViewer(startIndex) {
     activeStories = getStories().filter(st => {
         const currentUser = getActiveUser();
         if (st.audience === 'vip' && currentUser.role !== 'supreme_admin' && currentUser.role !== 'admin' && currentUser.role !== 'vip') {
+            return false;
+        }
+        if (st.audience === 'close' && st.author !== currentUser.username && !isAdminUser(currentUser) && !(currentUser.friends || []).includes(st.author)) {
             return false;
         }
         return true;
@@ -160,7 +186,7 @@ function renderActiveStoryInModal() {
                 </div>
                 <div class="story-user-info">
                     <div class="story-viewer-user">
-                        <img src="${authorUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="avatar-small">
+                        <img src="${authorUser.avatar || KRX_ASSETS.avatarGuest}" class="avatar-small">
                         <span style="font-weight:700;">${st.author}</span>
                         ${st.audience !== 'public' ? `<span class="story-badge-type ${st.audience}">${st.audience === 'vip' ? 'VIP ONLY' : 'БЛИЗКИЕ'}</span>` : ''}
                     </div>
@@ -249,7 +275,7 @@ function renderFeed() {
     // Обновим аватарку в поле создания
     const activeAvatar = document.getElementById('post-creator-avatar');
     if (activeAvatar) {
-        activeAvatar.src = getActiveUser().avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+        activeAvatar.src = getActiveUser().avatar || KRX_ASSETS.avatarGuest;
     }
     
     let posts = getPosts();
@@ -295,13 +321,17 @@ function renderFeed() {
             pollHtml = renderPostPoll(post);
         }
 
+        const authorBadge = getUserBadgeMarkup(authorUser);
+        const authorNickClass = getUserNickClass(authorUser);
+
         card.innerHTML = `
             <div class="post-header">
                 <div class="post-author-info">
-                    <img src="${authorUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="avatar-small">
+                    <img src="${authorUser.avatar || KRX_ASSETS.avatarGuest}" class="avatar-small">
                     <div class="post-author-details">
                         <div class="post-author-name-wrapper">
-                            <span class="post-author-name">${post.author}</span>
+                            <span class="post-author-name ${authorNickClass}">${post.author}</span>
+                            ${authorBadge}
                             <span class="post-author-level">LVL ${authorUser.level}</span>
                         </div>
                         <span class="post-time">${new Date(post.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -322,6 +352,10 @@ function renderFeed() {
                 <button class="post-action-btn" onclick="toggleCommentsSection('${post.id}')">
                     <span>💬</span>
                     <span>${post.comments.length} Ответов</span>
+                </button>
+                <button class="post-action-btn" onclick="sharePost('${post.id}')">
+                    <span>↗</span>
+                    <span>${post.shares || 0} Поделиться</span>
                 </button>
             </div>
             
@@ -563,6 +597,18 @@ function toggleLikePost(postId) {
     renderFeed();
 }
 
+function sharePost(postId) {
+    const posts = getPosts();
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    post.shares = (post.shares || 0) + 1;
+    savePosts(posts);
+    addXP(12);
+    showNotification('Публикация', 'Ссылка на пост условно скопирована и отправлена друзьям.', '↗');
+    renderFeed();
+}
+
 // Конструктор опроса в ленте
 function togglePollBuilder(show) {
     const builder = document.getElementById('post-poll-builder');
@@ -665,13 +711,16 @@ function renderReals() {
     container.innerHTML = '';
     const reals = getReals();
     const currentUser = getActiveUser();
+    const users = getUsers();
 
     reals.forEach(rl => {
+        const author = users.find(user => user.username === rl.author) || currentUser;
+        const canUploadUltra = author.role === 'vip' || isAdminUser(author);
         const card = document.createElement('div');
         card.className = 'real-video-card';
         card.innerHTML = `
             <!-- VIP HD Indicator -->
-            <div class="real-badge-vip">Ultra HD 4K</div>
+            ${canUploadUltra ? '<div class="real-badge-vip">Ultra HD 4K</div>' : ''}
             
             <div class="real-visual-placeholder" style="background-image: url('${rl.bg}')">
                 <span class="real-play-icon">▶</span>
@@ -680,8 +729,9 @@ function renderReals() {
             <!-- Описание оверлей -->
             <div class="real-overlay-details">
                 <div class="real-author">
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="avatar-small" style="width:24px; height:24px;">
-                    <span>@${rl.author}</span>
+                    <img src="${author.avatar || KRX_ASSETS.avatarGuest}" class="avatar-small" style="width:24px; height:24px;">
+                    <span class="${getUserNickClass(author)}">@${rl.author}</span>
+                    ${getUserBadgeMarkup(author)}
                 </div>
                 <p class="real-desc">${rl.desc}</p>
             </div>
@@ -768,7 +818,7 @@ function renderNews() {
     container.innerHTML = '';
     
     const currentUser = getActiveUser();
-    const isNewsPoster = currentUser.role === 'supreme_admin' || currentUser.username === 'KVARON_X';
+    const isNewsPoster = isAdminUser(currentUser);
     
     // Форма видна только админу KVARON_X или Высшей Администрации
     if (creator) {
@@ -784,6 +834,10 @@ function renderNews() {
         card.style.borderColor = 'rgba(255, 51, 51, 0.15)'; // Легкая красная рамка новостей
         
         const countHtml = isNewsPoster ? `<span class="post-author-level" style="background:rgba(255,51,51,0.1); color:#ff5555; border-color:rgba(255,51,51,0.2);">Просмотры: ${ns.views}</span>` : '';
+        const reactionHtml = ['👍', '🔥', '🚀'].map(emoji => {
+            const count = ns.reactions?.[emoji] || 0;
+            return `<button class="post-action-btn" onclick="reactNews('${ns.id}', '${emoji}')">${emoji} ${count}</button>`;
+        }).join('');
 
         card.innerHTML = `
             <div class="post-header">
@@ -800,7 +854,7 @@ function renderNews() {
             </div>
             <div class="post-content" style="white-space: pre-line; line-height: 1.7; font-size:13.5px;">${ns.body}</div>
             <div class="post-footer" style="border-color: rgba(255,51,51,0.1);">
-                <button class="post-action-btn" onclick="alert('Спасибо за реакцию на обновление!')">👍 Полезно</button>
+                ${reactionHtml}
             </div>
         `;
         container.appendChild(card);
@@ -812,6 +866,18 @@ function renderNews() {
     });
     
     saveNews(news);
+}
+
+function reactNews(newsId, emoji) {
+    const news = getNews();
+    const item = news.find(ns => ns.id === newsId);
+    if (!item) return;
+
+    if (!item.reactions) item.reactions = {};
+    item.reactions[emoji] = (item.reactions[emoji] || 0) + 1;
+    saveNews(news);
+    addXP(5);
+    renderNews();
 }
 
 // Публикация новости админами

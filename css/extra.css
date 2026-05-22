@@ -1792,3 +1792,224 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 /* ============ MISC ============ */
 .hidden { display: none !important; }
+
+/* ============ РОЛЕВЫЕ ГАЛОЧКИ И ПРОФИЛЬ ============ */
+.badge-checkmark {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    line-height: 1;
+    margin-left: 6px;
+    color: #fff;
+    border: 1px solid currentColor;
+    box-shadow: 0 0 10px color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.badge-supreme-check {
+    color: var(--admin-red);
+    animation: redPulse 0.9s infinite alternate;
+}
+
+.badge-admin-check {
+    color: var(--admin-red);
+}
+
+.badge-vip-green-check {
+    color: var(--admin-gold);
+}
+
+.badge-vip-purple-check {
+    color: var(--vip-purple);
+}
+
+.badge-top500-check {
+    color: var(--admin-fire);
+    animation: fireHaloPulse 1s ease-in-out infinite alternate;
+}
+
+.badge-blue-check {
+    color: #3b82f6;
+}
+
+.profile-social-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+}
+
+.profile-social-stat {
+    min-width: 92px;
+    padding: 9px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.profile-social-stat strong {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 15px;
+}
+
+.profile-social-stat span {
+    color: var(--text-secondary);
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.profile-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.profile-photo-cell {
+    aspect-ratio: 1;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* ============ МЕНЮ ДРУЗЕЙ ============ */
+.friend-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.friend-more {
+    position: relative;
+}
+
+.friend-more-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    width: 170px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-hover);
+    border-radius: 6px;
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 40;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.55);
+}
+
+.friend-more-menu.active {
+    display: flex;
+}
+
+.friend-more-menu button {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 7px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.friend-more-menu button:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: var(--border-color);
+}
+
+.online-friends-panel {
+    border-top: 1px solid var(--border-color);
+    margin-top: 14px;
+    padding-top: 14px;
+}
+
+.online-friends-panel h4 {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.online-friend-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.online-friend-chip:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.online-friend-chip img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* ============ АДМИН: МАГАЗИН И МОДЕРАЦИЯ ============ */
+.admin-shop-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.admin-shop-row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.admin-shop-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    background-color: #050505;
+    border: 1px solid var(--border-color);
+}
+
+.admin-shop-meta strong {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.admin-shop-meta span {
+    display: block;
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.admin-power-note {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}

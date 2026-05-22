@@ -53,7 +53,14 @@ function renderFriends() {
 
     if (activeFriendsSubtab === 'my') {
         // Мои Друзья
-        const friendsList = users.filter(u => currentUser.friends.includes(u.username));
+        const pinned = currentUser.pinnedFriends || [];
+        const friendsList = users
+            .filter(u => currentUser.friends.includes(u.username))
+            .sort((a, b) => {
+                const aPinned = pinned.includes(a.username) ? 0 : 1;
+                const bPinned = pinned.includes(b.username) ? 0 : 1;
+                return aPinned - bPinned || a.username.localeCompare(b.username);
+            });
         
         if (friendsList.length === 0) {
             container.innerHTML = `
@@ -152,6 +159,7 @@ function renderFriends() {
 
 function createFriendRow(user, actionsHtml) {
     const card = document.createElement('div');
+    const safeId = user.username.replace(/[^a-zA-Z0-9_-]/g, '_');
     card.className = 'friend-card card';
     card.style.display = 'flex';
     card.style.alignItems = 'center';
@@ -162,16 +170,10 @@ function createFriendRow(user, actionsHtml) {
 
     // Ранг и галочка
     let badge = '';
-    if (user.level >= 500) badge = '<span style="color:#ff3333; margin-left:5px;">🔥</span>';
-    else if (user.role === 'supreme_admin') badge = '<span style="color:#ff3333; margin-left:5px;">👑</span>';
-    else if (user.role === 'admin') badge = '<span style="color:#ff3333; margin-left:5px;">⚡</span>';
-    else if (user.role === 'vip') badge = `<span style="color:${user.nickColor === 'neon-green' ? '#39ff14' : '#bd00ff'}; margin-left:5px;">💎</span>`;
+    badge = getUserBadgeMarkup(user);
 
     // Определяем свечение ника
-    let nameClass = 'user-name';
-    if (user.role === 'supreme_admin') nameClass = 'user-name nick-admin-fire';
-    else if (user.role === 'vip' && user.nickColor === 'neon-green') nameClass = 'user-name nick-neon-green';
-    else if (user.role === 'vip' && user.nickColor === 'neon-purple') nameClass = 'user-name nick-neon-purple';
+    let nameClass = `user-name ${getUserNickClass(user)}`;
 
     const rankName = getRankName(user.level);
     
@@ -181,7 +183,7 @@ function createFriendRow(user, actionsHtml) {
     card.innerHTML = `
         <div style="display:flex; align-items:center; gap:15px;">
             <div class="thread-avatar-wrapper" style="width:50px; height:50px;">
-                <img src="${user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="thread-avatar" style="${user.level >= 500 ? 'border: 2px solid #ff3333; box-shadow: 0 0 10px rgba(255, 51, 51, 0.5);' : ''}">
+                <img src="${user.avatar || KRX_ASSETS.avatarGuest}" class="thread-avatar" style="${user.level >= 500 ? 'border: 2px solid #ff3333; box-shadow: 0 0 10px rgba(255, 51, 51, 0.5);' : ''}">
                 ${isOnline ? '<div class="status-online"></div>' : ''}
             </div>
             <div>
@@ -197,8 +199,17 @@ function createFriendRow(user, actionsHtml) {
                 </span>
             </div>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
+        <div class="friend-actions">
             ${actionsHtml}
+            <div class="friend-more">
+                <button class="btn-icon" title="Меню" onclick="toggleFriendMenu(event, '${safeId}')">⋯</button>
+                <div class="friend-more-menu" id="friend-menu-${safeId}">
+                    <button onclick="startDirectChat('${user.username}')">Написать</button>
+                    <button onclick="blockUser('${user.username}')">Заблокировать</button>
+                    <button onclick="pinFriendToTop('${user.username}')">Закрепить в топе</button>
+                    <button onclick="openUserProfile('${user.username}')">В профиль</button>
+                </div>
+            </div>
         </div>
     `;
 
@@ -211,6 +222,108 @@ function performUserSearch() {
         friendsSearchQuery = input.value;
         renderFriends();
     }
+}
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.friend-more-menu.active').forEach(menu => menu.classList.remove('active'));
+});
+
+function toggleFriendMenu(event, safeId) {
+    event.stopPropagation();
+    document.querySelectorAll('.friend-more-menu.active').forEach(menu => {
+        if (menu.id !== `friend-menu-${safeId}`) menu.classList.remove('active');
+    });
+    const menu = document.getElementById(`friend-menu-${safeId}`);
+    if (menu) menu.classList.toggle('active');
+}
+
+function blockUser(username) {
+    if (!confirm(`Заблокировать пользователя ${username}? Он будет перенесен в черный список.`)) return;
+
+    let users = getUsers();
+    const currentUser = getActiveUser();
+    const dbMe = users.find(u => u.username === currentUser.username);
+    const dbTarget = users.find(u => u.username === username);
+
+    if (!dbMe || !dbTarget) return;
+
+    if (!dbMe.blocked.includes(username)) dbMe.blocked.push(username);
+    dbMe.friends = dbMe.friends.filter(friend => friend !== username);
+    dbMe.pinnedFriends = (dbMe.pinnedFriends || []).filter(friend => friend !== username);
+    dbTarget.friends = (dbTarget.friends || []).filter(friend => friend !== currentUser.username);
+
+    saveUsers(users);
+    showNotification('Черный список', `${username} заблокирован.`, '🚫');
+    updateUserHUD();
+    renderFriends();
+}
+
+function pinFriendToTop(username) {
+    let users = getUsers();
+    const currentUser = getActiveUser();
+    const dbMe = users.find(u => u.username === currentUser.username);
+    if (!dbMe) return;
+
+    if (!dbMe.pinnedFriends) dbMe.pinnedFriends = [];
+    if (dbMe.pinnedFriends.includes(username)) {
+        dbMe.pinnedFriends = dbMe.pinnedFriends.filter(friend => friend !== username);
+        showNotification('Друзья', `${username} откреплен из топа.`, '📌');
+    } else {
+        dbMe.pinnedFriends.unshift(username);
+        showNotification('Друзья', `${username} закреплен в топе списка.`, '📌');
+    }
+
+    saveUsers(users);
+    renderFriends();
+}
+
+function openUserProfile(username) {
+    const user = getUsers().find(u => u.username === username);
+    if (!user) return;
+
+    const existing = document.getElementById('user-profile-modal');
+    if (existing) existing.remove();
+
+    const photos = (user.photos || []).slice(0, 6).map(photo => (
+        `<div class="profile-photo-cell" style="background-image:url('${photo}')"></div>`
+    )).join('');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'user-profile-modal';
+    modal.innerHTML = `
+        <div class="modal-card" style="max-width:620px;">
+            <div class="profile-preview-card card" style="margin:0 0 18px 0;">
+                <div class="profile-preview-banner" style="background-image:url('${user.banner || user.photos?.[0] || ''}')"></div>
+                <div class="profile-preview-header">
+                    <div class="profile-avatar-block ${user.level >= 500 ? 'top-500-fire-halo' : ''}">
+                        <img src="${user.avatar || KRX_ASSETS.avatarGuest}" class="profile-preview-avatar">
+                    </div>
+                    <div class="profile-preview-info">
+                        <h2 class="${getUserNickClass(user)}">${user.username}${getUserBadgeMarkup(user)}</h2>
+                        <span class="badge-role ${user.role}">${getUserRoleLabel(user)}</span>
+                        <div class="profile-level-stats">
+                            <span>LVL ${user.level}</span>
+                            <span>${getRankName(user.level)}</span>
+                        </div>
+                        <div class="profile-social-stats">
+                            <div class="profile-social-stat"><strong>${getUserFollowersCount(user.username)}</strong><span>Подписчики</span></div>
+                            <div class="profile-social-stat"><strong>${(user.friends || []).length}</strong><span>Друзья</span></div>
+                            <div class="profile-social-stat"><strong>${(user.photos || []).length}</strong><span>Фото</span></div>
+                        </div>
+                        <p class="profile-about-text">${user.bio || 'О себе еще не написано...'}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-photo-grid">${photos}</div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;">
+                <button class="btn btn-secondary" onclick="document.getElementById('user-profile-modal')?.remove()">Закрыть</button>
+                <button class="btn btn-primary" onclick="startDirectChat('${user.username}'); document.getElementById('user-profile-modal')?.remove()">Написать</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
 }
 
 /* --- ОПЕРАЦИИ ДРУЗЕЙ --- */
@@ -301,6 +414,14 @@ function unblockUser(username) {
 
 function startDirectChat(username) {
     const currentUser = getActiveUser();
+    const users = getUsers();
+    const targetUser = users.find(u => u.username === username);
+
+    if ((currentUser.blocked || []).includes(username) || (targetUser?.blocked || []).includes(currentUser.username)) {
+        showNotification('Чат недоступен', 'Диалог невозможен из-за черного списка.', '🚫');
+        return;
+    }
+
     const chats = getChats();
     
     // Ищем существующий директ
@@ -329,6 +450,7 @@ function startDirectChat(username) {
 
 function renderChats() {
     renderChatThreads();
+    renderOnlineFriends();
     renderActiveChat();
 }
 
@@ -343,7 +465,18 @@ function renderChatThreads() {
     const users = getUsers();
     
     // Фильтруем чаты с участием текущего юзера
-    const myChats = chats.filter(c => c.participants.includes(currentUser.username));
+    const pinned = currentUser.pinnedFriends || [];
+    const myChats = chats
+        .filter(c => c.participants.includes(currentUser.username))
+        .sort((a, b) => {
+            const aName = a.type === 'direct' ? a.participants.find(p => p !== currentUser.username) : a.groupName;
+            const bName = b.type === 'direct' ? b.participants.find(p => p !== currentUser.username) : b.groupName;
+            const aPinned = pinned.includes(aName) ? 0 : 1;
+            const bPinned = pinned.includes(bName) ? 0 : 1;
+            const aTime = a.messages[a.messages.length - 1]?.timestamp || 0;
+            const bTime = b.messages[b.messages.length - 1]?.timestamp || 0;
+            return aPinned - bPinned || bTime - aTime;
+        });
     
     if (myChats.length === 0) {
         container.innerHTML = `
@@ -364,12 +497,12 @@ function renderChatThreads() {
             const otherUser = users.find(u => u.username === otherUsername) || currentUser;
             
             name = otherUsername;
-            avatarUrl = otherUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+            avatarUrl = otherUser.avatar || KRX_ASSETS.avatarGuest;
             isOnline = otherUser.role !== 'user' || otherUser.username === 'Trinity';
         } else {
             // Группа
             name = chat.groupName || 'Группа';
-            avatarUrl = chat.groupAvatar || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150';
+            avatarUrl = chat.groupAvatar || KRX_ASSETS.bannerCircuit;
             isOnline = false; // У групп нет общего онлайна
         }
         
@@ -412,6 +545,43 @@ function renderChatThreads() {
         `;
         
         container.appendChild(row);
+    });
+}
+
+function renderOnlineFriends() {
+    const container = document.getElementById('online-friends-container');
+    if (!container) return;
+
+    const currentUser = getActiveUser();
+    const users = getUsers();
+    const onlineFriends = users.filter(user => {
+        const isFriend = (currentUser.friends || []).includes(user.username);
+        const online = user.role !== 'user' || user.username === 'Trinity';
+        return isFriend && online;
+    });
+
+    if (onlineFriends.length === 0) {
+        container.innerHTML = `
+            <h4>Друзья онлайн</h4>
+            <div style="font-size:11px; color:var(--text-secondary);">Сейчас никого нет в сети.</div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `<h4>Друзья онлайн</h4>`;
+    onlineFriends.forEach(friend => {
+        const chip = document.createElement('div');
+        chip.className = 'online-friend-chip';
+        chip.onclick = () => startDirectChat(friend.username);
+        chip.innerHTML = `
+            <span class="thread-avatar-wrapper">
+                <img src="${friend.avatar || KRX_ASSETS.avatarGuest}">
+                <span class="status-online"></span>
+            </span>
+            <span class="${getUserNickClass(friend)}" style="font-size:12px; font-weight:700;">${friend.username}</span>
+            ${getUserBadgeMarkup(friend)}
+        `;
+        container.appendChild(chip);
     });
 }
 
@@ -466,19 +636,19 @@ function renderActiveChat() {
         const otherUsername = chat.participants.find(p => p !== currentUser.username);
         const otherUser = users.find(u => u.username === otherUsername) || currentUser;
         
-        if (avatarEl) avatarEl.src = otherUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+        if (avatarEl) avatarEl.src = otherUser.avatar || KRX_ASSETS.avatarGuest;
         if (nameEl) nameEl.textContent = otherUsername;
         
         const isOnline = otherUser.role !== 'user' || otherUser.username === 'Trinity';
         if (statusEl) statusEl.textContent = isOnline ? 'В сети' : 'Был в сети недавно';
     } else {
         // Группа
-        if (avatarEl) avatarEl.src = chat.groupAvatar || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150';
+        if (avatarEl) avatarEl.src = chat.groupAvatar || KRX_ASSETS.bannerCircuit;
         if (nameEl) nameEl.textContent = chat.groupName || 'Группа';
         if (statusEl) statusEl.textContent = `${chat.participants.length} участников`;
         
-        // Кнопка настроек группы
-        if (settingsHolder) {
+        // Кнопка настроек группы: автор группы или администрация
+        if (settingsHolder && (chat.owner === currentUser.username || isAdminUser(currentUser))) {
             settingsHolder.innerHTML = `<button class="btn btn-secondary btn-xs" onclick="openGroupSettingsModal()">Настройки Группы</button>`;
         }
     }
@@ -973,7 +1143,7 @@ function openGroupChatCreator() {
             div.className = 'group-friend-select-item';
             div.innerHTML = `
                 <label class="friend-checkbox-label" for="invite-${fr.username}">
-                    <img src="${fr.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="avatar-small" style="width:20px; height:20px; border-radius:50%;">
+                    <img src="${fr.avatar || KRX_ASSETS.avatarGuest}" class="avatar-small" style="width:20px; height:20px; border-radius:50%;">
                     <span>${fr.username}</span>
                 </label>
                 <input type="checkbox" id="invite-${fr.username}" value="${fr.username}" class="invite-checkbox">
@@ -998,7 +1168,7 @@ function createGroupChat() {
     }
     
     const name = nameInp.value.trim();
-    const avatar = avaInp.value.trim() || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150';
+    const avatar = avaInp.value.trim() || KRX_ASSETS.bannerCircuit;
     
     const selectedFriends = [];
     document.querySelectorAll('.invite-checkbox:checked').forEach(cb => {
@@ -1014,6 +1184,7 @@ function createGroupChat() {
         type: 'group',
         groupName: name,
         groupAvatar: avatar,
+        owner: currentUser.username,
         participants: participants,
         messages: [
             { sender: 'System', text: `Группа "${name}" успешно создана создателем ${currentUser.username}. Приветствуем всех участников!`, timestamp: Date.now() }
@@ -1041,6 +1212,10 @@ function openGroupSettingsModal() {
     const chat = getChats().find(c => c.id === activeChatId);
     
     if (!modal || !chat || chat.type !== 'group') return;
+    if (chat.owner !== getActiveUser().username && !isAdminUser(getActiveUser())) {
+        showNotification('Группа', 'Настройки доступны только автору группы или Администрации.', '🔒');
+        return;
+    }
     
     modal.classList.remove('hidden');
     
