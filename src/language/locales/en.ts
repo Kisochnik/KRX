@@ -1,0 +1,133 @@
+import type { TranslationSchema } from "../types";
+
+/** English locale — ready for i18n scaling */
+export const en: TranslationSchema = {
+  app: {
+    name: "KVARON_X",
+    tagline: "Premium Social",
+    premium: "Next-generation social network",
+  },
+  nav: {
+    feed: "Feed",
+    explore: "Explore",
+    messages: "Messages",
+    notifications: "Notifications",
+    profile: "Profile",
+    bookmarks: "Bookmarks",
+    settings: "Settings",
+    createServer: "+ Create server",
+  },
+  feed: {
+    title: "KRX Feed",
+    updated: "Updated just now",
+    live: "Live",
+    tabs: {
+      forYou: "For you",
+      following: "Following",
+      live: "KRX Live",
+      media: "Media",
+    },
+    compose: "What's new on KVARON_X?",
+    publish: "Post",
+    yourStory: "Your story",
+    views: "views",
+  },
+  explore: {
+    title: "KRX Explore",
+    subtitle: "Discover trends, media and communities",
+    search: "Search posts, people, hashtags...",
+    showMore: "Show more",
+    categories: {
+      all: "All",
+      design: "Design",
+      music: "Music",
+      games: "Games",
+      crypto: "Crypto",
+      streams: "Streams",
+      photo: "Photo",
+      threeD: "3D",
+    },
+  },
+  messages: {
+    title: "Messages",
+    secure: "E2E encryption · KRX Secure",
+    search: "Search conversations...",
+    placeholder: "Write a message...",
+    selectChat: "Select a chat",
+    status: {
+      online: "online",
+      idle: "idle",
+      dnd: "do not disturb",
+      offline: "offline",
+    },
+  },
+  notifications: {
+    title: "Notifications",
+    unread: "unread",
+    markAll: "Mark all read",
+    types: {
+      like: "like",
+      follow: "follow",
+      mention: "mention",
+      repost: "repost",
+      message: "message",
+    },
+  },
+  profile: {
+    edit: "Edit profile",
+    tabs: {
+      posts: "Posts",
+      replies: "Replies",
+      media: "Media",
+      likes: "Likes",
+    },
+    followers: "followers",
+    following: "following",
+    postsCount: "posts",
+  },
+  trends: {
+    title: "KRX Trends",
+    showMore: "Show more",
+  },
+  suggestions: {
+    title: "Who to follow",
+    follow: "Follow",
+  },
+  online: {
+    title: "Online now",
+    count: "users online",
+  },
+  search: {
+    default: "Search KVARON_X...",
+    posts: "Search posts, people, hashtags...",
+    dialogs: "Search conversations...",
+  },
+  post: {
+    comments: "Comments",
+    reposts: "Reposts",
+    likes: "Likes",
+    bookmark: "Bookmark",
+    share: "Share",
+  },
+  time: {
+    justNow: "just now",
+    minutes: "m",
+    hours: "h",
+    days: "d",
+  },
+  servers: {
+    title: "KRX Servers",
+    general: "general",
+    dev: "krx-dev",
+    design: "design",
+    music: "music",
+  },
+  footer: {
+    about: "About",
+    pay: "KRX Pay",
+    api: "API",
+    rules: "Rules",
+    privacy: "Privacy",
+    copyright: "© 2026 KVARON_X · KRX",
+  },
+};

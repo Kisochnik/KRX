@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-panel: rgba(255, 255, 255, 0.04);
+  --bg-panel-hover: rgba(255, 255, 255, 0.07);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-glass-hover: rgba(255, 255, 255, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.35);
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 72px;
+  --right-panel-width: 340px;
+  --spacing-page: 1.5rem;
+  --spacing-section: 1.25rem;
+}
+
+@theme inline {
+  --color-krx-bg: var(--bg-primary);
+  --color-krx-panel: var(--bg-panel);
+  --color-krx-border: var(--border-glass);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Glassmorphism */
+.glass {
+  background: var(--bg-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid var(--border-glass);
+}
+
+.glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-hover:hover {
+  background: var(--bg-panel-hover);
+  border-color: var(--border-glass-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.5) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.story-ring {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  padding: 2px;
+}
+
+.story-ring-viewed {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px;
+}
+
+.status-online {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.status-idle {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.status-dnd {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid #000;
+}
+
+.status-offline {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.explore-gradient-design {
+  background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+}
+.explore-gradient-music {
+  background: linear-gradient(135deg, #0d0d0d 0%, #2a2a2a 100%);
+}
+.explore-gradient-3d {
+  background: linear-gradient(135deg, #111 0%, #444 100%);
+}
+.explore-gradient-tutorial {
+  background: linear-gradient(135deg, #0a0a0a 0%, #222 100%);
+}
+.explore-gradient-game {
+  background: linear-gradient(135deg, #151515 0%, #3a3a3a 100%);
+}
+.explore-gradient-crypto {
+  background: linear-gradient(135deg, #0f0f0f 0%, #2d2d2d 100%);
+}
+.explore-gradient-photo {
+  background: linear-gradient(135deg, #121212 0%, #383838 100%);
+}
+.explore-gradient-stream {
+  background: linear-gradient(135deg, #080808 0%, #2f2f2f 100%);
+}
+
+.post-image-music {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1f1f1f 50%, #0a0a0a 100%);
+}
+.post-image-art {
+  background: linear-gradient(45deg, #111 0%, #2a2a2a 50%, #111 100%);
+}
+
+.profile-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}

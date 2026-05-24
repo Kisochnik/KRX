@@ -1,0 +1,432 @@
+import type {
+  User,
+  Post,
+  Story,
+  Trend,
+  Conversation,
+  Message,
+  Notification,
+  ExploreItem,
+} from "@/lib/types";
+
+export const CURRENT_USER_ID = "u1";
+
+export const users: User[] = [
+  {
+    id: "u1",
+    username: "krx_admin",
+    displayName: "Админ KVARON",
+    avatar: "KA",
+    bio: "Основатель KVARON_X · Создаю будущее социальных сетей",
+    followers: 128400,
+    following: 312,
+    posts: 847,
+    verified: true,
+    status: "online",
+    banner: "gradient-1",
+  },
+  {
+    id: "u2",
+    username: "neon_void",
+    displayName: "Неон Войд",
+    avatar: "NV",
+    bio: "UI/UX · Киберпанк эстетика",
+    followers: 45200,
+    following: 890,
+    posts: 1203,
+    verified: true,
+    status: "online",
+  },
+  {
+    id: "u3",
+    username: "pixel_ghost",
+    displayName: "Пиксель Призрак",
+    avatar: "ПП",
+    bio: "3D арт · NFT · Монохром",
+    followers: 89100,
+    following: 445,
+    posts: 567,
+    verified: false,
+    status: "idle",
+  },
+  {
+    id: "u4",
+    username: "zero_day",
+    displayName: "Зеро Дей",
+    avatar: "ZD",
+    bio: "Безопасность · Хакинг · Open Source",
+    followers: 67300,
+    following: 201,
+    posts: 934,
+    verified: true,
+    status: "dnd",
+  },
+  {
+    id: "u5",
+    username: "luna_sync",
+    displayName: "Луна Синк",
+    avatar: "ЛС",
+    bio: "Музыка · Синтвейв · Live coding",
+    followers: 234500,
+    following: 1200,
+    posts: 2100,
+    verified: true,
+    status: "online",
+  },
+  {
+    id: "u6",
+    username: "dark_matter",
+    displayName: "Тёмная Материя",
+    avatar: "ТМ",
+    bio: "Физика · Наука · Философия",
+    followers: 15600,
+    following: 78,
+    posts: 234,
+    verified: false,
+    status: "offline",
+  },
+  {
+    id: "u7",
+    username: "crypto_owl",
+    displayName: "Крипто Сова",
+    avatar: "КС",
+    bio: "DeFi · Web3 · Аналитика",
+    followers: 98700,
+    following: 567,
+    posts: 1456,
+    verified: true,
+    status: "online",
+  },
+  {
+    id: "u8",
+    username: "void_walker",
+    displayName: "Войд Уокер",
+    avatar: "VW",
+    bio: "Геймдев · Unreal Engine",
+    followers: 34500,
+    following: 234,
+    posts: 678,
+    verified: false,
+    status: "idle",
+  },
+];
+
+export const posts: Post[] = [
+  {
+    id: "p1",
+    authorId: "u2",
+    content:
+      "Запустил новый UI-kit для KVARON_X. Glassmorphism + чёрно-белая палитра = идеальная эстетика будущего. Что думаете? 🖤",
+    likes: 2847,
+    reposts: 412,
+    comments: 189,
+    views: 45200,
+    createdAt: "2026-05-24T10:30:00",
+    liked: true,
+  },
+  {
+    id: "p2",
+    authorId: "u5",
+    content:
+      "Новый трек «Neon Pulse» уже в ленте KRX Music. Слушайте эксклюзивно только на KVARON_X. Ссылка в профиле.",
+    image: "music",
+    likes: 12400,
+    reposts: 3200,
+    comments: 890,
+    views: 234000,
+    createdAt: "2026-05-24T09:15:00",
+  },
+  {
+    id: "p3",
+    authorId: "u4",
+    content:
+      "⚠️ Важно: обновите клиент KVARON_X до версии 2.4.1. Исправлена критическая уязвимость в шифровании E2E сообщений.",
+    likes: 5670,
+    reposts: 8900,
+    comments: 456,
+    views: 890000,
+    createdAt: "2026-05-24T08:00:00",
+    reposted: true,
+  },
+  {
+    id: "p4",
+    authorId: "u3",
+    content:
+      "Закончил серию монохромных рендеров для #KRXArt. 12 работ за неделю — рекорд личный. Галерея в Explore →",
+    image: "art",
+    likes: 3421,
+    reposts: 567,
+    comments: 234,
+    views: 67800,
+    createdAt: "2026-05-23T22:45:00",
+  },
+  {
+    id: "p5",
+    authorId: "u7",
+    content:
+      "KRX Token вырос на 12% за сутки. Рынок реагирует на анонс интеграции с KVARON Pay. Не финансовый совет.",
+    likes: 1890,
+    reposts: 445,
+    comments: 678,
+    views: 123000,
+    createdAt: "2026-05-23T18:30:00",
+  },
+  {
+    id: "p6",
+    authorId: "u1",
+    content:
+      "Добро пожаловать в KVARON_X — социальную сеть нового поколения. Мы объединили лучшее от Telegram, Discord, X и Instagram в одном премиальном пространстве. KRX — это будущее.",
+    likes: 45600,
+    reposts: 12300,
+    comments: 2340,
+    views: 1200000,
+    createdAt: "2026-05-23T12:00:00",
+    liked: true,
+    reposted: true,
+  },
+  {
+    id: "p7",
+    authorId: "u8",
+    content:
+      "Демо новой игры на Unreal 5.4 — полностью в чёрно-белой палитре. Стрим завтра в 20:00 МСК на KRX Live.",
+    likes: 2100,
+    reposts: 340,
+    comments: 156,
+    views: 34500,
+    createdAt: "2026-05-23T10:00:00",
+  },
+];
+
+export const stories: Story[] = [
+  { id: "s1", userId: "u1", viewed: false, label: "Мой день" },
+  { id: "s2", userId: "u2", viewed: false, label: "UI WIP" },
+  { id: "s3", userId: "u3", viewed: true, label: "Арт" },
+  { id: "s4", userId: "u5", viewed: false, label: "Студия" },
+  { id: "s5", userId: "u7", viewed: true, label: "Charts" },
+  { id: "s6", userId: "u4", viewed: false, label: "Security" },
+  { id: "s7", userId: "u8", viewed: true, label: "Gamedev" },
+];
+
+export const trends: Trend[] = [
+  { id: "t1", tag: "#KVARON_X", posts: "124K", category: "Тренд · KRX" },
+  { id: "t2", tag: "#KRXArt", posts: "45.2K", category: "Искусство" },
+  { id: "t3", tag: "#NeonPulse", posts: "89K", category: "Музыка" },
+  { id: "t4", tag: "#Web3KRX", posts: "32.1K", category: "Крипто" },
+  { id: "t5", tag: "#GlassUI", posts: "18.7K", category: "Дизайн" },
+  { id: "t6", tag: "#KRXLive", posts: "56K", category: "Стримы" },
+  { id: "t7", tag: "#ZeroDay", posts: "12.4K", category: "Безопасность" },
+];
+
+export const conversations: Conversation[] = [
+  {
+    id: "c1",
+    userId: "u2",
+    lastMessage: "Отправил макеты в DM, глянь когда будет время",
+    lastMessageAt: "2026-05-24T11:20:00",
+    unread: 2,
+  },
+  {
+    id: "c2",
+    userId: "u5",
+    lastMessage: "Коллаб на трек? Пиши в KRX Studio",
+    lastMessageAt: "2026-05-24T10:05:00",
+    unread: 0,
+  },
+  {
+    id: "c3",
+    userId: "u4",
+    lastMessage: "Аудит пройден, всё чисто ✅",
+    lastMessageAt: "2026-05-23T19:30:00",
+    unread: 0,
+  },
+  {
+    id: "c4",
+    userId: "u7",
+    lastMessage: "График KRX/USDT обновил",
+    lastMessageAt: "2026-05-23T16:00:00",
+    unread: 1,
+  },
+  {
+    id: "c5",
+    userId: "u3",
+    lastMessage: "Спасибо за репост!",
+    lastMessageAt: "2026-05-22T14:20:00",
+    unread: 0,
+  },
+];
+
+export const messagesByConversation: Record<string, Message[]> = {
+  c1: [
+    {
+      id: "m1",
+      senderId: "u2",
+      content: "Привет! Как продвигается KVARON_X?",
+      createdAt: "2026-05-24T10:00:00",
+      read: true,
+    },
+    {
+      id: "m2",
+      senderId: "u1",
+      content: "Отлично! UI почти готов, осталось полировать анимации",
+      createdAt: "2026-05-24T10:15:00",
+      read: true,
+    },
+    {
+      id: "m3",
+      senderId: "u2",
+      content: "Отправил макеты в DM, глянь когда будет время",
+      createdAt: "2026-05-24T11:20:00",
+      read: false,
+    },
+  ],
+  c2: [
+    {
+      id: "m4",
+      senderId: "u5",
+      content: "Коллаб на трек? Пиши в KRX Studio",
+      createdAt: "2026-05-24T10:05:00",
+      read: true,
+    },
+  ],
+  c3: [
+    {
+      id: "m5",
+      senderId: "u4",
+      content: "Аудит пройден, всё чисто ✅",
+      createdAt: "2026-05-23T19:30:00",
+      read: true,
+    },
+  ],
+  c4: [
+    {
+      id: "m6",
+      senderId: "u7",
+      content: "График KRX/USDT обновил",
+      createdAt: "2026-05-23T16:00:00",
+      read: false,
+    },
+  ],
+  c5: [
+    {
+      id: "m7",
+      senderId: "u3",
+      content: "Спасибо за репост!",
+      createdAt: "2026-05-22T14:20:00",
+      read: true,
+    },
+  ],
+};
+
+export const notifications: Notification[] = [
+  {
+    id: "n1",
+    type: "like",
+    fromUserId: "u2",
+    content: "понравился ваш пост о запуске KVARON_X",
+    createdAt: "2026-05-24T11:30:00",
+    read: false,
+  },
+  {
+    id: "n2",
+    type: "follow",
+    fromUserId: "u5",
+    content: "подписался на вас",
+    createdAt: "2026-05-24T10:45:00",
+    read: false,
+  },
+  {
+    id: "n3",
+    type: "mention",
+    fromUserId: "u4",
+    content: "упомянул вас в посте о безопасности",
+    createdAt: "2026-05-24T09:00:00",
+    read: true,
+  },
+  {
+    id: "n4",
+    type: "repost",
+    fromUserId: "u7",
+    content: "репостнул ваш пост",
+    createdAt: "2026-05-23T20:00:00",
+    read: true,
+  },
+  {
+    id: "n5",
+    type: "message",
+    fromUserId: "u2",
+    content: "отправил сообщение",
+    createdAt: "2026-05-24T11:20:00",
+    read: false,
+  },
+  {
+    id: "n6",
+    type: "like",
+    fromUserId: "u3",
+    content: "понравился ваш пост",
+    createdAt: "2026-05-23T15:00:00",
+    read: true,
+  },
+];
+
+export const exploreItems: ExploreItem[] = [
+  {
+    id: "e1",
+    title: "Монохром UI Kit",
+    category: "Дизайн",
+    image: "design",
+    likes: 12400,
+  },
+  {
+    id: "e2",
+    title: "Neon Pulse — обложка",
+    category: "Музыка",
+    image: "music",
+    likes: 45600,
+  },
+  {
+    id: "e3",
+    title: "KRX City Render",
+    category: "3D",
+    image: "3d",
+    likes: 8900,
+  },
+  {
+    id: "e4",
+    title: "Glassmorphism Tutorial",
+    category: "Обучение",
+    image: "tutorial",
+    likes: 23400,
+  },
+  {
+    id: "e5",
+    title: "Void Walker — Gameplay",
+    category: "Игры",
+    image: "game",
+    likes: 15600,
+  },
+  {
+    id: "e6",
+    title: "KRX Token Analytics",
+    category: "Крипто",
+    image: "crypto",
+    likes: 7800,
+  },
+  {
+    id: "e7",
+    title: "Cyber Portrait Series",
+    category: "Фото",
+    image: "photo",
+    likes: 32100,
+  },
+  {
+    id: "e8",
+    title: "Live: Synthwave Set",
+    category: "Стрим",
+    image: "stream",
+    likes: 56700,
+  },
+];
+
+export function getUserById(id: string): User | undefined {
+  return users.find((u) => u.id === id);
+}

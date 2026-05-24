@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KVARON_X (KRX)
 
-## Getting Started
+Премиальная социальная сеть — чёрно-белый glassmorphism UI, масштабируемая архитектура.
 
-First, run the development server:
+## Стек
+
+- React 19 · Next.js 16 (App Router) · Tailwind CSS 4
+- Framer Motion · Lucide React
+
+## Запуск
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Архитектура
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/              # Next.js маршруты (тонкий слой)
+├── views/            # Композиции страниц (= pages layer)
+├── layouts/          # AppShell, Sidebar, RightPanel, MobileNav
+├── components/       # Feature-компоненты (feed, messages, …)
+├── ui/               # Переиспользуемые UI-примитивы
+├── hooks/            # React hooks
+├── animations/       # Framer Motion variants & wrappers
+├── settings/         # Конфиг, тема, SettingsProvider
+├── language/         # i18n (ru/en), LanguageProvider
+├── lib/              # Типы, data, repositories, utils
+├── config/           # Навигация и статический конфиг
+└── providers/        # Корневые провайдеры
+```
 
-## Learn More
+> **Примечание:** папка `views/` — это слой страниц. Next.js резервирует `src/pages/` для Pages Router, поэтому используется `views/`.
 
-To learn more about Next.js, take a look at the following resources:
+### Слои (Clean Architecture)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Слой | Папка | Назначение |
+|------|-------|------------|
+| Presentation | `views`, `components`, `layouts`, `ui` | UI |
+| Application | `hooks`, `providers` | Логика приложения |
+| Domain | `lib/types` | Сущности |
+| Infrastructure | `lib/data`, `lib/repositories` | Данные (mock → API) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### i18n
 
-## Deploy on Vercel
+```tsx
+import { useLanguage } from "@/hooks";
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+const { t, locale, setLocale } = useLanguage();
+t.nav.feed; // "Лента"
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Локали: `src/language/locales/ru.ts`, `en.ts`
+
+### Настройки
+
+```tsx
+import { useSettings } from "@/hooks";
+
+const { animationsEnabled, sidebarCollapsed, toggleSidebar } = useSettings();
+```
+
+### Анимации
+
+```tsx
+import { FadeIn, staggerContainer } from "@/animations";
+import { useMotionConfig } from "@/hooks";
+```
+
+Уважает `prefers-reduced-motion` и флаг `animationsEnabled`.
+
+## Адаптивность
+
+| Breakpoint | Поведение |
+|------------|-----------|
+| mobile | Нижняя навигация, скрытая правая панель |
+| tablet (md+) | Sidebar |
+| desktop (lg+) | Полный layout |
+| wide (xl+) | Правая панель трендов |
+
+## Маршруты
+
+| URL | View |
+|-----|------|
+| `/` | Лента |
+| `/explore` | Обзор |
+| `/messages` | Сообщения |
+| `/notifications` | Уведомления |
+| `/profile` | Профиль |
+
+© 2026 KVARON_X · KRX
