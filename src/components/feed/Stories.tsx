@@ -1,79 +1,77 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, Play } from "lucide-react";
 import { stories } from "@/lib/data";
 import { userRepository } from "@/lib/repositories";
 import { cn } from "@/lib/utils";
 import { useLanguage, useMotionConfig } from "@/hooks";
-import { hoverLift } from "@/animations/variants";
 
 export function Stories() {
   const { t } = useLanguage();
   const { shouldAnimate } = useMotionConfig();
   const currentUser = userRepository.getCurrent();
 
-  const StoryWrapper = shouldAnimate ? motion.button : "button";
-
   return (
-    <div className="border-b border-white/[0.06] px-4 py-5 lg:px-6">
-      <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-thin">
-        <StoryWrapper
+    <div className="border-b border-white/[0.06] bg-black/20 px-4 py-4 lg:px-6">
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        <motion.button
           type="button"
-          {...(shouldAnimate
-            ? { whileHover: "hover", whileTap: "tap", variants: hoverLift }
-            : {})}
-          className="flex shrink-0 flex-col items-center gap-2.5"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.97 }}
+          className="flex shrink-0 flex-col items-center gap-2"
         >
           <div className="relative">
-            <div className="story-ring rounded-full">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-base font-bold lg:h-16 lg:w-16 lg:text-lg">
+            <div className="story-ring rounded-2xl">
+              <div className="flex h-[72px] w-[52px] items-center justify-center rounded-[14px] bg-gradient-to-b from-white/10 to-black text-base font-bold">
                 {currentUser?.avatar}
               </div>
             </div>
-            <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black ring-2 ring-black">
+            <span className="absolute -bottom-1 left-1/2 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-white text-black ring-2 ring-black">
               <Plus className="h-3.5 w-3.5" />
             </span>
           </div>
-          <span className="max-w-[72px] truncate text-xs text-white/60">
+          <span className="max-w-[56px] truncate text-[11px] font-medium text-white/55">
             {t.feed.yourStory}
           </span>
-        </StoryWrapper>
+        </motion.button>
 
         {stories.map((story, i) => {
           const user = userRepository.getById(story.userId);
           if (!user) return null;
+          const isLive = i === 3;
 
           return (
-            <StoryWrapper
+            <motion.button
               key={story.id}
               type="button"
-              {...(shouldAnimate
-                ? {
-                    initial: { opacity: 0, y: 10 },
-                    animate: { opacity: 1, y: 0 },
-                    transition: { delay: i * 0.05 },
-                    whileHover: "hover",
-                    whileTap: "tap",
-                    variants: hoverLift,
-                  }
-                : {})}
-              className="flex shrink-0 flex-col items-center gap-2.5"
+              initial={shouldAnimate ? { opacity: 0, scale: 0.9 } : false}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.04 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex shrink-0 flex-col items-center gap-2"
             >
               <div
                 className={cn(
-                  "rounded-full",
+                  "rounded-2xl p-[2.5px]",
                   story.viewed ? "story-ring-viewed" : "story-ring"
                 )}
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-semibold ring-2 ring-black lg:h-16 lg:w-16">
+                <div className="relative flex h-[72px] w-[52px] items-center justify-center rounded-[14px] bg-gradient-to-b from-white/15 to-white/5 text-sm font-semibold ring-1 ring-black/50">
                   {user.avatar}
+                  {isLive && (
+                    <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-md bg-white px-1.5 py-0.5 text-[8px] font-bold uppercase text-black">
+                      <Play className="h-2 w-2 fill-black" />
+                      Live
+                    </span>
+                  )}
                 </div>
               </div>
-              <span className="max-w-[72px] truncate text-xs text-white/60">
+              <span className="max-w-[56px] truncate text-[11px] text-white/55">
                 {user.displayName.split(" ")[0]}
               </span>
-            </StoryWrapper>
+            </motion.button>
           );
         })}
       </div>

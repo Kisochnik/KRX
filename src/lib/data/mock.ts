@@ -7,6 +7,7 @@ import type {
   Message,
   Notification,
   ExploreItem,
+  Comment,
 } from "@/lib/types";
 
 export const CURRENT_USER_ID = "u1";
@@ -24,6 +25,16 @@ export const users: User[] = [
     verified: true,
     status: "online",
     banner: "gradient-1",
+    themeId: "neon",
+    customStatus: "Создаю будущее KVARON_X 🖤",
+    level: 42,
+    xp: 84500,
+    xpToNext: 100000,
+    badgeIds: ["b1", "b2", "b3", "b4"],
+    location: "Москва, Россия",
+    website: "kvaron.x/krx",
+    joinedAt: "2026-01-01",
+    friends: 156,
   },
   {
     id: "u2",
@@ -123,6 +134,10 @@ export const posts: Post[] = [
     views: 45200,
     createdAt: "2026-05-24T10:30:00",
     liked: true,
+    reactions: [
+      { emoji: "🔥", count: 420, userIds: ["u3", "u7"] },
+      { emoji: "👀", count: 89, userIds: [] },
+    ],
   },
   {
     id: "p2",
@@ -183,6 +198,13 @@ export const posts: Post[] = [
     createdAt: "2026-05-23T12:00:00",
     liked: true,
     reposted: true,
+    pinned: true,
+    bookmarked: true,
+    reactions: [
+      { emoji: "🔥", count: 8900, userIds: ["u2", "u5"] },
+      { emoji: "❤️", count: 3400, userIds: ["u3"] },
+      { emoji: "🎉", count: 1200, userIds: [] },
+    ],
   },
   {
     id: "p7",
@@ -257,36 +279,16 @@ export const conversations: Conversation[] = [
 
 export const messagesByConversation: Record<string, Message[]> = {
   c1: [
-    {
-      id: "m1",
-      senderId: "u2",
-      content: "Привет! Как продвигается KVARON_X?",
-      createdAt: "2026-05-24T10:00:00",
-      read: true,
-    },
-    {
-      id: "m2",
-      senderId: "u1",
-      content: "Отлично! UI почти готов, осталось полировать анимации",
-      createdAt: "2026-05-24T10:15:00",
-      read: true,
-    },
-    {
-      id: "m3",
-      senderId: "u2",
-      content: "Отправил макеты в DM, глянь когда будет время",
-      createdAt: "2026-05-24T11:20:00",
-      read: false,
-    },
+    { id: "m1", senderId: "u2", content: "Привет! Как продвигается KVARON_X?", createdAt: "2026-05-24T10:00:00", read: true },
+    { id: "m2", senderId: "u1", content: "Отлично! UI почти готов, осталось полировать анимации", createdAt: "2026-05-24T10:15:00", read: true },
+    { id: "m2b", senderId: "u2", content: "Кстати, glassmorphism смотрится идеально на тёмном фоне", createdAt: "2026-05-24T10:18:00", read: true },
+    { id: "m2c", senderId: "u1", content: "Согласен! Именно так и задумывали premium feel", createdAt: "2026-05-24T10:22:00", read: true },
+    { id: "m3", senderId: "u2", content: "Отправил макеты в DM, глянь когда будет время", createdAt: "2026-05-24T11:20:00", read: false },
   ],
   c2: [
-    {
-      id: "m4",
-      senderId: "u5",
-      content: "Коллаб на трек? Пиши в KRX Studio",
-      createdAt: "2026-05-24T10:05:00",
-      read: true,
-    },
+    { id: "m4", senderId: "u5", content: "Коллаб на трек? Пиши в KRX Studio", createdAt: "2026-05-24T10:05:00", read: true },
+    { id: "m4b", senderId: "u1", content: "Давай! Какой жанр планируешь?", createdAt: "2026-05-24T10:08:00", read: true },
+    { id: "m4c", senderId: "u5", content: "Synthwave / dark ambient — в стиле KRX", createdAt: "2026-05-24T10:12:00", read: true },
   ],
   c3: [
     {
@@ -427,6 +429,21 @@ export const exploreItems: ExploreItem[] = [
   },
 ];
 
+export const comments: Comment[] = [
+  { id: "cm1", postId: "p1", authorId: "u3", content: "Это шедевр! Когда релиз UI-kit?", likes: 124, createdAt: "2026-05-24T10:45:00" },
+  { id: "cm2", postId: "p1", authorId: "u7", content: "KRX дизайн на другом уровне 🔥", likes: 89, createdAt: "2026-05-24T10:50:00" },
+  { id: "cm3", postId: "p6", authorId: "u2", content: "Добро пожаловать в будущее!", likes: 456, createdAt: "2026-05-23T12:30:00" },
+  { id: "cm4", postId: "p6", authorId: "u5", content: "Уже влюблён в интерфейс", likes: 234, createdAt: "2026-05-23T13:00:00" },
+  { id: "cm5", postId: "p2", authorId: "u8", content: "Трек огонь, добавил в плейлист", likes: 67, createdAt: "2026-05-24T09:30:00" },
+  { id: "cm6", postId: "p3", authorId: "u1", content: "Спасибо за оперативность, команда!", likes: 312, createdAt: "2026-05-24T08:15:00" },
+  { id: "cm7", postId: "p4", authorId: "u2", content: "12 работ за неделю — респект", likes: 45, createdAt: "2026-05-23T23:00:00" },
+  { id: "cm8", postId: "p5", authorId: "u4", content: "Держу KRX в портфеле 📈", likes: 28, createdAt: "2026-05-23T19:00:00" },
+];
+
 export function getUserById(id: string): User | undefined {
   return users.find((u) => u.id === id);
+}
+
+export function getCommentsByPostId(postId: string): Comment[] {
+  return comments.filter((c) => c.postId === postId);
 }

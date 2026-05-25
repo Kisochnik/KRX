@@ -7,3 +7,4 @@ export { ExplorePage } from "./explore/ExplorePage";
 export { MessagesPage } from "./messages/MessagesPage";
 export { NotificationsPage } from "./notifications/NotificationsPage";
 export { ProfilePage } from "./profile/ProfilePage";
+export { SettingsPage } from "./settings/SettingsPage";

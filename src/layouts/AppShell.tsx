@@ -23,7 +23,7 @@ export function AppShell({
   const isMobile = useIsMobile();
 
   return (
-    <div className="grid-bg flex h-dvh w-full overflow-hidden bg-black">
+    <div className="app-bg grid-bg flex h-dvh w-full overflow-hidden">
       {!isMobile && <Sidebar />}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

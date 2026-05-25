@@ -1,5 +1,7 @@
 export type OnlineStatus = "online" | "idle" | "dnd" | "offline";
 
+export type CustomProfileStatus = string;
+
 export interface User {
   id: string;
   username: string;
@@ -8,10 +10,20 @@ export interface User {
   bio: string;
   followers: number;
   following: number;
+  friends?: number;
   posts: number;
   verified: boolean;
   status: OnlineStatus;
+  customStatus?: CustomProfileStatus;
   banner?: string;
+  themeId?: import("./social").ProfileThemeId;
+  level?: number;
+  xp?: number;
+  xpToNext?: number;
+  badgeIds?: string[];
+  location?: string;
+  website?: string;
+  joinedAt?: string;
 }
 
 export interface Post {
@@ -19,6 +31,7 @@ export interface Post {
   authorId: string;
   content: string;
   image?: string;
+  gif?: string;
   likes: number;
   reposts: number;
   comments: number;
@@ -26,6 +39,9 @@ export interface Post {
   createdAt: string;
   liked?: boolean;
   reposted?: boolean;
+  bookmarked?: boolean;
+  pinned?: boolean;
+  reactions?: import("./social").ReactionCount[];
 }
 
 export interface Story {
@@ -60,7 +76,7 @@ export interface Conversation {
 
 export interface Notification {
   id: string;
-  type: "like" | "follow" | "mention" | "repost" | "message";
+  type: "like" | "follow" | "mention" | "repost" | "message" | "achievement";
   fromUserId: string;
   content: string;
   createdAt: string;
@@ -74,3 +90,15 @@ export interface ExploreItem {
   image: string;
   likes: number;
 }
+
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  content: string;
+  likes: number;
+  createdAt: string;
+  gif?: string;
+}
+
+export * from "./social";

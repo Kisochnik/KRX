@@ -14,7 +14,7 @@ export const LAYOUT = {
     expanded: 280,
     collapsed: 72,
   },
-  rightPanel: 340,
+  rightPanel: 360,
   headerHeight: 64,
   mobileNavHeight: 64,
   maxContentWidth: 680,

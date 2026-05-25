@@ -9,4 +9,16 @@ export {
   notifications,
   exploreItems,
   getUserById,
+  comments,
+  getCommentsByPostId,
 } from "./mock";
+export {
+  PROFILE_THEMES,
+  PROFILE_BADGES,
+  ACHIEVEMENTS,
+  ACTIVITIES,
+  DAILY_REWARDS,
+  FOLLOWS,
+  REACTION_EMOJIS,
+  MOCK_GIFS,
+} from "./social-mock";

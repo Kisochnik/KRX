@@ -129,6 +129,26 @@ export type TranslationKeys = {
     privacy: string;
     copyright: string;
   };
+  settings: {
+    title: string;
+    subtitle: string;
+    sections: {
+      account: string;
+      appearance: string;
+      notifications: string;
+      privacy: string;
+      language: string;
+    };
+    darkMode: string;
+    darkModeDesc: string;
+    animations: string;
+    animationsDesc: string;
+    reducedMotion: string;
+    reducedMotionDesc: string;
+    pushNotif: string;
+    sounds: string;
+    comingSoon: string;
+  };
 };
 
 export type TranslationSchema = TranslationKeys;
