@@ -16,6 +16,10 @@ export const en: TranslationSchema = {
     bookmarks: "Bookmarks",
     settings: "Settings",
     createServer: "+ Create server",
+    friends: "Friends",
+    games: "Games",
+    music: "Music",
+    shop: "Shop",
   },
   feed: {
     title: "KRX Feed",
@@ -71,6 +75,7 @@ export const en: TranslationSchema = {
       mention: "mention",
       repost: "repost",
       message: "message",
+      achievement: "achievement",
     },
   },
   profile: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart, UserPlus, AtSign, Repeat2, MessageCircle } from "lucide-react";
+import { Heart, UserPlus, AtSign, Repeat2, MessageCircle, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar, PageHeader } from "@/ui";
 import { notifications } from "@/lib/data";
@@ -17,6 +17,7 @@ const iconMap: Record<Notification["type"], LucideIcon> = {
   mention: AtSign,
   repost: Repeat2,
   message: MessageCircle,
+  achievement: Trophy,
 };
 
 function NotificationItem({

@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -20,15 +19,15 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(APP_CONFIG.defaultLocale);
+const loadInitialLocale = () => {
+  if (typeof window === "undefined") return APP_CONFIG.defaultLocale;
 
-  useEffect(() => {
-    const stored = localStorage.getItem(APP_CONFIG.storageKeys.locale) as Locale;
-    if (stored && (stored === "ru" || stored === "en")) {
-      setLocaleState(stored);
-    }
-  }, []);
+  const stored = localStorage.getItem(APP_CONFIG.storageKeys.locale) as Locale | null;
+  return stored === "ru" || stored === "en" ? stored : APP_CONFIG.defaultLocale;
+};
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>(loadInitialLocale);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);

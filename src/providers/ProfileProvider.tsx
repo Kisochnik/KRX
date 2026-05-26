@@ -10,7 +10,6 @@ import {
 } from "react";
 import type { ProfileThemeId, OnlineStatus } from "@/lib/types";
 import { CURRENT_USER_ID, getUserById } from "@/lib/data";
-import { APP_CONFIG } from "@/settings/config";
 
 export interface EditableProfile {
   displayName: string;
@@ -66,21 +65,13 @@ function defaultProfile(): EditableProfile {
 }
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
-  const [profile, setProfile] = useState<EditableProfile>(defaultProfile);
-  const [hydrated, setHydrated] = useState(false);
+  const [profile, setProfile] = useState<EditableProfile>(() => loadProfile() ?? defaultProfile());
   const [followingIds, setFollowingIds] = useState<string[]>(["u2", "u5", "u4"]);
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<string[]>(["p6", "p1"]);
 
   useEffect(() => {
-    const saved = loadProfile();
-    if (saved) setProfile(saved);
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-  }, [profile, hydrated]);
+  }, [profile]);
 
   const updateProfile = useCallback((patch: Partial<EditableProfile>) => {
     setProfile((p) => ({ ...p, ...patch }));

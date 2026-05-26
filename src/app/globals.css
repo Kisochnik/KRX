@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-space-grotesk: "Space Grotesk", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
   --bg-primary: #000000;
   --bg-elevated: #0c0c0c;
   --bg-surface: #111111;
@@ -82,6 +84,49 @@ body {
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border: 1px solid var(--border-glass);
   box-shadow: var(--shadow-premium);
+}
+
+/* Auth card panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.028);
+  backdrop-filter: blur(48px) saturate(1.4);
+  -webkit-backdrop-filter: blur(48px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 8px 48px rgba(0,0,0,0.65),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* Glowing input border on focus */
+.border-glow-focus:focus {
+  border-color: rgba(255,255,255,0.28) !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.05), 0 0 16px rgba(255,255,255,0.04);
+}
+
+/* Scanline animation */
+@keyframes scanline {
+  0% { top: 0; opacity: 0.8; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.animate-scanline {
+  animation: scanline 1.8s linear infinite;
+}
+
+/* Cyber shake error animation */
+@keyframes cyber-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-5px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(2px); }
+}
+
+.animate-cyber-shake {
+  animation: cyber-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
 .glass-strong {
@@ -174,6 +219,15 @@ body {
 
 .animate-spin-slow {
   animation: spin-slow 1.2s linear infinite;
+}
+
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+
+.animate-grid-pulse {
+  animation: grid-pulse 4s ease-in-out infinite;
 }
 
 /* Telegram chat wallpaper */

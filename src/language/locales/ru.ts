@@ -15,6 +15,10 @@ export const ru: TranslationSchema = {
     bookmarks: "Закладки",
     settings: "Настройки",
     createServer: "+ Создать сервер",
+    friends: "Друзья",
+    games: "Игры",
+    music: "Музыка",
+    shop: "Магазин",
   },
   feed: {
     title: "Лента KRX",
@@ -70,6 +74,7 @@ export const ru: TranslationSchema = {
       mention: "упоминание",
       repost: "репост",
       message: "сообщение",
+      achievement: "достижение",
     },
   },
   profile: {

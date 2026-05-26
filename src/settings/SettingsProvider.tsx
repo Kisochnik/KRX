@@ -31,21 +31,14 @@ function loadSettings(): AppSettings {
 }
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [hydrated, setHydrated] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>(loadSettings);
 
   useEffect(() => {
-    setSettings(loadSettings());
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
     localStorage.setItem(
       APP_CONFIG.storageKeys.settings,
       JSON.stringify(settings)
     );
-  }, [settings, hydrated]);
+  }, [settings]);
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setSettings((prev) => ({ ...prev, ...patch }));

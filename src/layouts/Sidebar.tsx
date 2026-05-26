@@ -26,13 +26,10 @@ export function Sidebar() {
     messages: t.nav.messages,
     notifications: t.nav.notifications,
     profile: t.nav.profile,
-  };
-
-  const serverLabels: Record<string, string> = {
-    general: t.servers.general,
-    dev: t.servers.dev,
-    design: t.servers.design,
-    music: t.servers.music,
+    friends: t.nav.friends,
+    games: t.nav.games,
+    music: t.nav.music,
+    shop: t.nav.shop,
   };
 
   const width = sidebarCollapsed
@@ -82,36 +79,7 @@ export function Sidebar() {
           />
         ))}
 
-        {!sidebarCollapsed && (
-          <div className="my-5 border-t border-white/[0.06] pt-5">
-            <p className="mb-3 px-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/25">
-              {t.servers.title}
-            </p>
-            <div className="space-y-0.5">
-              {SERVER_CHANNELS.map(({ nameKey, icon: Icon }) => (
-                <button
-                  key={nameKey}
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/45 transition-all duration-300 hover:bg-white/[0.05] hover:text-white/80"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.05] text-white/50">
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
-                  <span>{serverLabels[nameKey]}</span>
-                </button>
-              ))}
-              <button
-                type="button"
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/35 transition-all duration-300 hover:bg-white/[0.05] hover:text-white/60"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-white/15">
-                  <Users className="h-3.5 w-3.5" />
-                </span>
-                <span>{t.nav.createServer}</span>
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {!sidebarCollapsed && (
           <div className="space-y-0.5 pt-2">

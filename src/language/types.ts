@@ -15,6 +15,10 @@ export type TranslationKeys = {
     bookmarks: string;
     settings: string;
     createServer: string;
+    friends: string;
+    games: string;
+    music: string;
+    shop: string;
   };
   feed: {
     title: string;
@@ -70,6 +74,7 @@ export type TranslationKeys = {
       mention: string;
       repost: string;
       message: string;
+      achievement: string;
     };
   };
   profile: {
