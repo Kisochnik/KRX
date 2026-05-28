@@ -1,28 +1,23 @@
 "use client";
 
 import { AppShell, ScrollArea } from "@/layouts";
-import { FeedHeader, Stories, ComposeBox, PostCard } from "@/components/feed";
-import { PostCardSkeleton } from "@/ui";
-import { postRepository } from "@/lib/repositories";
-import { usePageLoading } from "@/hooks/usePageLoading";
+import { FeedHeader, Stories, ComposeBox } from "@/components/feed";
+import { useLanguage } from "@/hooks";
+import { FileText } from "lucide-react";
 
 export function HomePage() {
-  const loading = usePageLoading(500);
-  const posts = postRepository.getAll();
+  const { t } = useLanguage();
 
   return (
     <AppShell showRightPanel>
       <FeedHeader />
       <ScrollArea>
         <Stories />
-        {!loading && <ComposeBox />}
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <PostCardSkeleton key={i} />
-            ))
-          : posts.map((post, i) => (
-              <PostCard key={post.id} post={post} index={i} />
-            ))}
+        <ComposeBox />
+        <div className="flex flex-col items-center justify-center gap-3 py-24 text-white/25">
+          <FileText className="h-10 w-10 opacity-20" />
+          <p className="text-sm">{t.feed.compose}</p>
+        </div>
       </ScrollArea>
     </AppShell>
   );

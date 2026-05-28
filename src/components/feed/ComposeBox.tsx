@@ -3,11 +3,11 @@
 import { Image, Smile, BarChart2, MapPin, Mic } from "lucide-react";
 import { Avatar, Button, IconButton, GlassPanel } from "@/ui";
 import { useLanguage } from "@/hooks";
-import { userRepository } from "@/lib/repositories";
+import { useAuth } from "@/context/AuthContext";
 
 export function ComposeBox() {
   const { t } = useLanguage();
-  const user = userRepository.getCurrent();
+  const { user } = useAuth();
 
   return (
     <GlassPanel

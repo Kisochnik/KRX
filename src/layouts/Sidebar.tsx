@@ -11,14 +11,14 @@ import {
 import { Avatar, NavLink } from "@/ui";
 import { cn } from "@/lib/utils";
 import { useLanguage, useSettings } from "@/hooks";
-import { userRepository } from "@/lib/repositories";
+import { useAuth } from "@/context/AuthContext";
 import { LAYOUT } from "@/settings";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useLanguage();
   const { sidebarCollapsed, toggleSidebar } = useSettings();
-  const currentUser = userRepository.getCurrent();
+  const { user: currentUser } = useAuth();
 
   const navLabels: Record<string, string> = {
     feed: t.nav.feed,
@@ -120,18 +120,18 @@ export function Sidebar() {
             )}
           >
             <Avatar
-              initials={currentUser.avatar}
+              initials={currentUser.nickname.slice(0,2).toUpperCase()}
               size="md"
-              status={currentUser.status}
+              status="online"
               showStatus
             />
             {!sidebarCollapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">
-                  {currentUser.displayName}
+                  {currentUser.nickname}
                 </p>
                 <p className="truncate text-xs text-white/40">
-                  @{currentUser.username}
+                  @{currentUser.username || currentUser.nickname.toLowerCase()}
                 </p>
               </div>
             )}
