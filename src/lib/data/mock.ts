@@ -13,21 +13,13 @@ import type {
 export const CURRENT_USER_ID = "u1";
 
 export const users: User[] = [];
-
 export const posts: Post[] = [];
-
 export const stories: Story[] = [];
-
 export const trends: Trend[] = [];
-
 export const conversations: Conversation[] = [];
-
-export const messages: Record<string, Message[]> = {};
-
+export const messagesByConversation: Record<string, Message[]> = {};
 export const notifications: Notification[] = [];
-
 export const exploreItems: ExploreItem[] = [];
-
 export const comments: Record<string, Comment[]> = {};
 
 export const getUserById = (id: string): User | undefined =>
@@ -35,3 +27,6 @@ export const getUserById = (id: string): User | undefined =>
 
 export const getPostById = (id: string): Post | undefined =>
   posts.find((p) => p.id === id);
+
+export const getCommentsByPostId = (postId: string): Comment[] =>
+  comments[postId] ?? [];

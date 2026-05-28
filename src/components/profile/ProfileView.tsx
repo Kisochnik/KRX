@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Avatar, VerifiedBadge, Button, Tabs } from "@/ui";
 import { PostCard } from "@/components/feed";
-import { postRepository } from "@/lib/repositories";
 import { formatCount } from "@/lib/utils";
 import { useLanguage, useMotionConfig } from "@/hooks";
 import { cn } from "@/lib/utils";
@@ -63,12 +62,9 @@ export function ProfileView() {
       }
     : null;
 
-  // Fallback to mock user if no auth user
-  const { userRepository } = require("@/lib/repositories");
-  const mockUser = userRepository.getCurrent();
-  const user = displayUser || mockUser;
+  const user = displayUser;
 
-  const userPosts = displayUser?.isReal ? [] : (mockUser ? postRepository.getByAuthor(mockUser.id) : []);
+  const userPosts: never[] = [];
 
   if (!user) return null;
 
