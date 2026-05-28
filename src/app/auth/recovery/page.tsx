@@ -84,7 +84,7 @@ export default function RecoveryPage() {
     return nextErrors;
   };
 
-  const handleIdentifierSubmit = (event: React.FormEvent) => {
+  const handleIdentifierSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!method) return;
 
@@ -98,25 +98,23 @@ export default function RecoveryPage() {
     setErrors({});
     setIsLoading(true);
 
-    window.setTimeout(() => {
-      const result = sendRecoveryOtp(method, identifier.trim());
-      setIsLoading(false);
+    const result = await sendRecoveryOtp(method, identifier.trim());
+    setIsLoading(false);
 
-      if (result.success && result.target) {
-        setVerificationTarget(result.target);
-        setStep("verification");
-        addToast(
-          "Код отправлен",
-          `Проверочный код отправлен через ${method === "email" ? "почту" : "Telegram"}.`,
-          "success"
-        );
-        return;
-      }
+    if (result.success && result.target) {
+      setVerificationTarget(result.target);
+      setStep("verification");
+      addToast(
+        "Код отправлен",
+        `Проверочный код отправлен через ${method === "email" ? "почту" : "Telegram"}.`,
+        "success"
+      );
+      return;
+    }
 
-      setErrors({ identifier: result.error || "Учётная запись не найдена." });
-      addToast("Ошибка", result.error || "Не удалось найти аккаунт.", "error");
-      triggerShake();
-    }, 1000);
+    setErrors({ identifier: result.error || "Учётная запись не найдена." });
+    addToast("Ошибка", result.error || "Не удалось найти аккаунт.", "error");
+    triggerShake();
   };
 
   const handleVerifyOtp = async (code: string): Promise<boolean> => {
@@ -138,9 +136,9 @@ export default function RecoveryPage() {
     });
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     if (!method) return;
-    const result = sendRecoveryOtp(method, identifier.trim());
+    const result = await sendRecoveryOtp(method, identifier.trim());
     if (result.target) setVerificationTarget(result.target);
   };
 

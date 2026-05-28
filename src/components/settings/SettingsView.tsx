@@ -93,8 +93,12 @@ export function SettingsView() {
                 )}
 
                 {section.id === "language" && (
-                  <div className="flex gap-2">
-                    {(["ru", "en"] as Locale[]).map((loc) => (
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { value: "ru" as Locale, label: "🇷🇺 Русский" },
+                      { value: "en" as Locale, label: "🇬🇧 English" },
+                      { value: "uk" as Locale, label: "🇺🇦 Українська" },
+                    ]).map(({ value: loc, label: locLabel }) => (
                       <button
                         key={loc}
                         type="button"
@@ -105,7 +109,7 @@ export function SettingsView() {
                             : "bg-white/[0.05] text-white/60 hover:bg-white/10"
                         }`}
                       >
-                        {loc === "ru" ? "Русский" : "English"}
+                        {locLabel}
                       </button>
                     ))}
                   </div>

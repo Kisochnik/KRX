@@ -19,11 +19,13 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-const loadInitialLocale = () => {
-  if (typeof window === "undefined") return APP_CONFIG.defaultLocale;
+const VALID_LOCALES: Locale[] = ["ru", "en", "uk"];
+
+const loadInitialLocale = (): Locale => {
+  if (typeof window === "undefined") return APP_CONFIG.defaultLocale as Locale;
 
   const stored = localStorage.getItem(APP_CONFIG.storageKeys.locale) as Locale | null;
-  return stored === "ru" || stored === "en" ? stored : APP_CONFIG.defaultLocale;
+  return stored && VALID_LOCALES.includes(stored) ? stored : APP_CONFIG.defaultLocale as Locale;
 };
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {

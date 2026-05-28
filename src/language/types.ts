@@ -1,4 +1,4 @@
-export type Locale = "ru" | "en";
+export type Locale = "ru" | "en" | "uk";
 
 export type TranslationKeys = {
   app: {
