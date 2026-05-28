@@ -46,6 +46,7 @@ interface AuthContextType {
   removeToast: (id: string) => void;
   sendVerificationOtp: (email: string) => Promise<void>;
   verifyOtp: (identifier: string, code: string) => boolean;
+  verifyOtpAsync: (identifier: string, code: string) => Promise<boolean>;
   registerUser: (nickname: string, email: string, dob: string, passwordHash: string, language?: string) => AuthResult;
   loginUser: (identifier: string, passwordHash: string, remember?: boolean) => AuthResult;
   sendRecoveryOtp: (method: OtpChannel, identifier: string) => Promise<RecoveryResult>;
@@ -286,27 +287,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
-    // Server-sent codes are verified locally only in dev mode
-    // In production with real SMTP, the code was sent to email — we trust local entry
-    if (entry.serverSent) {
-      // We don't know the code client-side; we'd need an extra GET verify call.
-      // For simplicity the server stores it in-memory and we call GET /api/send-code
-      // But since this is client-side only, we can't block the flow. 
-      // The pattern is: server sent email, user types code, we verify against server memory.
-      // Since we can't make async calls in verifyOtp easily, we fall back to checking:
-      // if code length is 6 and not "wrong", allow (trusting server sent correctly).
-      // For a full implementation, make verifyOtp async and call GET /api/send-code.
-      if (code.length === 6 && /^\d{6}$/.test(code)) {
-        setOtps((prev) => {
-          const copy = { ...prev };
-          delete copy[key];
-          return copy;
-        });
-        return true;
-      }
-      return false;
-    }
-
     if (entry.code !== code) return false;
 
     setOtps((prev) => {
@@ -315,6 +295,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return copy;
     });
     return true;
+  };
+
+  // Async OTP verification for server-sent codes — used when real email was sent
+  const verifyOtpAsync = async (identifier: string, code: string): Promise<boolean> => {
+    const key = getOtpKey(identifier);
+    const entry = otps[key];
+
+    if (!entry) return false;
+
+    if (Date.now() > entry.expires) {
+      addToast("Код устарел", "Срок действия кода истёк. Запросите новый код.", "error");
+      setOtps((prev) => { const copy = { ...prev }; delete copy[key]; return copy; });
+      return false;
+    }
+
+    if (entry.serverSent) {
+      try {
+        const res = await fetch(`/api/send-code?email=${encodeURIComponent(identifier.trim().toLowerCase())}&code=${code}`);
+        const data = await res.json();
+        if (data.success) {
+          setOtps((prev) => { const copy = { ...prev }; delete copy[key]; return copy; });
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    }
+
+    return verifyOtp(identifier, code);
   };
 
   const registerUser = (
@@ -378,6 +388,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(foundUser);
     localStorage.setItem("krx_user", JSON.stringify(foundUser));
+
+    // Restore user language preference
+    if (foundUser.language) {
+      localStorage.setItem("krx_locale", foundUser.language);
+    }
 
     const sessionData = JSON.stringify(foundUser);
     sessionStorage.removeItem(SESSION_KEY);
@@ -502,6 +517,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         removeToast,
         sendVerificationOtp,
         verifyOtp,
+        verifyOtpAsync,
         registerUser,
         loginUser,
         sendRecoveryOtp,

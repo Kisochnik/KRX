@@ -53,7 +53,7 @@ const STEP_COPY: Record<RegisterStep, Record<string, string>> = {
 const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 
 export default function RegisterPage() {
-  const { registerUser, sendVerificationOtp, verifyOtp, addToast } = useAuth();
+  const { registerUser, sendVerificationOtp, verifyOtp, verifyOtpAsync, addToast } = useAuth();
   const { setLocale } = useLanguageContext();
   const router = useRouter();
 
@@ -134,13 +134,8 @@ export default function RegisterPage() {
     setErrors({});
     setIsLoading(true);
 
-    // Apply selected language immediately
-    if (lang === "ru" || lang === "en") {
-      setLocale(lang as Locale);
-    } else {
-      // Ukrainian not yet a Locale in the type but save to localStorage
-      localStorage.setItem("krx_locale", lang);
-    }
+    // Apply selected language immediately for all supported locales
+    setLocale(lang as Locale);
 
     await sendVerificationOtp(email.trim());
     setIsLoading(false);
@@ -155,8 +150,8 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     return new Promise<boolean>((resolve) => {
-      window.setTimeout(() => {
-        const isValid = verifyOtp(verifyIdentifier, code);
+      window.setTimeout(async () => {
+        const isValid = await verifyOtpAsync(verifyIdentifier, code);
 
         if (!isValid) {
           setIsLoading(false);
