@@ -1,95 +1,34 @@
-# KVARON_X (KRX)
+# KRX / KVARON_X
 
-Премиальная социальная сеть — чёрно-белый glassmorphism UI, масштабируемая архитектура.
+Black and white futuristic social platform.
 
-## Стек
+## Stack
 
-- React 19 · Next.js 16 (App Router) · Tailwind CSS 4
-- Framer Motion · Lucide React
+- Frontend: Next.js 15, React, TypeScript, TailwindCSS, Framer Motion
+- Backend: Node.js, NestJS
+- Database: PostgreSQL
+- Auth foundation: JWT, bcrypt, validation, email verification codes, 2FA-ready user model
+- Security foundation: Helmet, rate limit, validation, CORS, hardened env defaults
 
-## Запуск
+## Start
 
 ```bash
 npm install
-npm run dev
+npm run dev:web
+npm run dev:api
 ```
 
-Откройте [http://localhost:3000](http://localhost:3000)
+PostgreSQL can be started with Docker when Docker is installed:
 
-## Архитектура
-
-```
-src/
-├── app/              # Next.js маршруты (тонкий слой)
-├── views/            # Композиции страниц (= pages layer)
-├── layouts/          # AppShell, Sidebar, RightPanel, MobileNav
-├── components/       # Feature-компоненты (feed, messages, …)
-├── ui/               # Переиспользуемые UI-примитивы
-├── hooks/            # React hooks
-├── animations/       # Framer Motion variants & wrappers
-├── settings/         # Конфиг, тема, SettingsProvider
-├── language/         # i18n (ru/en), LanguageProvider
-├── lib/              # Типы, data, repositories, utils
-├── config/           # Навигация и статический конфиг
-└── providers/        # Корневые провайдеры
+```bash
+docker compose up -d postgres
 ```
 
-> **Примечание:** папка `views/` — это слой страниц. Next.js резервирует `src/pages/` для Pages Router, поэтому используется `views/`.
+Copy `.env.example` to `.env` for the API and expose `NEXT_PUBLIC_API_URL` for the frontend when wiring real requests.
 
-### Слои (Clean Architecture)
+## Day 1 Scope
 
-| Слой | Папка | Назначение |
-|------|-------|------------|
-| Presentation | `views`, `components`, `layouts`, `ui` | UI |
-| Application | `hooks`, `providers` | Логика приложения |
-| Domain | `lib/types` | Сущности |
-| Infrastructure | `lib/data`, `lib/repositories` | Данные (mock → API) |
-
-### i18n
-
-```tsx
-import { useLanguage } from "@/hooks";
-
-const { t, locale, setLocale } = useLanguage();
-t.nav.feed; // "Лента"
-```
-
-Локали: `src/language/locales/ru.ts`, `en.ts`
-
-### Настройки
-
-```tsx
-import { useSettings } from "@/hooks";
-
-const { animationsEnabled, sidebarCollapsed, toggleSidebar } = useSettings();
-```
-
-### Анимации
-
-```tsx
-import { FadeIn, staggerContainer } from "@/animations";
-import { useMotionConfig } from "@/hooks";
-```
-
-Уважает `prefers-reduced-motion` и флаг `animationsEnabled`.
-
-## Адаптивность
-
-| Breakpoint | Поведение |
-|------------|-----------|
-| mobile | Нижняя навигация, скрытая правая панель |
-| tablet (md+) | Sidebar |
-| desktop (lg+) | Полный layout |
-| wide (xl+) | Правая панель трендов |
-
-## Маршруты
-
-| URL | View |
-|-----|------|
-| `/` | Лента |
-| `/explore` | Обзор |
-| `/messages` | Сообщения |
-| `/notifications` | Уведомления |
-| `/profile` | Профиль |
-
-© 2026 KVARON_X · KRX
+- UI kit: Button, Input, Modal, Sidebar, Navbar, Card, Avatar, Loader
+- Pages: Home Feed, Login, Register, Forgot Password, Verify Code
+- API modules: Auth, Users, Posts, Messages, Notifications
+- Database tables: users, posts, comments, likes, messages, notifications, friends

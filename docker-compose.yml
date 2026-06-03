@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: krx-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: krx
+      POSTGRES_PASSWORD: krx_password
+      POSTGRES_DB: krx
+    ports:
+      - "5432:5432"
+    volumes:
+      - krx_postgres_data:/var/lib/postgresql/data
+      - ./apps/api/database/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krx -d krx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  krx_postgres_data:
