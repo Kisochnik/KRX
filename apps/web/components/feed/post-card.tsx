@@ -9,9 +9,18 @@ import type { FeedPost } from "@/types/feed";
 
 type PostCardProps = {
   post: FeedPost;
+  onToggleLike?: (postId: string) => void;
+  onComment?: (postId: string) => void;
 };
 
-export function PostCard({ post }: PostCardProps) {
+function formatCount(value: number) {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
+  }
+  return `${value}`;
+}
+
+export function PostCard({ post, onToggleLike, onComment }: PostCardProps) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
@@ -50,17 +59,28 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         ) : null}
         <div className="grid grid-cols-4 border-t border-[#2a2a2a] text-sm text-neutral-300">
-          <button className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black">
+          <button
+            type="button"
+            onClick={() => onToggleLike?.(post.id)}
+            className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black"
+          >
             <Heart className="h-4 w-4" />
-            {post.stats.reactions}
+            {formatCount(post.stats.reactions)}
           </button>
-          <button className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black">
+          <button
+            type="button"
+            onClick={() => onComment?.(post.id)}
+            className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black"
+          >
             <MessageCircle className="h-4 w-4" />
-            {post.stats.comments}
+            {formatCount(post.stats.comments)}
           </button>
-          <button className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black">
+          <button
+            type="button"
+            className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black"
+          >
             <Repeat2 className="h-4 w-4" />
-            {post.stats.reposts}
+            {formatCount(post.stats.reposts)}
           </button>
           <button className="flex h-12 items-center justify-center gap-2 transition hover:bg-white hover:text-black">
             <Send className="h-4 w-4" />

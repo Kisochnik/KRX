@@ -16,9 +16,9 @@ export type FeedPost = {
     alt: string;
   };
   stats: {
-    reactions: string;
-    comments: string;
-    reposts: string;
+    reactions: number;
+    comments: number;
+    reposts: number;
   };
 };
 

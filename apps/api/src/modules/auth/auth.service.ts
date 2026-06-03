@@ -12,6 +12,7 @@ import { User } from "../../entities/user.entity";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { VerifyEmailDto } from "./dto/verify-email.dto";
 
 @Injectable()
@@ -143,6 +144,38 @@ export class AuthService {
       ok: true,
       codeDevOnly: resetCode,
     };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.users
+      .createQueryBuilder("user")
+      .addSelect("user.emailVerificationCodeHash")
+      .where("user.email = :email", {
+        email: dto.email.toLowerCase(),
+      })
+      .getOne();
+
+    if (!user?.emailVerificationCodeHash || !user.emailVerificationExpiresAt) {
+      throw new UnauthorizedException("Reset code is invalid");
+    }
+
+    if (user.emailVerificationExpiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException("Reset code expired");
+    }
+
+    const codeOk = await bcrypt.compare(dto.code, user.emailVerificationCodeHash);
+
+    if (!codeOk) {
+      throw new UnauthorizedException("Reset code is invalid");
+    }
+
+    const rounds = Number(this.config.get("BCRYPT_ROUNDS", 12));
+    user.passwordHash = await bcrypt.hash(dto.newPassword, rounds);
+    user.emailVerificationCodeHash = null;
+    user.emailVerificationExpiresAt = null;
+    await this.users.save(user);
+
+    return { ok: true };
   }
 
   private signUser(user: User) {

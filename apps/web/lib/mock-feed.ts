@@ -26,9 +26,9 @@ export const feedPosts: FeedPost[] = [
       alt: "Monochrome KRX grid composition",
     },
     stats: {
-      reactions: "12.8K",
-      comments: "842",
-      reposts: "1.9K",
+      reactions: 12800,
+      comments: 842,
+      reposts: 1900,
     },
   },
   {
@@ -48,9 +48,9 @@ export const feedPosts: FeedPost[] = [
       alt: "KRX live monochrome stage frame",
     },
     stats: {
-      reactions: "8.4K",
-      comments: "391",
-      reposts: "734",
+      reactions: 8400,
+      comments: 391,
+      reposts: 734,
     },
   },
   {
@@ -69,9 +69,9 @@ export const feedPosts: FeedPost[] = [
       alt: "Futuristic monochrome social panel",
     },
     stats: {
-      reactions: "5.1K",
-      comments: "204",
-      reposts: "488",
+      reactions: 5100,
+      comments: 204,
+      reposts: 488,
     },
   },
 ];
