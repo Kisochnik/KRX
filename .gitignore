@@ -1,0 +1,15 @@
+node_modules/
+.npm-cache/
+.next/
+dist/
+coverage/
+
+.env
+.env.local
+.env.*.local
+apps/**/.env
+apps/**/.env.local
+!*.env.example
+!apps/**/.env.example
+
+*.log
